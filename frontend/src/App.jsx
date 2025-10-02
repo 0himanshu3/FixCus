@@ -12,6 +12,13 @@ import OTP from './pages/OTP'
 import ResetPassword from './pages/ResetPassword'
 import { useDispatch, useSelector } from 'react-redux'
 import { getUser } from './redux/slices/authSlice'
+import MainLayout from './components/MainLayout'
+import About from './pages/About'
+import Gallery from './pages/Gallery'
+import Donate from './pages/Donate'
+import Issues from './components/Issues'
+import IssuesStaff from './components/IssuesStaff'
+import CreateIssue from './pages/CreateIssue'
 const App = () => {
 
   const {user,isAuthenticated}= useSelector((state)=>state.auth)
@@ -23,6 +30,18 @@ const App = () => {
   return (
       <Router>
           <Routes>
+            {/* Routes that require Header & Footer */}
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/donate" element={<Donate />} />
+          <Route
+            path="/issues"
+            element={user && user.role === "User" ? <Issues /> : <IssuesStaff />}
+          />
+          <Route path="/create" element={<CreateIssue />} />
+        </Route>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
