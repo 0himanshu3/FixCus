@@ -1,0 +1,164 @@
+@import "tailwindcss";
+/* apparently this font is better for people with visual impairment (braille website) */
+@font-face {
+  font-family: 'Atkinson Hyperlegible';
+  src: url('/fonts/Atkinson-Hyperlegible-Regular-102a.woff2') format('woff2'),
+       url('/fonts/Atkinson-Hyperlegible-Regular-102.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
+* {
+  font-family: 'Atkinson Hyperlegible', Arial, sans-serif !important;
+  font-optical-sizing: auto;
+  font-style: normal;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+
+/* High Contrast Mode */
+.high-contrast {
+  background-color: black !important;
+  color: yellow !important;
+}
+
+.high-contrast * {
+  background-color: black !important;
+  color: yellow !important;
+}
+
+.high-contrast a, 
+.high-contrast h1, 
+.high-contrast h2, 
+.high-contrast h3, 
+.high-contrast p, 
+.high-contrast span {
+  color: yellow !important;
+}
+
+.high-contrast button {
+  background-color: yellow !important;
+  color: black !important;
+  border: 2px solid yellow !important;
+}
+
+/* Grayscale Mode */
+.grayscale {
+  filter: grayscale(100%);
+}
+
+/* Dark Mode */
+.dark-mode {
+  background-color: #121212 !important;
+  color: white !important;
+}
+
+.dark-mode * {
+  background-color: #121212 !important;
+  color: white !important;
+}
+
+.dark-mode a,
+.dark-mode h1,
+.dark-mode h2,
+.dark-mode h3,
+.dark-mode p,
+.dark-mode span {
+  color: white !important;
+}
+
+.dark-mode button {
+  background-color: #333 !important;
+  color: white !important;
+  border: 1px solid #555 !important;
+}
+
+.dark-mode input, 
+.dark-mode textarea {
+  background-color: #222 !important;
+  color: white !important;
+  border: 1px solid #555 !important;
+}
+
+/* Dark Mode */
+.dark-mode {
+  background-color: #121212 !important;
+  color: white !important;
+}
+
+.dark-mode * {
+  background-color: #121212 !important;
+  color: white !important;
+}
+
+/* Proper Borders for Buttons */
+.dark-mode button {
+  background-color: #333 !important;
+  color: white !important;
+  border: 2px solid white !important;  /* White border for visibility */
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Hover Effect for Buttons */
+.dark-mode button:hover {
+  background-color: #555 !important;
+  border-color: #ffcc00 !important;  /* Yellow border on hover */
+  color: #ffcc00 !important;
+}
+
+/* Inputs and Text Areas */
+.dark-mode input, 
+.dark-mode textarea {
+  background-color: #222 !important;
+  color: white !important;
+  border: 2px solid #bbb !important;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.dark-mode input:focus, 
+.dark-mode textarea:focus {
+  border-color: #ffcc00 !important;  /* Highlight border on focus */
+  outline: none;
+}
+
+/* Links */
+.dark-mode a {
+  color: #ffcc00 !important;
+  text-decoration: underline;
+}
+
+.dark-mode a:hover {
+  color: #ff9900 !important;
+}
+
+/* General focus outline for accessibility */
+*:focus-visible {
+  outline: 2px solid #00ff00; /* Green outline */
+  outline-offset: 4px;
+  box-shadow: 0 0 8px #00ff00; /* Green glow effect */
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+/* Style for buttons */
+button:focus-visible {
+  background-color: #004d00; /* Darker shade for active focus */
+  color: white;
+}
+
+/* Style for links */
+a:focus-visible {
+  text-decoration: underline;
+  background-color: rgba(0, 255, 0, 0.2);
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+/* Dropdown items */
+div[role="menuitem"]:focus-visible {
+  background-color: #004d00;
+  color: white;
+}
