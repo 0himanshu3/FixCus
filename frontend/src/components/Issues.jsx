@@ -1,173 +1,333 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
+
+const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
+const issueCategories = [
+  "Education & Skill Development",
+  "Sports & Cultural Events",
+  "Health & Well-being",
+  "Women Empowerment",
+  "Environmental Sustainability",
+  "Social Inclusion & Awareness",
+];
+const statusOptions = ["Open", "In Progress", "Resolved"];
 
 function Issues() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [issues, setIssues] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchIssues = async () => {
-      setIsLoading(true);
-      try {
-        const res = await fetch("http://localhost:3000/api/v1/issues/all", {
+  // Initialize filters from URL query params
+  const [filters, setFilters] = useState({
+    title: searchParams.get("title") || "",
+    category: searchParams.get("category") || "",
+    priority: searchParams.get("priority") || "",
+    status: searchParams.get("status") || "",
+    location: searchParams.get("location") || "",
+    recency: searchParams.get("recency") || "",
+  });
+
+  // Fetch filtered issues from API
+  const fetchFilteredIssues = async (appliedFilters) => {
+    setIsLoading(true);
+    try {
+      // Build query string
+      const query = new URLSearchParams();
+      Object.entries(appliedFilters).forEach(([key, value]) => {
+        if (value) query.append(key, value);
+      });
+
+      const res = await fetch(
+        `http://localhost:3000/api/v1/issues/all?${query.toString()}`,
+        {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           credentials: "include",
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          console.log(data);
-          setIssues(data.issues || []);
-        } else {
-          console.error("Error:", res.status, res.statusText);
         }
-      } catch (error) {
-        console.error("Error fetching issues:", error);
-      } finally {
-        setIsLoading(false);
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        setIssues(data.issues || []);
+      } else {
+        console.error("Error fetching issues:", res.statusText);
       }
-    };
-
-    fetchIssues();
-  }, []);
-
-  const handleAddIssue = () => {
-    navigate("/create");
+    } catch (error) {
+      console.error("Error fetching issues:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleViewIssue = (slug) => {
-    navigate(`/event/${slug}`);
+  // Initial fetch on mount
+  useEffect(() => {
+    fetchFilteredIssues(filters);
+  }, []);
+
+  const handleAddIssue = () => navigate("/create");
+  const handleViewIssue = (slug) => navigate(`/event/${slug}`);
+
+  const handleApplyFilters = () => {
+    // Update URL
+    setSearchParams(
+      Object.fromEntries(
+        Object.entries(filters).filter(([_, value]) => value)
+      )
+    );
+    // Fetch from API
+    fetchFilteredIssues(filters);
+    setIsFilterOpen(false);
+  };
+
+  const handleResetFilters = () => {
+    const resetFilters = {
+      title: "",
+      category: "",
+      priority: "",
+      status: "",
+      location: "",
+      recency: "",
+    };
+    setFilters(resetFilters);
+    setSearchParams({});
+    fetchFilteredIssues(resetFilters);
+    setIsFilterOpen(false);
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">All Issues</h1>
-        <button
-          onClick={handleAddIssue}
-          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg shadow transition-colors duration-200 flex items-center gap-2"
-        >
-          Publish Issue
-        </button>
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      ) : issues.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-          <h3 className="mt-4 text-lg font-medium text-gray-900">No issues found</h3>
-          <p className="mt-2 text-gray-500">Get started by creating your first issue.</p>
-          <button
-            onClick={handleAddIssue}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Publish Issue
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {issues.map((event) => (
-            <motion.div
-              key={event._id}
-              className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-2xl transition-all duration-300 group flex flex-col"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+    <div className="relative">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">All Issues</h1>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setIsFilterOpen(true)}
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-6 rounded-lg shadow transition-colors duration-200"
             >
-              {event.image ? (
-                <div className="h-48 overflow-hidden">
-                  <img
-                    src={event.image}
-                    alt={event.title}
-                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                  />
-                </div>
-              ) : (
-                <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-12 w-12"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              Filter
+            </button>
+            <button
+              onClick={handleAddIssue}
+              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg shadow transition-colors duration-200 flex items-center gap-2"
+            >
+              Publish Issue
+            </button>
+          </div>
+        </div>
+
+        {/* Loading / Empty / Issues List */}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : issues.length === 0 ? (
+          <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 className="mt-4 text-lg font-medium text-gray-900">
+              No issues found
+            </h3>
+            <p className="mt-2 text-gray-500">
+              Get started by creating your first issue.
+            </p>
+            <button
+              onClick={handleAddIssue}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Publish Issue
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {issues.map((event) => (
+              <motion.div
+                key={event._id}
+                className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-2xl transition-all duration-300 group flex flex-col"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {event.image ? (
+                  <div className="h-48 overflow-hidden">
+                    <img
+                      src={event.image}
+                      alt={event.title}
+                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                     />
-                  </svg>
-                </div>
-              )}
-
-              <div className="p-6 flex-grow">
-                <h2 className="text-2xl font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors duration-300">
-                  {event.title}
-                </h2>
-
-                {event.category && (
-                  <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full mb-3">
-                    {event.category}
-                  </span>
+                  </div>
+                ) : (
+                  <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-12 w-12"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
                 )}
 
-                <p className="text-sm text-gray-500 mb-2">
-                  <strong>Priority:</strong> {event.priority}
-                </p>
-                <p className="text-sm text-gray-500 mb-2">
-                  <strong>Status:</strong> {event.status}
-                </p>
-                <p className="text-sm text-gray-500 mb-2">
-                  <strong>Location:</strong> {event.eventLocation}
-                </p>
-                <p className="text-sm text-gray-500 mb-2">
-                  <strong>Published:</strong>{" "}
-                  {new Date(event.issuePublishDate).toLocaleDateString()}
-                </p>
-                <p className="text-sm text-gray-500 mb-2">
-                  <strong>Donation:</strong> ₹{event.donation}
-                </p>
+                <div className="p-6 flex-grow">
+                  <h2 className="text-2xl font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors duration-300">
+                    {event.title}
+                  </h2>
 
-                <div
-                  className="text-gray-600 text-base leading-relaxed mb-4 line-clamp-3"
-                  dangerouslySetInnerHTML={{
-                    __html: event?.content
-                      ? event.content.split(" ").slice(0, 30).join(" ") + "..."
-                      : "",
-                  }}
-                />
-              </div>
+                  {event.category && (
+                    <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full mb-3">
+                      {event.category}
+                    </span>
+                  )}
 
-              <div className="px-6 pb-6">
-                <button
-                  onClick={() => handleViewIssue(event.slug)}
-                  className="w-full bg-gray-800 hover:bg-gray-900 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
+                  <p className="text-sm text-gray-500 mb-2">
+                    <strong>Priority:</strong> {event.priority}
+                  </p>
+                  <p className="text-sm text-gray-500 mb-2">
+                    <strong>Status:</strong> {event.status}
+                  </p>
+                  <p className="text-sm text-gray-500 mb-2">
+                    <strong>Location:</strong> {event.eventLocation}
+                  </p>
+                  <p className="text-sm text-gray-500 mb-2">
+                    <strong>Published:</strong>{" "}
+                    {new Date(event.issuePublishDate).toLocaleDateString()}
+                  </p>
+                </div>
+
+                <div className="px-6 pb-6">
+                  <button
+                    onClick={() => handleViewIssue(event.slug)}
+                    className="w-full bg-gray-800 hover:bg-gray-900 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
                   >
-                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                    <path
-                      fillRule="evenodd"
-                      d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  View Details
-                </button>
-              </div>
-            </motion.div>
-          ))}
+                    View Details
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Filter Modal */}
+      {isFilterOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Blurred Background */}
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setIsFilterOpen(false)}
+          />
+
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-xl shadow-lg w-full max-w-md p-6 z-10">
+            <h2 className="text-xl font-semibold mb-4">Filter Issues</h2>
+
+            <div className="space-y-3">
+              {/* Title */}
+              <input
+                type="text"
+                placeholder="Title"
+                value={filters.title}
+                onChange={(e) =>
+                  setFilters({ ...filters, title: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+
+              {/* Category Dropdown */}
+              <select
+                value={filters.category}
+                onChange={(e) =>
+                  setFilters({ ...filters, category: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option value="">All Categories</option>
+                {issueCategories.map((cat, idx) => (
+                  <option key={idx} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+
+              {/* Priority Dropdown */}
+              <select
+                value={filters.priority}
+                onChange={(e) =>
+                  setFilters({ ...filters, priority: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option value="">All Priorities</option>
+                {priorityLevels.map((level, idx) => (
+                  <option key={idx} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </select>
+
+              {/* Status Dropdown */}
+              <select
+                value={filters.status}
+                onChange={(e) =>
+                  setFilters({ ...filters, status: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option value="">All Status</option>
+                {statusOptions.map((s, idx) => (
+                  <option key={idx} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+
+              {/* Location */}
+              <input
+                type="text"
+                placeholder="Location"
+                value={filters.location}
+                onChange={(e) =>
+                  setFilters({ ...filters, location: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              />
+
+              {/* Recency */}
+              <select
+                value={filters.recency}
+                onChange={(e) =>
+                  setFilters({ ...filters, recency: e.target.value })
+                }
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option value="">Sort by Recency</option>
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+              </select>
+            </div>
+
+            <div className="flex justify-end mt-6 gap-3">
+              <button
+                onClick={handleResetFilters}
+                className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
+              >
+                Reset
+              </button>
+              <button
+                onClick={handleApplyFilters}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

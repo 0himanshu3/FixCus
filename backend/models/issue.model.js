@@ -29,7 +29,7 @@ const IssueSchema = new mongoose.Schema(
     staffsAssigned: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     reportedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     status: { type: String, enum: ["Open", "In Progress", "Resolved"], default: "Open" },
-    donation: { type: Number, default: 0 },
+    
   },
   { timestamps: true }
 );

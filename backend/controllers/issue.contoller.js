@@ -37,10 +37,47 @@ export const createIssue = async (req, res) => {
 // Get all issues
 export const getIssues = async (req, res) => {
   try {
-    const issues = await Issue.find()
+    const {
+      title,
+      category,
+      priority,
+      status,
+      location,
+      recency, // newest / oldest
+    } = req.query;
+
+    // Build filter object dynamically
+    const filter = {};
+
+    if (title) {
+      filter.title = { $regex: title, $options: "i" }; // case-insensitive partial match
+    }
+
+    if (category) {
+      filter.category = category;
+    }
+
+    if (priority) {
+      filter.priority = priority;
+    }
+
+    if (status) {
+      filter.status = status;
+    }
+
+    if (location) {
+      filter.eventLocation = { $regex: location, $options: "i" }; // case-insensitive partial match
+    }
+
+    // Build sort
+    let sortOption = { createdAt: -1 }; // default newest first
+    if (recency === "newest") sortOption = { createdAt: -1 };
+    else if (recency === "oldest") sortOption = { createdAt: 1 };
+
+    const issues = await Issue.find(filter)
       .populate("reportedBy", "name email")
       .populate("staffsAssigned", "name email")
-      .sort({ createdAt: -1 });
+      .sort(sortOption);
 
     res.status(200).json({ success: true, issues });
   } catch (err) {
