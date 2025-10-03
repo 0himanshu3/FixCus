@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 import { useNavigate, Link } from 'react-router-dom'
 
 const MuncipalityMain = () => {
-  const { user } = useSelector((state) => state.auth)
+  const { user  } = useSelector((state) => state.auth)
   const navigate = useNavigate()
   const [showApplicationForm, setShowApplicationForm] = useState(false)
   const [formData, setFormData] = useState({
@@ -89,7 +89,7 @@ const MuncipalityMain = () => {
           </h1>
           {user?.accountApproved && (
             <Link
-              to="/municipality/issues"
+              to="/issues"
               className="ml-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
               Issues
