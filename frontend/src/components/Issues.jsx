@@ -68,7 +68,7 @@ function Issues() {
   }, []);
 
   const handleAddIssue = () => navigate("/create");
-  const handleViewIssue = (slug) => navigate(`/event/${slug}`);
+  const handleViewIssue = (slug) => navigate(`/issue/${slug}`);
 
   const handleApplyFilters = () => {
     // Update URL
