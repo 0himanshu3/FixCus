@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useSelector } from "react-redux"; // ✅ to get logged in user
 
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
 const issueCategories = [
@@ -20,50 +21,66 @@ function IssuesMunicipality() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Initialize filters from URL query params
+  const user = useSelector((state) => state.auth.user);
+  const adminDistrict = user?.district || null;  
+
   const [filters, setFilters] = useState({
     title: searchParams.get("title") || "",
     category: searchParams.get("category") || "",
     priority: searchParams.get("priority") || "",
     status: searchParams.get("status") || "",
-    location: searchParams.get("location") || "",
     recency: searchParams.get("recency") || "",
   });
 
-  // Fetch filtered issues from API
   const fetchFilteredIssues = async (appliedFilters) => {
-    setIsLoading(true);
-    try {
-      const query = new URLSearchParams();
-      Object.entries(appliedFilters).forEach(([key, value]) => {
-        if (value) query.append(key, value);
-      });
+  setIsLoading(true);
+  try {
+    const query = new URLSearchParams();
 
-      const res = await fetch(
-        `http://localhost:3000/api/v1/issues/all?${query.toString()}`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
+    Object.entries(appliedFilters).forEach(([key, value]) => {
+      if (value) query.append(key, value);
+    });
+
+    if (adminDistrict) {
+      query.append("district", adminDistrict);
+    }
+
+    const res = await fetch(
+      `http://localhost:3000/api/v1/issues/all?${query.toString()}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
+
+    if (res.ok) {
+      const data = await res.json();
+
+      const validIssues = (data.issues || []).filter(
+        (issue) => issue.issueDistrict &&
+      issue.issueDistrict.trim() !== "" &&
+      issue.issueDistrict === adminDistrict
       );
 
-      if (res.ok) {
-        const data = await res.json();
-        setIssues(data.issues || []);
-      } else {
-        console.error("Error fetching issues:", res.statusText);
-      }
-    } catch (error) {
-      console.error("Error fetching issues:", error);
-    } finally {
-      setIsLoading(false);
+      setIssues(validIssues);
+    } else {
+      console.error("Error fetching issues:", res.statusText);
     }
-  };
+  } catch (error) {
+    console.error("Error fetching issues:", error);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   useEffect(() => {
-    fetchFilteredIssues(filters);
-  }, []);
+    if (adminDistrict) {
+      fetchFilteredIssues(filters);
+    }
+  }, [adminDistrict]); // wait until user is loaded
+
 
   const handleViewIssue = (slug) => navigate(`/issue/${slug}`);
 
@@ -81,7 +98,6 @@ function IssuesMunicipality() {
       category: "",
       priority: "",
       status: "",
-      location: "",
       recency: "",
     };
     setFilters(resetFilters);
@@ -252,7 +268,7 @@ function IssuesMunicipality() {
                   </option>
                 ))}
               </select>
-              <input
+              {/* <input
                 type="text"
                 placeholder="Location"
                 value={filters.location}
@@ -260,7 +276,7 @@ function IssuesMunicipality() {
                   setFilters({ ...filters, location: e.target.value })
                 }
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
-              />
+              /> */}
               <select
                 value={filters.recency}
                 onChange={(e) =>
