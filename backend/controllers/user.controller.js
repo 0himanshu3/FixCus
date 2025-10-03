@@ -11,7 +11,7 @@ import crypto from "crypto"
 export const register = async (req, res) => {
     try {
         // Destructure all fields including role and municipalityName
-        let { name, email, password, location, role, municipalityName } = req.body;
+        let { name, email, password, location, role, municipalityName, district, state, country } = req.body;
         
         // Validate all required fields including location
         if (!name || !email || !password || !location || !role) {
@@ -48,6 +48,9 @@ export const register = async (req, res) => {
                 password: hashedPassword, 
                 location, 
                 municipalityName,
+                district,
+                state,
+                country,
                 role: 'Municipality Admin'
             });
         } else {
@@ -56,7 +59,10 @@ export const register = async (req, res) => {
                 name, 
                 email, 
                 password: hashedPassword, 
-                location 
+                location,
+                district,
+                state,
+                country
             });
         }
         
@@ -194,6 +200,39 @@ export const getUser = async (req, res) => {
         
     }
 }
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('-password');
+
+    res.status(200).json({
+      success: true,
+      users,
+    });
+  } catch (err) {
+    console.error('Failed to fetch users:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching users',
+    });
+  }
+};
+export const getAllMunicipalities = async (req, res) => {
+  try {
+    const users = await Municipality.find().select('-password');
+
+    res.status(200).json({
+      success: true,
+      users,
+    });
+  } catch (err) {
+    console.error('Failed to fetch users:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching users',
+    });
+  }
+};
 
 export const forgotPassword= async(req,res)=>{
     const user = await User.findOne({

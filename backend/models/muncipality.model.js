@@ -35,6 +35,9 @@ const municipalitySchema = new mongoose.Schema({
     },
     avatar: { type: String },
     location: { type: String },
+    district: { type: String },
+    state: { type: String },
+    country: { type: String },
 
     verificationCode: Number,
     verificationCodeExpire: Date,

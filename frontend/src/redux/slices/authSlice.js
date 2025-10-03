@@ -138,9 +138,8 @@ export const register = (data) => async (dispatch) => {
             dispatch(authSlice.actions.registerSuccess(res.data));
         })
         .catch((error) => {
-            console.log(error.message);
-            
-            dispatch(authSlice.actions.registerFailed(error.response.data.message));
+            const backendMsg = error?.response?.data?.msg || error?.response?.data?.message || error.message || "Registration failed";
+            dispatch(authSlice.actions.registerFailed(backendMsg));
         });
 };
 
@@ -204,7 +203,13 @@ export const getUser = () => async (dispatch) => {
             dispatch(authSlice.actions.getUserSuccess(res.data));
         })
         .catch((error) => {
-            dispatch(authSlice.actions.getUserFailed(error.response.data.message));
+            // Silently handle unauthorized without noisy console errors
+            const status = error?.response?.status;
+            if (status === 401) {
+                dispatch(authSlice.actions.getUserFailed("Unauthorized"));
+                return;
+            }
+            dispatch(authSlice.actions.getUserFailed(error?.response?.data?.message || "Failed to fetch user"));
         });
 };
 

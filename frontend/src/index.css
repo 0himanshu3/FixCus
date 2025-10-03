@@ -135,30 +135,23 @@
   color: #ff9900 !important;
 }
 
-/* General focus outline for accessibility */
 *:focus-visible {
-  outline: 2px solid #00ff00; /* Green outline */
-  outline-offset: 4px;
-  box-shadow: 0 0 8px #00ff00; /* Green glow effect */
-  transition: box-shadow 0.2s ease-in-out;
+  outline: 0px solid #94a3b8; /* slate-400 */
+  outline-offset: 0px;
+  box-shadow: none;
 }
 
-/* Style for buttons */
 button:focus-visible {
-  background-color: #004d00; /* Darker shade for active focus */
-  color: white;
+  outline: 0px solid #94a3b8;
+  outline-offset: 0px;
 }
 
-/* Style for links */
 a:focus-visible {
-  text-decoration: underline;
-  background-color: rgba(0, 255, 0, 0.2);
-  border-radius: 4px;
-  padding: 2px 4px;
+  outline: 0px solid #94a3b8;
+  outline-offset: 0px;
 }
 
-/* Dropdown items */
 div[role="menuitem"]:focus-visible {
-  background-color: #004d00;
-  color: white;
+  outline: 0px solid #94a3b8;
+  outline-offset: 0px;
 }

@@ -19,7 +19,7 @@ function Footer() {
 
         {/* Centered copyright and links - now properly aligned */}
         <div className="order-first md:order-none flex flex-col absolute left-[15cm] top-8 mb-4 md:mb-0">
-          <p className="mb-1">&copy; {new Date().getFullYear()} Samarthanam. All rights reserved.</p>
+          <p className="mb-1">&copy; {new Date().getFullYear()} FixCus. All rights reserved.</p>
           <div className="flex space-x-2">
             <a href="#" className="text-blue-400 hover:underline">Privacy Policy</a>
             <span>|</span>
@@ -34,7 +34,7 @@ function Footer() {
           <div className="grid grid-cols-3 gap-3 w-max mx-auto md:mx-0">
             {/* Row 1 */}
             <a 
-              href="https://www.facebook.com/samarthanaminfo" 
+              href="https://www.facebook.com/fixcusfb" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-white hover:text-blue-500" 
@@ -43,7 +43,7 @@ function Footer() {
               <FaFacebook size={20} />
             </a>
             <a 
-              href="https://www.instagram.com/samarthanamtrustforthedisabled/" 
+              href="https://www.instagram.com/codesangam-fixcus/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-white hover:text-pink-500" 
@@ -52,7 +52,7 @@ function Footer() {
               <FaInstagram size={20} />
             </a>
             <a 
-              href="https://www.youtube.com/channel/UCXWyda3dsdkjaZzfg6qX0ew" 
+              href="https://www.youtube.com/channel/fixcus-channel" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-white hover:text-red-500" 
@@ -63,7 +63,7 @@ function Footer() {
             
             {/* Row 2 */}
             <a 
-              href="https://x.com/SamarthanamTFTD" 
+              href="https://x.com/fixcus" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-white hover:text-blue-400" 

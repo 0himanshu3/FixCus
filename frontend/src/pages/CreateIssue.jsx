@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import LocationPicker from "../components/LocationPicker";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { app } from "../firebase";
 
@@ -7,7 +8,7 @@ export default function CreateIssue() {
   const [imageFiles, setImageFiles] = useState([]);
   const [videoFiles, setVideoFiles] = useState([]);
   const [uploadProgress, setUploadProgress] = useState({ images: [], videos: [] });
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState(null);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -56,7 +57,7 @@ export default function CreateIssue() {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    if (!formData.title || !formData.content || !formData.category || !location) {
+    if (!formData.title || !formData.content || !formData.category || !location || !location.lat || !location.lng) {
       setError("Please fill all required fields.");
       return;
     }
@@ -66,7 +67,14 @@ export default function CreateIssue() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ ...formData, issueLocation: location, issuePublishDate: new Date() })
+        body: JSON.stringify({
+          ...formData,
+          issueLocation: `${location.lat},${location.lng}`,
+          issueDistrict: location?.district || "",
+          issueState: location?.state || "",
+          issueCountry: location?.country || "",
+          issuePublishDate: new Date()
+        })
       });
       if (res.ok) window.alert("Issue created successfully!");
       else setError("Failed to create issue.");
@@ -78,108 +86,111 @@ export default function CreateIssue() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex justify-center items-start py-10 px-4">
-      <div className="w-full max-w-3xl bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-center text-blue-700 mb-6">Create Issue</h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-lg font-medium mb-1">Title</label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={e => setFormData({ ...formData, title: e.target.value })}
-              required
-              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+    <div className="w-full">
+      <div className="max-w-6xl mx-auto px-6 lg:px-8 py-8">
+        <div className="bg-white border border-gray-200 rounded-md shadow-sm">
+          <div className="px-6 py-5 border-b border-gray-200">
+            <h1 className="text-2xl font-semibold text-gray-900">Create Issue</h1>
+            <p className="text-sm text-gray-500 mt-1">Provide details and publish your issue.</p>
           </div>
+          <form onSubmit={handleSubmit} className="px-6 py-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={e => setFormData({ ...formData, title: e.target.value })}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-slate-400"
+                />
+              </div>
 
-          <div>
-            <label className="block text-lg font-medium mb-1">Category</label>
-            <select
-              value={formData.category}
-              onChange={e => setFormData({ ...formData, category: e.target.value })}
-              required
-              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select category</option>
-              {categories.map((cat, idx) => (
-                <option key={idx} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select
+                  value={formData.category}
+                  onChange={e => setFormData({ ...formData, category: e.target.value })}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+                >
+                  <option value="">Select category</option>
+                  {categories.map((cat, idx) => (
+                    <option key={idx} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
 
-          <div>
-            <label className="block text-lg font-medium mb-1">Location</label>
-            <input
-              type="text"
-              value={location}
-              onChange={e => setLocation(e.target.value)}
-              placeholder="Enter issue location"
-              required
-              className="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <div className="w-full">
+                  <LocationPicker location={location} setLocation={setLocation} />
+                </div>
+              </div>
 
-          <div>
-            <label className="block text-lg font-medium mb-1">Description</label>
-            <textarea
-              value={formData.content}
-              onChange={e => setFormData({ ...formData, content: e.target.value })}
-              required
-              className="w-full p-3 border rounded-md h-40 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea
+                  value={formData.content}
+                  onChange={e => setFormData({ ...formData, content: e.target.value })}
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md h-40 resize-y focus:outline-none focus:ring-2 focus:ring-slate-400"
+                />
+              </div>
 
-          {/* Image Upload */}
-          <div>
-            <label className="block text-lg font-medium mb-1">Images</label>
-            <div className="flex gap-2 items-center">
-              <input type="file" multiple accept="image/*" onChange={e => setImageFiles([...e.target.files])} />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Images</label>
+                <div className="flex gap-3 items-center">
+                  <input type="file" multiple accept="image/*" onChange={e => setImageFiles([...e.target.files])} />
+                  <button
+                    type="button"
+                    onClick={() => uploadFiles(imageFiles, "images")}
+                    className="px-4 py-2 rounded-md bg-slate-700 text-white hover:bg-slate-800"
+                  >
+                    Upload Images
+                  </button>
+                </div>
+                <div className="mt-2 space-y-1">
+                  {uploadProgress.images.map((p, i) => (
+                    <div key={i} className="text-sm text-gray-600">Image {i + 1}: {p}%</div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Videos</label>
+                <div className="flex gap-3 items-center">
+                  <input type="file" multiple accept="video/*" onChange={e => setVideoFiles([...e.target.files])} />
+                  <button
+                    type="button"
+                    onClick={() => uploadFiles(videoFiles, "videos")}
+                    className="px-4 py-2 rounded-md bg-slate-700 text-white hover:bg-slate-800"
+                  >
+                    Upload Videos
+                  </button>
+                </div>
+                <div className="mt-2 space-y-1">
+                  {uploadProgress.videos.map((p, i) => (
+                    <div key={i} className="text-sm text-gray-600">Video {i + 1}: {p}%</div>
+                  ))}
+                </div>
+              </div>
+
+              {error && <div className="md:col-span-2 text-red-600">{error}</div>}
+
+            </div>
+
+            <div className="mt-8 flex justify-end">
               <button
-                type="button"
-                onClick={() => uploadFiles(imageFiles, "images")}
-                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+                type="submit"
+                disabled={isSubmitting}
+                className="inline-flex items-center px-5 py-3 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-60"
               >
-                Upload Images
+                {isSubmitting ? "Submitting..." : "Create Issue"}
               </button>
             </div>
-            <div className="mt-1 space-y-1">
-              {uploadProgress.images.map((p, i) => (
-                <div key={i} className="text-sm text-gray-700">Image {i + 1}: {p}%</div>
-              ))}
-            </div>
-          </div>
-
-          {/* Video Upload */}
-          <div>
-            <label className="block text-lg font-medium mb-1">Videos</label>
-            <div className="flex gap-2 items-center">
-              <input type="file" multiple accept="video/*" onChange={e => setVideoFiles([...e.target.files])} />
-              <button
-                type="button"
-                onClick={() => uploadFiles(videoFiles, "videos")}
-                className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
-              >
-                Upload Videos
-              </button>
-            </div>
-            <div className="mt-1 space-y-1">
-              {uploadProgress.videos.map((p, i) => (
-                <div key={i} className="text-sm text-gray-700">Video {i + 1}: {p}%</div>
-              ))}
-            </div>
-          </div>
-
-          {error && <div className="text-red-600">{error}</div>}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-purple-600 text-white py-3 rounded-md text-lg font-semibold hover:bg-purple-700 disabled:opacity-60"
-          >
-            {isSubmitting ? "Submitting..." : "Create Issue"}
-          </button>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
