@@ -22,7 +22,8 @@ const IssueSchema = new mongoose.Schema(
     // Default lowest priority
     priority: { type: String, enum: priorityLevels, default: "Very Low" },
     content: { type: String },
-    image: { type: String },
+    images: [{ type: String }], // array of image URLs from Firebase
+    videos: [{ type: String }], // array of video URLs from Firebase
     issueLocation: { type: String, required: true },
     issuePublishDate: { type: Date, required: true },
     staffsAssigned: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],

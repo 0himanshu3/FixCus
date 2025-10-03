@@ -11,7 +11,7 @@ function Issues() {
     const fetchIssues = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch("http://localhost:3000/api/v1/issues/getEvents", {
+        const res = await fetch("http://localhost:3000/api/v1/issues/all", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -21,7 +21,8 @@ function Issues() {
 
         if (res.ok) {
           const data = await res.json();
-          setIssues(data);
+          console.log(data);
+          setIssues(data.issues || []);
         } else {
           console.error("Error:", res.status, res.statusText);
         }
