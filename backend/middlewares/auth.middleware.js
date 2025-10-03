@@ -19,10 +19,9 @@ export const isAuthenticated = async (req, res, next) => {
         // Check both User and Municipality collections
         let user = await User.findById(decoded.id).select("-password");
         
-        if (!user) {
+        if(!user){
             user = await Municipality.findById(decoded.id).select("-password");
         }
-
         if (!user) {
             return res.status(401).json({ message: "Unauthorized: User not found" });
         }
@@ -45,4 +44,35 @@ export const isAdminOrOrganiser = (req, res, next) => {
     return next();
   }
   return res.status(403).json({ error: "Access denied" });
+};
+
+export const protectMunicipality = async (req, res, next) => {
+ try {
+        // console.log("Checking authentication...");
+        // console.log("Cookies received:", req.cookies);  // Debug cookies
+
+        const token = req.cookies?.token;
+
+        if (!token) {
+            return res.status(401).json({ message: "Unauthorized: No token provided" });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+       //  console.log("Decoded token:", decoded);  // Debug JWT payload
+
+        // Check both User and Municipality collections
+        let user = await Municipality.findById(decoded.id).select("-password");
+        
+       
+        if (!user) {
+            return res.status(401).json({ message: "Unauthorized: User not found" });
+        }
+
+        req.municipality = user;
+        // console.log("Authenticated muni:", req.municipality);
+        next();
+    } catch (error) {
+        console.error("Auth Middleware Error:", error.message);
+        res.status(401).json({ message: "Unauthorized" });
+    }
 };

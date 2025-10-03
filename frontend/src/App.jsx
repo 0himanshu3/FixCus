@@ -52,7 +52,7 @@ const App = () => {
     switch (user?.role) {
       case "User":
         return <IssueDetails />;
-      case "Municipality":
+      case "Municipality Admin":
         return <IssueDetailsMunicipality />;
       case "Staff":
       case "Admin":
