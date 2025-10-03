@@ -1,4 +1,3 @@
-//!uses gmp-map instead of classic google maps. places api working fine and map is visible but not clickable
 import React, { useState, useRef, useEffect } from "react";
 import MapPickerModal from "./MapPickerModal"; // separate modal component
 import { MapPinIcon } from "@heroicons/react/24/outline";
@@ -29,7 +28,7 @@ const LocationPicker = ({ location, setLocation }) => {
         const input = document.getElementById("location-input");
         if (input) {
           autocompleteRef.current = new window.google.maps.places.Autocomplete(input, {
-            fields: ["geometry", "formatted_address"],
+            fields: ["geometry", "formatted_address", "address_components"],
           });
 
           autocompleteRef.current.addListener("place_changed", () => {
@@ -37,8 +36,16 @@ const LocationPicker = ({ location, setLocation }) => {
             if (place.geometry) {
               const lat = place.geometry.location.lat();
               const lng = place.geometry.location.lng();
-              setLocation({ lat, lng });
-              setInputValue(place.formatted_address || "");
+              // Extract district/state/country
+              let district = "", state = "", country = "";
+              (place.address_components || []).forEach((c) => {
+                if (c.types.includes("administrative_area_level_2")) district = c.long_name;
+                if (c.types.includes("administrative_area_level_1")) state = c.long_name;
+                if (c.types.includes("country")) country = c.long_name;
+              });
+              const formattedAddress = place.formatted_address || "";
+              setLocation({ lat, lng, district, state, country, formattedAddress });
+              setInputValue(formattedAddress);
             }
           });
 
@@ -76,9 +83,9 @@ const LocationPicker = ({ location, setLocation }) => {
           show={showMapModal}
           onClose={() => setShowMapModal(false)}
           location={location}
-          onSelectLocation={(pos, address) => {
-            setLocation(pos);
-            if (address) setInputValue(address);
+          onSelectLocation={(loc) => {
+            setLocation(loc);
+            if (loc?.formattedAddress) setInputValue(loc.formattedAddress);
           }}
         />
       )}

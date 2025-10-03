@@ -1,7 +1,7 @@
 import Issue from "../models/issue.model.js";
 export const createIssue = async (req, res) => {
   try {
-    const { title, content, category, issueLocation, issuePublishDate, images, videos } = req.body;
+    const { title, content, category, issueLocation, issuePublishDate, images, videos, issueDistrict, issueState, issueCountry } = req.body;
 
     if (!title || !category || !issueLocation || !issuePublishDate) {
       return res.status(400).json({ success: false, message: "Missing required fields." });
@@ -15,6 +15,9 @@ export const createIssue = async (req, res) => {
       content,
       category,
       issueLocation,
+      issueDistrict,
+      issueState,
+      issueCountry,
       issuePublishDate,
       images,
       videos,
@@ -66,7 +69,13 @@ export const getIssues = async (req, res) => {
     }
 
     if (location) {
-      filter.eventLocation = { $regex: location, $options: "i" }; // case-insensitive partial match
+      // Support searching by district/state/country or legacy location string
+      filter.$or = [
+        { issueDistrict: { $regex: location, $options: "i" } },
+        { issueState: { $regex: location, $options: "i" } },
+        { issueCountry: { $regex: location, $options: "i" } },
+        { issueLocation: { $regex: location, $options: "i" } }
+      ];
     }
 
     // Build sort

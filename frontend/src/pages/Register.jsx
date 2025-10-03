@@ -14,6 +14,7 @@ function Register() {
     const [category, setCategory] = useState('');
     const [role, setRole] = useState('citizen');
     const [municipalityName, setMunicipalityName] = useState(''); 
+    const [errors, setErrors] = useState({ name: '', email: '', password: '', municipalityName: '', location: '' });
 
     const dispatch = useDispatch();
     const {
@@ -22,29 +23,63 @@ function Register() {
 
     const navigateTo = useNavigate();
 
+    const validateName = (value) => {
+        if (!value.trim()) return 'Name is required';
+        return '';
+    };
+
+    const validateEmail = (value) => {
+        if (!value.trim()) return 'Email is required';
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) return 'Enter a valid email (must include @ and domain)';
+        return '';
+    };
+
+    const validatePassword = (value) => {
+        if (!value) return 'Password is required';
+        if (value.length < 8 || value.length > 16) return 'Password must be 8–16 characters';
+        return '';
+    };
+
+    const validateMunicipalityName = (value) => {
+        if (role === 'municipality_admin' && !value.trim()) return 'Municipality name is required';
+        return '';
+    };
+
+    const validateLocation = (value) => {
+        if (!value || !value.lat || !value.lng) return 'Location is required';
+        return '';
+    };
+
+    const validateAll = () => {
+        const nameErr = validateName(name);
+        const emailErr = validateEmail(email);
+        const passErr = validatePassword(password);
+        const muniErr = validateMunicipalityName(municipalityName);
+        const locErr = validateLocation(location);
+        const newErrors = { name: nameErr, email: emailErr, password: passErr, municipalityName: muniErr, location: locErr };
+        setErrors(newErrors);
+        return Object.values(newErrors).every((m) => m === '');
+    };
+
     const handleRegister = (e) => {
         e.preventDefault();
-        // Ensure location is provided before proceeding
-        if (!location) {
-            toast.error("Please enter your location");
-            return;
-        }
-        // If municipality admin, ensure municipality name is provided
-        if (role === 'municipality_admin' && !municipalityName.trim()) {
-            toast.error("Please enter municipality name");
-            return;
-        }
-        const data = new FormData();
-        data.append('name', name);
-        data.append('email', email);
-        data.append('password', password);
-        data.append('location', location); // Append location to the form data
-        data.append('category', category);
-        data.append('role', role);
-        if (role === 'municipality_admin') {
-            data.append('municipalityName', municipalityName);
-        }
-        dispatch(register(data));
+        // Run validations and prevent submit if invalid
+        if (!validateAll()) return;
+        const payload = {
+            name,
+            email,
+            password,
+            // store as string for backend schemas
+            location: `${location.lat},${location.lng}`,
+            district: location?.district || "",
+            state: location?.state || "",
+            country: location?.country || "",
+            category,
+            role,
+            ...(role === 'municipality_admin' ? { municipalityName } : {})
+        };
+        dispatch(register(payload));
     }
 
     if (isAuthenticated) {
@@ -131,10 +166,14 @@ function Register() {
                             <input
                             type="text"
                             value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            onChange={(e) => {
+                                setName(e.target.value);
+                                setErrors(prev => ({ ...prev, name: validateName(e.target.value) }));
+                            }}
                             placeholder={role === 'municipality_admin' ? "Admin Name" : "Full Name"}
                             className="w-full px-4 py-3 border border-black rounded-md focus:outline-none"
                             />
+                            {errors.name && <p className="text-red-600 text-sm mt-1">{errors.name}</p>}
                         </div>
                         
                         {/* Municipality Name Field - Only show for municipality admin */}
@@ -143,34 +182,50 @@ function Register() {
                                 <input
                                     type="text"
                                     value={municipalityName}
-                                    onChange={(e) => setMunicipalityName(e.target.value)}
+                                    onChange={(e) => {
+                                        setMunicipalityName(e.target.value);
+                                        setErrors(prev => ({ ...prev, municipalityName: validateMunicipalityName(e.target.value) }));
+                                    }}
                                     placeholder="Municipality Name"
                                     className="w-full px-4 py-3 border border-black rounded-md focus:outline-none"
                                 />
+                                {errors.municipalityName && <p className="text-red-600 text-sm mt-1">{errors.municipalityName}</p>}
                             </div>
                         )}
                         <div className="mb-2">
                             <input
                             type="email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(e) => {
+                                setEmail(e.target.value);
+                                setErrors(prev => ({ ...prev, email: validateEmail(e.target.value) }));
+                            }}
                             placeholder="Email"
                             className="w-full px-4 py-3 border border-black rounded-md focus:outline-none"
                             />
+                            {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
                         </div>
                         <div className="mb-2">
                             <input
                             type="password"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={(e) => {
+                                setPassword(e.target.value);
+                                setErrors(prev => ({ ...prev, password: validatePassword(e.target.value) }));
+                            }}
                             placeholder="Password"
                             className="w-full px-4 py-3 border border-black rounded-md focus:outline-none"
                             />
+                            {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
                         </div>
 
                         {/* Location Picker Field */}
                         <div className="mb-2">
-                            <LocationPicker location={location} setLocation={setLocation} />
+                            <LocationPicker location={location} setLocation={(val) => {
+                                setLocation(val);
+                                setErrors(prev => ({ ...prev, location: validateLocation(val) }));
+                            }} />
+                            {errors.location && <p className="text-red-600 text-sm mt-1">{errors.location}</p>}
                         </div>
 
                         <div className="block md:hidden font-semibold mt-5">

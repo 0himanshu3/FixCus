@@ -46,6 +46,9 @@ const userSchema= new mongoose.Schema({
       ],
       avatar:{ type: String },
       location: { type: String },
+      district: { type: String },
+      state: { type: String },
+      country: { type: String },
       availability: {
           weekdays: { type: Boolean, default: false },
           weekends: { type: Boolean, default: false }

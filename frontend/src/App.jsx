@@ -28,7 +28,18 @@ const App = () => {
   const dispatch =useDispatch();
 
   useEffect(()=>{
-    dispatch(getUser());
+    // Avoid calling protected profile endpoint on public routes
+    const path = window.location.pathname || '';
+    const isPublicRoute = (
+      path === '/login' ||
+      path === '/register' ||
+      path === '/password/forgot' ||
+      path.startsWith('/password/reset/') ||
+      path.startsWith('/otp-verification/')
+    );
+    if (!isPublicRoute) {
+      dispatch(getUser());
+    }
   },[])
   return (
       <Router>
