@@ -10,7 +10,7 @@ function Register() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [location, setLocation] = useState(''); 
+    const [location, setLocation] = useState(null);
     const [category, setCategory] = useState(''); 
 
     const dispatch = useDispatch();
@@ -61,15 +61,6 @@ function Register() {
         animate: { opacity: 1, x: "0%", transition: { duration: 0.5, ease: "easeInOut" } },
         exit: { opacity: 0, x: "-50%", transition: { duration: 0.5, ease: "easeInOut" } }
     };
-
-    const Categories = [
-        "Education & Skill Development",
-        "Sports & Cultural Events",
-        "Health & Well-being",
-        "Women Empowerment",
-        "Environmental Sustainability",
-        "Social Inclusion & Awareness",
-      ];
 
     return (
         <>
@@ -141,29 +132,9 @@ function Register() {
                             />
                         </div>
 
-                        {/* Event Category Dropdown */}
-                        <div className="mb-2">
-                            <select
-                            id="category"
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            className="w-full px-4 py-3 border border-black rounded-md focus:outline-none"
-                            required
-                            >
-                            <option value="" disabled>
-                                Select a category
-                            </option>
-                            {Categories.map((cat, index) => (
-                                <option key={index} value={cat}>
-                                {cat}
-                                </option>
-                            ))}
-                            </select>
-                        </div>
-
                         {/* Location Picker Field */}
                         <div className="mb-2">
-                            <LocationPicker eventLocation={location} setEventLocation={setLocation} />
+                            <LocationPicker location={location} setLocation={setLocation} />
                         </div>
 
                         <div className="block md:hidden font-semibold mt-5">
