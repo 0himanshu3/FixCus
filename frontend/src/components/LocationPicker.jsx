@@ -1,6 +1,8 @@
 //!uses gmp-map instead of classic google maps. places api working fine and map is visible but not clickable
 import React, { useState, useRef, useEffect } from "react";
 import MapPickerModal from "./MapPickerModal"; // separate modal component
+import { MapPinIcon } from "@heroicons/react/24/outline";
+import { FaMapMarkerAlt } from "react-icons/fa";
 
 const LocationPicker = ({ location, setLocation }) => {
   const [inputValue, setInputValue] = useState("");
@@ -62,9 +64,9 @@ const LocationPicker = ({ location, setLocation }) => {
         <button
           type="button"
           onClick={() => setShowMapModal(true)}
-          className="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300"
+          className="rounded"
         >
-          🗺️
+          <MapPinIcon className="h-6 w-6 text-gray-700 hover:text-gray-900 cursor-pointer" />
         </button>
       </div>
 
@@ -79,7 +81,6 @@ const LocationPicker = ({ location, setLocation }) => {
             if (address) setInputValue(address);
           }}
         />
-
       )}
     </div>
   );
