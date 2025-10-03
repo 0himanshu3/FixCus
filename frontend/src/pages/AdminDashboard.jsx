@@ -200,7 +200,7 @@ const fetchMunicipalities = async () => {
             columns={[
               { label: 'Name', key: 'name' },
               { label: 'Email', key: 'email' },
-              { label: 'City', key: 'location' }
+              { label: 'District', key: 'district' }
             ]}
           />
 
@@ -212,17 +212,8 @@ const fetchMunicipalities = async () => {
             columns={[
               { label: 'Name', key: 'name' },
               { label: 'Email', key: 'email' },
-              { label: 'City', key: 'location' },
-              {
-                label: 'Total Donations',
-                key: 'totalDonations',
-                render: (val) => (
-                  <div className="flex items-center text-sm text-gray-500">
-                    <FaRupeeSign className="text-green-500 mr-1" />
-                    {val?.toLocaleString() || 0}
-                  </div>
-                )
-              }
+              { label: 'District', key: 'issuedistrict' },
+              
             ]}
           />
         </>
@@ -244,7 +235,7 @@ const fetchMunicipalities = async () => {
                     }`}
                   >
                     <p className="font-medium truncate">{issue.title}</p>
-                    <p className="text-sm text-gray-500 truncate">{issue.issueLocation}</p>
+                    <p className="text-sm text-gray-500 truncate">{issue.issueDistrict}</p>
                   </button>
                 ))}
               </div>
@@ -257,7 +248,7 @@ const fetchMunicipalities = async () => {
                   <div className="flex justify-between items-center">
                     <div>
                       <h2 className="text-2xl font-bold">{selectedIssue.title}</h2>
-                      <p className="text-gray-600">{selectedIssue.issueLocation}</p>
+                      <p className="text-gray-600">{selectedIssue.issueDistrict}</p>
                     </div>
                     <div className="flex space-x-4">
                       <button
