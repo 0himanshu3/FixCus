@@ -22,6 +22,8 @@ import CreateIssue from './pages/CreateIssue'
 import MuncipalityMain from './pages/MuncipalityMain'
 import AdminDashboard from './pages/AdminDashboard'
 import ApplicationRequest from './pages/ApplicationRequest'
+import IssueDetails from './components/IssueDetails'
+import IssueDetailsStaff from './components/IssueDetailsStaff'
 const App = () => {
 
   const {user,isAuthenticated}= useSelector((state)=>state.auth)
@@ -53,6 +55,10 @@ const App = () => {
           <Route
             path="/issues"
             element={user && user.role === "User" ? <Issues /> : <IssuesStaff />}
+          />
+          <Route
+            path="/issue/:slug"
+            element={user && user.role === "User" ? <IssueDetails /> : <IssueDetailsStaff />}
           />
           <Route path="/create" element={<CreateIssue />} />
           <Route path="/municipality" element={<MuncipalityMain />} />

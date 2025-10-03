@@ -1,29 +1,37 @@
 import mongoose from "mongoose";
 
-//change these categories
-
+// Updated categories
 const issueCategories = [
   "Education & Skill Development",
   "Sports & Cultural Events",
   "Health & Well-being",
   "Women Empowerment",
   "Environmental Sustainability",
-  "Social Inclusion & Awareness"
+  "Social Inclusion & Awareness",
 ];
 
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
 
-// Main event schema
+// Comment sub-schema
+const CommentSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    content: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { _id: true }
+);
+
+// Main Issue schema
 const IssueSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     category: { type: String, enum: issueCategories, required: true },
     slug: { type: String, unique: true },
-    // Default lowest priority
     priority: { type: String, enum: priorityLevels, default: "Very Low" },
     content: { type: String },
-    images: [{ type: String }], // array of image URLs from Firebase
-    videos: [{ type: String }], // array of video URLs from Firebase
+    images: [{ type: String }],
+    videos: [{ type: String }],
     issueLocation: { type: String, required: true },
     issueDistrict: { type: String },
     issueState: { type: String },
@@ -32,12 +40,16 @@ const IssueSchema = new mongoose.Schema(
     staffsAssigned: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     reportedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     status: { type: String, enum: ["Open", "In Progress", "Resolved"], default: "Open" },
-    
+
+    // New fields
+    upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    downvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    comments: [CommentSchema],
   },
   { timestamps: true }
 );
 
-// Pre-validate hook to create a slug from the title
+// Pre-validate hook to create slug
 IssueSchema.pre("validate", function (next) {
   if (this.title) {
     this.slug = this.title
@@ -49,18 +61,29 @@ IssueSchema.pre("validate", function (next) {
   next();
 });
 
-// Virtual priority calculation based on weeks passed
+// Virtual priority based on weeks passed
 IssueSchema.virtual("calculatedPriority").get(function () {
   const weeksPassed = Math.floor(
     (Date.now() - new Date(this.issuePublishDate)) / (7 * 24 * 60 * 60 * 1000)
   );
-  
-  // Clamp priority within available levels
   const index = Math.min(weeksPassed, priorityLevels.length - 1);
   return priorityLevels[index];
 });
 
-// Ensure virtuals are included when converting to JSON/Objects
+// Virtual counts for convenience
+IssueSchema.virtual("upvoteCount").get(function () {
+  return this.upvotes.length;
+});
+
+IssueSchema.virtual("downvoteCount").get(function () {
+  return this.downvotes.length;
+});
+
+IssueSchema.virtual("commentCount").get(function () {
+  return this.comments.length;
+});
+
+// Include virtuals in JSON/Objects
 IssueSchema.set("toJSON", { virtuals: true });
 IssueSchema.set("toObject", { virtuals: true });
 
