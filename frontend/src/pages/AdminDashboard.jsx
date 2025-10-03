@@ -19,10 +19,22 @@ const AdminDashboard = () => {
   const [aiReport, setAiReport] = useState(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedState, setSelectedState] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  
+
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalMunicipalities: 0,
   });
+
+  const states = [...new Set(users.map(u => u.state).concat(municipalities.map(m => m.state)))];
+  const districts = selectedState 
+  ? [...new Set(
+      users.filter(u => u.state === selectedState).map(u => u.district)
+        .concat(municipalities.filter(m => m.state === selectedState).map(m => m.issuedistrict))
+    )]
+  : [];
 
   const handleLogout = async () => {
     try {
@@ -126,6 +138,19 @@ const fetchMunicipalities = async () => {
       </div>
     );
   }
+   const filteredUsers = users.filter(u => 
+    (!selectedState || u.state === selectedState) &&
+    (!selectedDistrict || u.district === selectedDistrict)
+  );
+
+  const filteredMunicipalities = municipalities.filter(m =>
+    (!selectedState || m.state === selectedState) &&
+    (!selectedDistrict || m.issuedistrict === selectedDistrict)
+  );
+  const filteredCompletedIssues = completedIssues.filter(issue =>
+  (!selectedState || issue.state === selectedState) &&
+  (!selectedDistrict || issue.issueDistrict === selectedDistrict)
+);
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -191,16 +216,47 @@ const fetchMunicipalities = async () => {
               color="from-purple-600 to-purple-400"
             />
           </div>
+          <div className="flex space-x-4 mb-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+          <select
+            value={selectedState}
+            onChange={(e) => { setSelectedState(e.target.value); setSelectedDistrict(''); }}
+            className="border rounded-lg px-3 py-2"
+          >
+            <option value="">All States</option>
+            {states.map((state) => (
+              <option key={state} value={state}>{state}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">District</label>
+          <select
+            value={selectedDistrict}
+            onChange={(e) => setSelectedDistrict(e.target.value)}
+            className="border rounded-lg px-3 py-2"
+            disabled={!selectedState}
+          >
+            <option value="">All Districts</option>
+            {districts.map((district) => (
+              <option key={district} value={district}>{district}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
 
             {/* Users Table */}
           <DataTable
             title="All Users"
             icon={<FaUsers className="mr-2" />}
-            data={users}
+            data={filteredUsers}
             columns={[
               { label: 'Name', key: 'name' },
               { label: 'Email', key: 'email' },
-              { label: 'City', key: 'location' }
+              { label: 'District', key: 'district' }
             ]}
           />
 
@@ -208,21 +264,12 @@ const fetchMunicipalities = async () => {
           <DataTable
             title="All Municipalities"
             icon={<FaBuilding className="mr-2" />}
-            data={municipalities}
+            data={filteredMunicipalities}
             columns={[
               { label: 'Name', key: 'name' },
               { label: 'Email', key: 'email' },
-              { label: 'City', key: 'location' },
-              {
-                label: 'Total Donations',
-                key: 'totalDonations',
-                render: (val) => (
-                  <div className="flex items-center text-sm text-gray-500">
-                    <FaRupeeSign className="text-green-500 mr-1" />
-                    {val?.toLocaleString() || 0}
-                  </div>
-                )
-              }
+              { label: 'District', key: 'issuedistrict' },
+              
             ]}
           />
         </>
@@ -231,24 +278,46 @@ const fetchMunicipalities = async () => {
           <div className="flex space-x-4">
             {/* Vertical Tabs */}
             <div className="w-1/4 bg-white rounded-lg shadow-md p-4">
-              <h3 className="text-lg font-semibold mb-4">Completed Issues</h3>
-              <div className="space-y-2">
-                {completedIssues.map((issue) => (
-                  <button
-                    key={issue._id}
-                    onClick={() => setSelectedIssue(issue)}
-                    className={`w-full text-left p-3 rounded-lg transition-colors ${
-                      selectedIssue?._id === issue._id
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'hover:bg-gray-100'
-                    }`}
-                  >
-                    <p className="font-medium truncate">{issue.title}</p>
-                    <p className="text-sm text-gray-500 truncate">{issue.issueLocation}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
+  <h3 className="text-lg font-semibold mb-4">Completed Issues</h3>
+
+  {/* Filter Dropdowns */}
+  <div className="mb-4">
+    <select
+      value={selectedState}
+      onChange={(e) => setSelectedState(e.target.value)}
+      className="w-full mb-2 p-2 border rounded"
+    >
+      <option value="">All States</option>
+      {/* map over your states here */}
+    </select>
+
+    <select
+      value={selectedDistrict}
+      onChange={(e) => setSelectedDistrict(e.target.value)}
+      className="w-full p-2 border rounded"
+    >
+      <option value="">All Districts</option>
+      {/* map over districts here */}
+    </select>
+  </div>
+
+    <div className="space-y-2">
+      {filteredCompletedIssues.map((issue) => (
+        <button
+          key={issue._id}
+          onClick={() => setSelectedIssue(issue)}
+          className={`w-full text-left p-3 rounded-lg transition-colors ${
+            selectedIssue?._id === issue._id
+              ? 'bg-blue-100 text-blue-800'
+              : 'hover:bg-gray-100'
+          }`}
+        >
+          <p className="font-medium truncate">{issue.title}</p>
+          <p className="text-sm text-gray-500 truncate">{issue.issueDistrict}</p>
+        </button>
+      ))}
+    </div>
+  </div>
 
             {/* Issue Details and Actions */}
             <div className="w-3/4 bg-white rounded-lg shadow-md p-6">
@@ -257,7 +326,7 @@ const fetchMunicipalities = async () => {
                   <div className="flex justify-between items-center">
                     <div>
                       <h2 className="text-2xl font-bold">{selectedIssue.title}</h2>
-                      <p className="text-gray-600">{selectedIssue.issueLocation}</p>
+                      <p className="text-gray-600">{selectedIssue.issueDistrict}</p>
                     </div>
                     <div className="flex space-x-4">
                       <button
