@@ -1,5 +1,7 @@
 import { User } from "../models/user.model.js";
+import { Municipality } from "../models/muncipality.model.js";
 import jwt from "jsonwebtoken";
+
 export const isAuthenticated = async (req, res, next) => {
     try {
         // console.log("Checking authentication...");
@@ -14,12 +16,18 @@ export const isAuthenticated = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         // console.log("Decoded token:", decoded);  // Debug JWT payload
 
-        req.user = await User.findById(decoded.id).select("-password");
+        // Check both User and Municipality collections
+        let user = await User.findById(decoded.id).select("-password");
+        
+        if (!user) {
+            user = await Municipality.findById(decoded.id).select("-password");
+        }
 
-        if (!req.user) {
+        if (!user) {
             return res.status(401).json({ message: "Unauthorized: User not found" });
         }
 
+        req.user = user;
         // console.log("Authenticated User:", req.user);
         next();
     } catch (error) {
@@ -33,7 +41,7 @@ export const isAdminOrOrganiser = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({ error: "Unauthorized" });
   }
-  if (req.user.role === "Admin" || req.user.role === "Event Organiser") {
+  if (req.user.role === "Admin" || req.user.role === "Municipality Admin") {
     return next();
   }
   return res.status(403).json({ error: "Access denied" });

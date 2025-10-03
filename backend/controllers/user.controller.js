@@ -1,5 +1,6 @@
 import { log } from "console";
 import { User } from "../models/user.model.js";
+import { Municipality } from "../models/muncipality.model.js";
 import { generateForgotPasswordEmailTemplate } from "../utils/emailTemplates.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendToken } from "../utils/sendToken.js";
@@ -9,29 +10,55 @@ import crypto from "crypto"
 
 export const register = async (req, res) => {
     try {
-        // Destructure location along with other fields
-        let { name, email, password, location } = req.body;
+        // Destructure all fields including role and municipalityName
+        let { name, email, password, location, role, municipalityName } = req.body;
         
         // Validate all required fields including location
-        if (!name || !email || !password || !location) {
-            return res.status(400).json({ msg: "Please fill in all fields, including location" });
+        if (!name || !email || !password || !location || !role) {
+            return res.status(400).json({ msg: "Please fill in all fields, including location and role" });
         }
         
-        const isAlreadyPresent = await User.findOne({ email, accountVerified: true });
-        if (isAlreadyPresent) {
+        // If municipality admin, validate municipality name
+        if (role === 'municipality_admin' && !municipalityName) {
+            return res.status(400).json({ msg: "Municipality name is required for municipality admin" });
+        }
+        
+        // Check if email already exists in either User or Municipality collection
+        const existingUser = await User.findOne({ email, accountVerified: true });
+        const existingMunicipality = await Municipality.findOne({ email, accountVerified: true });
+        
+        if (existingUser || existingMunicipality) {
             return res.status(400).json({ msg: "Email is already registered" });
         }
-        
         
         if (password.length < 8 || password.length > 16) {
             return res.status(400).json({ msg: "Password must be between 8 and 16 characters" });
         }
-        // location = location.charAt(0).toUpperCase() + location.slice(1).toLowerCase();
-        name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
         
+        name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
         const hashedPassword = await bcrypt.hash(password, 10);
-        // Include location when creating the new user
-        const user = await User.create({ name, email, password: hashedPassword, location });
+        
+        let user;
+        
+        if (role === 'municipality_admin') {
+            // Create municipality admin
+            user = await Municipality.create({ 
+                name, 
+                email, 
+                password: hashedPassword, 
+                location, 
+                municipalityName,
+                role: 'Municipality Admin'
+            });
+        } else {
+            // Create regular citizen
+            user = await User.create({ 
+                name, 
+                email, 
+                password: hashedPassword, 
+                location 
+            });
+        }
         
         const verificationCode = await user.generateVerificationCode();
         await user.save();
@@ -55,48 +82,57 @@ export const verifyOtp = async (req, res) => {
         if (!email || !otp) {
             return res.status(400).json({ msg: "Please fill in all fields" });
         }
-        const userAllEntries = await User.find({
+        
+        // Check both User and Municipality collections for unverified accounts
+        const userEntries = await User.find({
             email,
             accountVerified: false,
         }).sort({ createdAt: -1 });
-        console.log(userAllEntries);
         
-
-        if (!userAllEntries) {
+        const municipalityEntries = await Municipality.find({
+            email,
+            accountVerified: false,
+        }).sort({ createdAt: -1 });
+        
+        console.log("User entries:", userEntries);
+        console.log("Municipality entries:", municipalityEntries);
+        
+        // Determine which collection has the user
+        let user;
+          if (municipalityEntries.length > 0) {
+            user = municipalityEntries[0];
+        } 
+        else if (userEntries.length > 0) {
+          user = userEntries[0];
+      }
+      else {
             return res.status(400).json({ msg: "Invalid OTP" });
         }
-       const user=userAllEntries[0];
-       console.log(user);
-       
         
-        console.log(user.verificationCode);
-        console.log("Here");
+        console.log("Found user:", user);
+        console.log("Verification code:", user.verificationCode);
         
-
         if(user.verificationCode !== Number(otp)){
             return res.status(400).json({ msg: "Invalid OTP" });
         }
-        const currentTime=Date.now();
+        
+        const currentTime = Date.now();
+        const verificationCodeExpire = new Date(user.verificationCodeExpire).getTime();
 
-        const verificationCodeExpire= new Date(
-            user.verificationCodeExpire
-        ).getTime();
-
-        if(currentTime>verificationCodeExpire){
+        if(currentTime > verificationCodeExpire){
             return res.status(400).json({ msg: "OTP has expired" });
         }
         
-        
-        user.accountVerified=true;
-        user.verificationCode=null;
-        user.verificationCodeExpire=null;
+        // Update the user (works for both User and Municipality models)
+        user.accountVerified = true;
+        user.verificationCode = null;
+        user.verificationCodeExpire = null;
         await user.save({validateModifiedOnly: true});
 
-        sendToken(user,200,"Account Verified",res)
+        sendToken(user, 200, "Account Verified", res);
     } catch (error) {
         console.log(error.message);
-        
-        return res.status(500).json({ success: false, message: "Internal Server Error" })
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
 
@@ -108,7 +144,12 @@ export const login = async (req, res) => {
             return res.status(400).json({ msg: "Please fill in all fields" });
         }
 
-        const user = await User.findOne({ email, accountVerified: true }).select("+password");
+        // Check both User and Municipality collections for verified accounts
+        let user = await User.findOne({ email, accountVerified: true }).select("+password");
+        
+        if (!user) {
+            user = await Municipality.findOne({ email, accountVerified: true }).select("+password");
+        }
 
         if (!user) {
             return res.status(400).json({ msg: "User not found" });
@@ -176,7 +217,7 @@ export const forgotPassword= async(req,res)=>{
     try {
         await sendEmail({
             email: user.email,
-            subject: "Samartharam Password Recovery",
+            subject: "FixCus Password Recovery",
             message,
         });
         

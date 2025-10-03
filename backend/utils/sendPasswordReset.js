@@ -6,7 +6,7 @@ export async function sendPasswordReset(resetPasswordUrl, email, res) {
         const message = generateForgotPasswordEmailTemplate(resetPasswordUrl);
         await sendEmail({
             email,
-            subject: "Password Recovery (Samarthanam)",
+            subject: "Password Recovery (FixCus)",
             message
         });
         return res.status(200).json({

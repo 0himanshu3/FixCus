@@ -91,7 +91,7 @@ export function generateTaskAssignmentEmailTemplate(eventTitle, tasks) {
     <p style="font-size: 16px; color: #ccc;">Please complete these tasks at your earliest convenience.</p>
 
     <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
-        <p>Thank you,<br>Samarthanam Team</p>
+        <p>Thank you,<br>FixCus Team</p>
         <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
     </footer>
 
@@ -115,7 +115,7 @@ export function generateUserRegistrationEmailTemplate(volunteerName, eventTitle)
         <p style="font-size: 16px; color: #555;">You can check your event dashboard for more details.</p>
 
         <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #888;">
-            <p>Thank you,<br>Samartharam Team</p>
+            <p>Thank you,<br>FixCus Team</p>
             <p style="font-size: 12px;">This is an automated message. Please do not reply.</p>
         </footer>
     </div>
@@ -135,7 +135,7 @@ export function generateEventCompletionEmailTemplate(eventTitle) {
       <p style="font-size: 16px; color: #ccc;">We hereby invite you to fill the event feedback form with your honest thoughts. Thank you!</p>
   
       <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
-          <p>Thank you,<br>Samarthanam Team</p>
+          <p>Thank you,<br>FixCus Team</p>
           <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
       </footer>
   
@@ -159,7 +159,7 @@ export function generateEventCompletionEmailTemplate(eventTitle) {
       <p style="font-size: 16px; color: #ccc;">If you have any further questions, feel free to contact us again.</p>
   
       <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
-          <p>Best regards,<br>Samarthanam Team</p>
+          <p>Best regards,<br>FixCus Team</p>
           <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
       </footer>
   
@@ -175,7 +175,7 @@ export const generateCompletedDonationTemplate = (donorName, amount, ) => {
         <p style="font-size: 16px; color: #ccc;">We sincerely appreciate your generous donation of <strong>₹${amount}</strong>.</p>
         <p style="font-size: 16px; color: #ccc;">Your support helps us continue our mission to make a difference. Thank you!</p>
         <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
-            <p>Thank you,<br>Samarthanam Team</p>
+            <p>Thank you,<br>FixCus Team</p>
             <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
         </footer>
     </div>`;

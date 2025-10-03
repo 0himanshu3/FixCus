@@ -31,17 +31,29 @@ function Login() {
     useEffect(() => {
         if (message) {
             // toast.success(message);
-            user?.role === 'Admin' ? navigateTo("/admin/dashboard") : navigateTo("/")
+            if (user?.role === 'Admin') {
+                navigateTo("/admin/dashboard");
+            } else if (user?.role === 'Municipality Admin') {
+                navigateTo("/municipality");
+            } else {
+                navigateTo("/");
+            }
         }
         if (error) {
             // toast.error(error);
             dispatch(resetAuthSlice());
         }
 
-    }, [dispatch, isAuthenticated, error, loading])
+    }, [dispatch, isAuthenticated, error, loading, message, user, navigateTo])
 
     if (isAuthenticated) {
-        return <Navigate to={"/"} />
+        // Redirect based on user role
+        if (user?.role === 'Admin') {
+            return <Navigate to="/admin/dashboard" />;
+        } else if (user?.role === 'Municipality Admin') {
+            return <Navigate to="/municipality" />;
+        }
+        return <Navigate to={"/"} />;
     }
 
     const leftVariants = {

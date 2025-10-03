@@ -28,8 +28,22 @@ const Header = () => {
   ];
 
   const authLinks = [
-    { path: "/dashboard", label: "Dashboard" },
+    { path: "/", label: "Dashboard" },
     { path: "/issues", label: "Issues" },
+  ];
+  
+  const municipalityLinks = [
+    { path: "/municipality", label: "Dashboard" },
+  ];
+  
+  const staffLinks = [
+    { path: "/", label: "Dashboard" },
+    { path: "/issues", label: "Manage Issues" },
+  ];
+  
+  const adminLinks = [
+    { path: "/", label: "Dashboard" },
+    { path: "/admin/requests", label: "Request" },
   ];
   const messageLinks = [
     { path: "/organiser/messages", label: "Messages" },
@@ -62,7 +76,49 @@ const Header = () => {
               {item.label}
             </Link>
           ))}
-          {isAuthenticated &&
+          {isAuthenticated && user?.role === "Municipality Admin" &&
+            municipalityLinks.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`${
+                  isActive(item.path)
+                    ? "text-blue-700 font-bold border-b-2 border-blue-700"
+                    : "hover:text-black transition duration-200"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          {isAuthenticated && user?.role === "Municipality Staff" &&
+            staffLinks.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`${
+                  isActive(item.path)
+                    ? "text-blue-700 font-bold border-b-2 border-blue-700"
+                    : "hover:text-black transition duration-200"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          {isAuthenticated && user?.role === "Admin" &&
+            adminLinks.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`${
+                  isActive(item.path)
+                    ? "text-blue-700 font-bold border-b-2 border-blue-700"
+                    : "hover:text-black transition duration-200"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          {isAuthenticated && user?.role === "User" &&
             authLinks.map((item) => (
               <Link
                 key={item.path}
@@ -161,7 +217,40 @@ const Header = () => {
                   {item.label}
                 </Link>
               ))}
-              {isAuthenticated &&
+              {isAuthenticated && user?.role === "Municipality Admin" &&
+                municipalityLinks.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className="hover:text-black transition duration-200"
+                    onClick={() => setMenuModalOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              {isAuthenticated && user?.role === "Municipality Staff" &&
+                staffLinks.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className="hover:text-black transition duration-200"
+                    onClick={() => setMenuModalOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              {isAuthenticated && user?.role === "Admin" &&
+                adminLinks.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className="hover:text-black transition duration-200"
+                    onClick={() => setMenuModalOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              {isAuthenticated && user?.role === "User" &&
                 authLinks.map((item) => (
                   <Link
                     key={item.path}

@@ -6,7 +6,7 @@ export async function sendVerificationCode(verificationCode,email,res){
         const message =generateVerificationOtpEmailTemplate(verificationCode);
         sendEmail({
             email,
-            subject:"Verification Code(Samartharam)",
+            subject:"Verification Code(FixCus)",
             message
         });
         return res.status(200).json({success:true,message:"Verification code sent to your email."});

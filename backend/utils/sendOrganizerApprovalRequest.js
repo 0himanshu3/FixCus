@@ -6,7 +6,7 @@ export async function sendOrganizerApprovalRequest(organizerName, organizerEmail
         const message = generateOrganizerApprovalEmailTemplate(organizerName, organizerEmail);
         await sendEmail({
             email,
-            subject: "Organizer Approval Request (Samarthanam)",
+            subject: "Organizer Approval Request (FixCus)",
             message
         });
         return res.status(200).json({

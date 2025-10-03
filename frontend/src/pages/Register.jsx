@@ -11,7 +11,9 @@ function Register() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [location, setLocation] = useState(null);
-    const [category, setCategory] = useState(''); 
+    const [category, setCategory] = useState('');
+    const [role, setRole] = useState('citizen');
+    const [municipalityName, setMunicipalityName] = useState(''); 
 
     const dispatch = useDispatch();
     const {
@@ -27,12 +29,21 @@ function Register() {
             toast.error("Please enter your location");
             return;
         }
+        // If municipality admin, ensure municipality name is provided
+        if (role === 'municipality_admin' && !municipalityName.trim()) {
+            toast.error("Please enter municipality name");
+            return;
+        }
         const data = new FormData();
         data.append('name', name);
         data.append('email', email);
         data.append('password', password);
         data.append('location', location); // Append location to the form data
         data.append('category', category);
+        data.append('role', role);
+        if (role === 'municipality_admin') {
+            data.append('municipalityName', municipalityName);
+        }
         dispatch(register(data));
     }
 
@@ -104,15 +115,40 @@ function Register() {
                         Please provide your information to sign up.
                         </p>
                         <form onSubmit={handleRegister}>
+                        {/* Role Selector */}
+                        <div className="mb-2">
+                            <select
+                                value={role}
+                                onChange={(e) => setRole(e.target.value)}
+                                className="w-full px-4 py-3 border border-black rounded-md focus:outline-none"
+                            >
+                                <option value="citizen">Citizen</option>
+                                <option value="municipality_admin">Municipality Admin</option>
+                            </select>
+                        </div>
+                        
                         <div className="mb-2">
                             <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            placeholder="Full Name"
+                            placeholder={role === 'municipality_admin' ? "Admin Name" : "Full Name"}
                             className="w-full px-4 py-3 border border-black rounded-md focus:outline-none"
                             />
                         </div>
+                        
+                        {/* Municipality Name Field - Only show for municipality admin */}
+                        {role === 'municipality_admin' && (
+                            <div className="mb-2">
+                                <input
+                                    type="text"
+                                    value={municipalityName}
+                                    onChange={(e) => setMunicipalityName(e.target.value)}
+                                    placeholder="Municipality Name"
+                                    className="w-full px-4 py-3 border border-black rounded-md focus:outline-none"
+                                />
+                            </div>
+                        )}
                         <div className="mb-2">
                             <input
                             type="email"

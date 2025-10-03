@@ -19,6 +19,9 @@ import Donate from './pages/Donate'
 import Issues from './components/Issues'
 import IssuesStaff from './components/IssuesStaff'
 import CreateIssue from './pages/CreateIssue'
+import MuncipalityMain from './pages/MuncipalityMain'
+import AdminDashboard from './pages/AdminDashboard'
+import ApplicationRequest from './pages/ApplicationRequest'
 const App = () => {
 
   const {user,isAuthenticated}= useSelector((state)=>state.auth)
@@ -41,6 +44,9 @@ const App = () => {
             element={user && user.role === "User" ? <Issues /> : <IssuesStaff />}
           />
           <Route path="/create" element={<CreateIssue />} />
+          <Route path="/municipality" element={<MuncipalityMain />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard/>}/>
+          <Route path="/admin/requests" element={<ApplicationRequest/>}/>
         </Route>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
