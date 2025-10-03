@@ -24,6 +24,7 @@ import ApplicationRequest from "./pages/ApplicationRequest";
 import IssueDetailsMunicipality from "./components/IssueDetailsMunicipality"; // If you have this component
 import IssuesMunicipality from "./components/IssuesMunicipality"; // If you have this component
 import CreateIssue from "./pages/CreateIssue";
+import MonthlyAnalysis from "./pages/MonthlyAnalysis";
 
 const App = () => {
   const { user } = useSelector((state) => state.auth);
@@ -75,6 +76,7 @@ const App = () => {
           <Route path="/issue/:slug" element={getIssueDetailsComponent()} />
           <Route path="/create" element={<CreateIssue />} />
           <Route path="/municipality" element={<MuncipalityMain />} />
+          <Route path="/monthly-analysis" element={<MonthlyAnalysis />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/requests" element={<ApplicationRequest />} />
         </Route>
