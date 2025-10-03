@@ -195,6 +195,39 @@ export const getUser = async (req, res) => {
     }
 }
 
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select('-password');
+
+    res.status(200).json({
+      success: true,
+      users,
+    });
+  } catch (err) {
+    console.error('Failed to fetch users:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching users',
+    });
+  }
+};
+export const getAllMunicipalities = async (req, res) => {
+  try {
+    const users = await Municipality.find().select('-password');
+
+    res.status(200).json({
+      success: true,
+      users,
+    });
+  } catch (err) {
+    console.error('Failed to fetch users:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching users',
+    });
+  }
+};
+
 export const forgotPassword= async(req,res)=>{
     const user = await User.findOne({
         email: req.body.email,

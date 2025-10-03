@@ -85,3 +85,36 @@ export const getIssues = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+export const getCompletedIssues = async (req, res) => {
+  try {
+    const issues = await Issue.find({ status: 'Resolved' });
+    res.status(200).json({
+      success: true,
+      issues
+    });
+  } catch (err) {
+    console.error('Error fetching completed issues:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch completed issues'
+    });
+  }
+};
+
+export const getIssueDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const issue = await Issue.findById(id);
+
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    res.status(200).json({ success: true, issue });
+  } catch (error) {
+    console.error('Error fetching issue details:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
