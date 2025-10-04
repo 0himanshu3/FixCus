@@ -853,16 +853,17 @@ export default function IssueDetailsStaff() {
            {/* Resolve Modal (Supervisor) */}
 <AnimatePresence>
   {resolveModalOpen && (
-    <motion.div
-      key="resolve-modal"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/60 z-50"
-      style={{ WebkitOverflowScrolling: "touch" }}
-    >
+  <motion.div
+    key="resolve-modal"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 bg-black/60 z-50 overflow-y-auto" // Added overflow-y-auto here
+    style={{ WebkitOverflowScrolling: "touch" }}
+  >
+    <div className="min-h-screen px-4 py-8 flex items-center justify-center"> {/* Wrapper for centering */}
       <div
-        className="bg-white p-6 rounded-md w-[90%] max-w-3xl mx-auto my-8 relative"
+        className="bg-white p-6 rounded-md w-full max-w-3xl relative"
         style={{
           maxHeight: "calc(100vh - 4rem)",
           overflowY: "auto",
@@ -916,7 +917,6 @@ export default function IssueDetailsStaff() {
               (issue?.staffsAssigned || []).filter((s) => {
                 if (!s.user) return false;
                 const u = s.user || {};
-                // hide current user (supervisor)
                 return !(
                   (u._id && String(u._id) === String(user._id)) ||
                   (u.id && String(u.id) === String(user._id)) ||
@@ -927,7 +927,6 @@ export default function IssueDetailsStaff() {
               const uid = s.user._id || s.user.id || s.user?.email || String(s.user?.name) || String(Math.random());
               const r = resolveRatings[uid] || { rating: 5, comment: "", role: s.role, name: s.user.name || s.user.email, userId: uid };
 
-              // lazy-init rating entry if missing (keeps inputs controlled)
               if (!resolveRatings[uid]) {
                 Promise.resolve().then(() => {
                   setResolveRatings((prev) => {
@@ -991,8 +990,10 @@ export default function IssueDetailsStaff() {
           </button>
         </div>
       </div>
-    </motion.div>
-  )}
+    </div>
+  </motion.div>
+)}
+
 </AnimatePresence>
 
 
