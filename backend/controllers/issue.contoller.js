@@ -1,7 +1,6 @@
 import Issue from "../models/issue.model.js";
 import { Task } from "../models/task.model.js";
 import { User } from "../models/user.model.js";
-import  {User} from "../models/user.model.js"
 import { Municipality } from "../models/muncipality.model.js";
 export const createIssue = async (req, res) => {
   try {
@@ -845,3 +844,22 @@ export async function escalateOverdueTasksService({ dryRun = false } = {}) {
 
   return results;
 }
+
+export const getPendingIssues = async (req, res) => {
+  try {
+    const userId = req.user._id; 
+
+   
+    const pendingIssues = await Issue.find({
+      issueTakenUpBy: userId,
+      status: { $ne: "Resolved" },
+    })
+      .populate("assignedStaff", "name email role") 
+      .sort({ createdAt: -1 }); 
+
+    res.status(200).json({ pendingIssues });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch pending issues" });
+  }
+};

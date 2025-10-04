@@ -408,3 +408,21 @@ export const updateUser = async (req, res) => {
     }
   };
 
+export const getStaffs = async (req, res) => {
+  try {
+    const municipalityUser = req.user; 
+    if (!municipalityUser) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const staffList = await User.find({
+      role: "Municipality Staff",
+      district: municipalityUser.district
+    }).select("-password"); 
+
+    res.status(200).json(staffList);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+};

@@ -1,5 +1,5 @@
 import express from "express"
-import { forgotPassword, getUser, login, logout, register, resetPassword, updatePassword, updateUser, verifyOtp,getAllUsers,getAllMunicipalities} from "../controllers/user.controller.js";
+import { forgotPassword, getUser, login, logout, getStaffs,register, resetPassword, updatePassword, updateUser, verifyOtp,getAllUsers,getAllMunicipalities} from "../controllers/user.controller.js";
 import { isAuthenticated } from "../middlewares/auth.middleware.js";
 
 
@@ -11,6 +11,7 @@ router.post("/login",login)
 router.get("/logout",isAuthenticated, logout)
 router.get("/profile",isAuthenticated,getUser)
 router.get("/getusers",isAuthenticated,getAllUsers)
+router.get("/staff",isAuthenticated,getStaffs)
 router.get("/getmunicipalities",isAuthenticated,getAllMunicipalities)
 router.post("/password/forgot",forgotPassword)
 router.put("/password/reset/:token",resetPassword)

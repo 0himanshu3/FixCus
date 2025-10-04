@@ -1,5 +1,5 @@
 import express from "express";
-import { addComment, createIssue, deleteComment, downvoteIssue, editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis } from "../controllers/issue.contoller.js";
+import { addComment, createIssue, deleteComment, downvoteIssue, getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis } from "../controllers/issue.contoller.js";
 import { isAuthenticated, protectMunicipality } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -8,6 +8,7 @@ router.post("/create", isAuthenticated, createIssue);
 router.get("/completed-issues",isAuthenticated, getCompletedIssues);
 router.get("/issue-details/:id",isAuthenticated,getIssueDetails)
 router.get("/all",isAuthenticated, getIssues);
+router.get("/pending",isAuthenticated, getPendingIssues);
 router.get("/monthly-analysis",getMonthlyAnalysis)
 router.post("/upvote", isAuthenticated, upvoteIssue);
 router.post("/downvote", isAuthenticated, downvoteIssue);
