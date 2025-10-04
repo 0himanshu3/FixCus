@@ -1,5 +1,6 @@
 import Issue from "../models/issue.model.js";
 import  {User} from "../models/user.model.js"
+import { Municipality } from "../models/muncipality.model.js";
 export const createIssue = async (req, res) => {
   try {
     const { title, content, category, issueLocation, issuePublishDate, images, videos, issueDistrict, issueState, issueCountry } = req.body;
@@ -321,33 +322,68 @@ export const getIssueDetails = async (req, res) => {
 };
 
 export const getMonthlyAnalysis = async (req, res) => {
-  const { userId } = req.query;
+  const { userId, month } = req.query;
   if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  if (!month) return res.status(400).json({ error: 'Missing month' });
 
   try {
-    const assignedIssues = await Issue.find({ createdBy: userId });
-    const completedIssues = assignedIssues.filter(issue => issue.status === 'completed');
+    // Parse year and month from the query
+    const [year, monthIndex] = month.split('-').map(Number); // monthIndex is 1-based
 
+    // Start and end dates for the month
+    const startDate = new Date(year, monthIndex - 1, 1);
+    const endDate = new Date(year, monthIndex, 0, 23, 59, 59, 999);
+
+    // Get assigned issues in that month
+    const assignedIssues = await Issue.find({
+      issueTakenUpBy: userId,
+      issuePublishDate: { $gte: startDate, $lte: endDate }
+    });
+
+    const completedIssues = assignedIssues.filter(issue => issue.status === 'Resolved');
     const totalAssigned = assignedIssues.length;
     const totalCompleted = completedIssues.length;
+
+    const munic = await Municipality.findById(userId);
+    const staffCount = await User.countDocuments({ role: 'Municipality Staff', district: munic?.district });
 
     const avgCompletionTimeHours = completedIssues.length > 0
       ? completedIssues.reduce((sum, issue) => {
           const created = new Date(issue.createdAt);
-          const resolved = new Date(issue.completedAt);
+          const resolved = new Date(issue.updatedAt);
           return sum + (resolved - created) / (1000 * 60 * 60);
         }, 0) / completedIssues.length
       : 0;
 
-    const staffCount = await User.countDocuments({ role: 'staff', assignedTo: userId });
+    const mostUpvotedArr = await Issue.aggregate([
+      { $match: { createdBy: userId, createdAt: { $gte: startDate, $lte: endDate } } },
+      { $addFields: { upvoteCount: { $size: "$upvotes" } } },
+      { $sort: { upvoteCount: -1 } },
+      { $limit: 1 }
+    ]);
 
-    const mostUpvoted = await Issue.findOne({ createdBy: userId }).sort({ upvotes: -1 });
-    const mostDownvoted = await Issue.findOne({ createdBy: userId }).sort({ downvotes: -1 });
+    const mostDownvotedArr = await Issue.aggregate([
+      { $match: { createdBy: userId, createdAt: { $gte: startDate, $lte: endDate } } },
+      { $addFields: { downvoteCount: { $size: "$downvotes" } } },
+      { $sort: { downvoteCount: -1 } },
+      { $limit: 1 }
+    ]);
 
-    const votesData = await Issue.find({ createdBy: userId })
-      .select('title upvotes downvotes')
-      .sort({ upvotes: -1 })
-      .limit(5);
+    const mostUpvoted = mostUpvotedArr[0] || null;
+    const mostDownvoted = mostDownvotedArr[0] || null;
+
+    const votesData = await Issue.aggregate([
+      { $match: { issueTakenUpBy: userId, createdAt: { $gte: startDate, $lte: endDate } } },
+      {
+        $project: {
+          title: 1,
+          upvotes: { $size: "$upvotes" },
+          downvotes: { $size: "$downvotes" }
+        }
+      },
+      { $sort: { upvotes: -1 } },
+      { $limit: 5 }
+    ]);
 
     res.json({
       assignedIssues: totalAssigned,
@@ -358,9 +394,13 @@ export const getMonthlyAnalysis = async (req, res) => {
       mostDownvoted,
       votesData
     });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
+  }
+};
+
 export const takeUpIssue = async (req, res) => {
   try {
     const { issueId, deadline } = req.body;
