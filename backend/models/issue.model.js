@@ -27,7 +27,7 @@ const AssignedStaffSchema = new mongoose.Schema(
   {
     role: {
       type: String,
-      enum: ["Supervisor", "Worker", "Inspector", "Coordinator", "Other"], // customize as needed
+      enum: ["Supervisor", "Worker", "Coordinator"], // customize as needed
       required: true,
     },
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },

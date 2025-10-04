@@ -2,6 +2,8 @@ import cookieParser from "cookie-parser";
 import { app } from "./app.js";
 import http, { createServer } from "http";
 import { Server } from "socket.io";
+import cron from "node-cron";
+import { escalateOverdueTasksService } from "./controllers/issue.contoller.js";
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -25,6 +27,17 @@ io.on("connection", (socket) => {
     });
   });
 export {io}
+
+
+cron.schedule("0 * * * *", async () => {
+  try {
+    console.log("[CRON] Running escalateOverdueTasksService");
+    const result = await escalateOverdueTasksService();
+    console.log("[CRON] Escalation summary:", result);
+  } catch (err) {
+    console.error("[CRON] Escalation error:", err);
+  }
+});
 
 server.listen(process.env.PORT || 3000, () => {
     console.log(`Server is running on port ${process.env.PORT || 3000}`);
