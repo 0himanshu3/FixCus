@@ -1,5 +1,5 @@
 import express from "express";
-import { addComment, createIssue, deleteComment, downvoteIssue, getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback } from "../controllers/issue.contoller.js";
+import { addComment, createIssue, deleteComment, downvoteIssue, getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback, getFeedbackForIssue, getReportForIssue } from "../controllers/issue.contoller.js";
 import { isAuthenticated, protectMunicipality } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -46,7 +46,8 @@ router.post("/approveReject/:taskId", isAuthenticated, approveRejectTaskProof);
 router.post("/resolve/:issueId", isAuthenticated,  resolveIssue);
 
 router.post("/submitFeedback", isAuthenticated,  submitFeedback);
-
+router.get('/feedback/:issueId', isAuthenticated, getFeedbackForIssue);
+router.get('/report/:issueId', isAuthenticated, getReportForIssue);
 router.get("/:slug",isAuthenticated, getIssueBySlug);
 
 
