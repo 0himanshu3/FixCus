@@ -849,14 +849,13 @@ export const getPendingIssues = async (req, res) => {
   try {
     const userId = req.user._id; 
 
-   
     const pendingIssues = await Issue.find({
       issueTakenUpBy: userId,
       status: { $ne: "Resolved" },
     })
-      .populate("assignedStaff", "name email role") 
+      .populate("reportedBy", "name email role") 
       .sort({ createdAt: -1 }); 
-
+   
     res.status(200).json({ pendingIssues });
   } catch (err) {
     console.error(err);

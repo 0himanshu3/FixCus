@@ -40,7 +40,8 @@ export default function MunicipalityMain() {
       const res = await axios.get(`http://localhost:3000/api/v1/issues/pending`, {
         withCredentials: true
       })
-      setIssues(res.data.issues || [])
+      
+      setIssues(res.data.pendingIssues || [])
     } catch (err) {
       console.error('fetchIssues', err)
       setIssues([])
@@ -70,7 +71,9 @@ export default function MunicipalityMain() {
   const filteredIssues = issues
     .filter(i => priorityFilter === 'all' ? true : i.priority === priorityFilter)
     .filter(i => {
+      console.log(priorityFilter);
       if (!query) return true
+      
       const q = query.toLowerCase()
       return (i.title || '').toLowerCase().includes(q) || (i.location || '').toLowerCase().includes(q)
     })
@@ -160,6 +163,7 @@ export default function MunicipalityMain() {
                 <option value="high">High priority</option>
                 <option value="medium">Medium</option>
                 <option value="low">Low</option>
+                <option value="verylow">Very Low</option>
               </select>
             </div>
           </div>
@@ -183,9 +187,9 @@ export default function MunicipalityMain() {
                       <div className="font-medium">{issue.title}</div>
                       <div className="text-xs text-gray-500">Reported: {new Date(issue.createdAt).toLocaleString()}</div>
                     </div>
-                    <div className="col-span-2 text-center"><div className="inline-flex items-center gap-2 justify-center"><FaMapMarkerAlt className="text-gray-400" /> <span className="text-sm">{issue.location || '—'}</span></div></div>
+                    <div className="col-span-2 text-center"><div className="inline-flex items-center gap-2 justify-center"><FaMapMarkerAlt className="text-gray-400" /> <span className="text-sm">{issue.issueDistrict || '—'}</span></div></div>
                     <div className="col-span-2 text-center">
-                      <span className={`px-2 py-1 rounded-full text-xs ${issue.priority === 'high' ? 'bg-red-100 text-red-700' : issue.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
+                      <span className={`px-2 py-1 rounded-full text-xs ${issue.priority === 'high' ? 'bg-red-100 text-red-700' : issue.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :issue.priority === 'low' ? 'bg-yellow-100 text-green-700' : 'bg-green-100 text-green-700'}`}>
                         {issue.priority || 'normal'}
                       </span>
                     </div>
