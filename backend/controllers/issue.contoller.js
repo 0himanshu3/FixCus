@@ -693,3 +693,116 @@ export const resolveIssue = async (req, res) => {
   }
 };
 
+
+
+export async function escalateOverdueTasksService({ dryRun = false } = {}) {
+  const now = new Date();
+  const results = {
+    processed: 0,
+    skippedNoSupervisor: 0,
+    skippedNoAssignedBy: 0,
+    createdTasks: [],
+    errors: []
+  };
+
+  // find overdue tasks not completed and not escalated
+  const overdueTasks = await Task.find({
+    deadline: { $lt: now },
+    status: { $ne: "Completed" },
+    hasEscalated: false
+  });
+
+  for (const task of overdueTasks) {
+    results.processed++;
+    try {
+      // load issue and its staffsAssigned (to find supervisor)
+      const issue = await Issue.findById(task.issueId).lean();
+      if (!issue) {
+        results.errors.push({ taskId: task._id, msg: "Issue not found" });
+        continue;
+      }
+
+      // find supervisor in issue.staffsAssigned
+      const supervisorEntry = (issue.staffsAssigned || []).find(s => s.role === "Supervisor" && s.user);
+      const supervisorId = supervisorEntry ? (supervisorEntry.user._id || supervisorEntry.user) : null;
+      if (!supervisorId) {
+        results.skippedNoSupervisor++;
+        continue;
+      }
+
+      // compute new deadline = original deadline + 2 days
+      const newDeadline = new Date(task.deadline.getTime() + (2 * 24 * 60 * 60 * 1000));
+
+      if (task.roleOfAssignee === "Worker") {
+        // escalate to the coordinator who assigned the worker (task.assignedBy)
+        const coordinatorId = task.assignedBy;
+        if (!coordinatorId) {
+          results.skippedNoAssignedBy++;
+          continue;
+        }
+
+        const newTaskData = {
+          title: task.title,
+          description: task.description,
+          issueId: task.issueId,
+          assignedBy: supervisorId,    // supervisor now assigns this escalated task
+          assignedTo: coordinatorId,   // coordinator will now handle it
+          roleOfAssignee: "Coordinator",
+          status: "Pending",
+          deadline: newDeadline,
+          taskUpdates: [],
+          taskCompletionProof: undefined,
+          taskProofImages: [],
+          taskProofSubmitted: false,
+          escalatedFrom: task._id
+        };
+
+        if (dryRun) {
+          results.createdTasks.push({ newTaskData, dryRun: true });
+        } else {
+          const newTask = await Task.create(newTaskData);
+          // mark original task as escalated
+          task.hasEscalated = true;
+          await task.save();
+          results.createdTasks.push({ newTaskId: newTask._id, originalTask: task._id });
+        }
+
+      } else if (task.roleOfAssignee === "Coordinator") {
+        // escalate to supervisor
+        const newTaskData = {
+          title: task.title,
+          description: task.description,
+          issueId: task.issueId,
+          assignedBy: supervisorId,
+          assignedTo: supervisorId,
+          roleOfAssignee: "Supervisor",
+          status: "Pending",
+          deadline: newDeadline,
+          taskUpdates: [],
+          taskCompletionProof: undefined,
+          taskProofImages: [],
+          taskProofSubmitted: false,
+          escalatedFrom: task._id
+        };
+
+        if (dryRun) {
+          results.createdTasks.push({ newTaskData, dryRun: true });
+        } else {
+          const newTask = await Task.create(newTaskData);
+          task.hasEscalated = true;
+          await task.save();
+          results.createdTasks.push({ newTaskId: newTask._id, originalTask: task._id });
+        }
+      } else {
+        // roleOfAssignee === Supervisor: do not escalate
+        // mark as skipped silently
+        continue;
+      }
+    } catch (err) {
+      console.error("Error escalating task", task._id, err);
+      results.errors.push({ taskId: task._id, error: err.message || String(err) });
+    }
+  }
+
+  return results;
+}

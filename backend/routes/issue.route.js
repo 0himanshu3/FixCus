@@ -1,5 +1,5 @@
 import express from "express";
-import { addComment, createIssue, deleteComment, downvoteIssue, editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue } from "../controllers/issue.contoller.js";
+import { addComment, createIssue, deleteComment, downvoteIssue, editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis } from "../controllers/issue.contoller.js";
 import { isAuthenticated, protectMunicipality } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();

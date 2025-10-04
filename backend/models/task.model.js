@@ -1,3 +1,4 @@
+// models/task.js
 import mongoose from "mongoose";
 
 const taskUpdateSchema = new mongoose.Schema({
@@ -16,13 +17,17 @@ const taskSchema = new mongoose.Schema({
 
   status: { type: String, enum: ["Pending", "In Review", "Completed"], default: "Pending" },
 
-  deadline: { type: Date, required: true }, // ✅ Task deadline
+  deadline: { type: Date, required: true },
 
   taskUpdates: [taskUpdateSchema],
 
-  taskCompletionProof: { type: String }, // Could be a link or text description
+  taskCompletionProof: { type: String },
   taskProofImages: [{ type: String }],
-  taskProofSubmitted: { type: Boolean, default: false }
+  taskProofSubmitted: { type: Boolean, default: false },
+
+  // NEW: escalation metadata
+  hasEscalated: { type: Boolean, default: false },        // set true when this task has been escalated
+  escalatedFrom: { type: mongoose.Schema.Types.ObjectId, ref: "Task" } // id of original task if this one was created via escalation
 
 }, { timestamps: true });
 

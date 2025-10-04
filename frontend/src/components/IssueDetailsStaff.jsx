@@ -51,6 +51,19 @@ export default function IssueDetailsStaff() {
 
   const [issueSummary, setIssueSummary] = useState("");
 
+  // Helper: treat a date string as end-of-day and check if it's in the past
+  const hasDeadlinePassed = (deadline) => {
+    if (!deadline) return false;
+    try {
+      const dl = new Date(deadline);
+      // If deadline is a date-only string (yyyy-mm-dd) set it to end of that day
+      dl.setHours(23, 59, 59, 999);
+      return dl < new Date();
+    } catch (e) {
+      return false;
+    }
+  };
+
   // Firebase upload helper
   const uploadFilesToFirebase = async (files) => {
     if (!files || files.length === 0) return [];
@@ -154,9 +167,16 @@ export default function IssueDetailsStaff() {
       return;
     }
 
-    // If task already approved/completed do nothing (UI shouldn't allow this path, but guard anyway)
+    // Guard: if task already approved/completed do nothing (UI shouldn't allow this path, but guard anyway)
     if (updateModalTask.status === "Completed") {
       alert("Task is already completed.");
+      setUpdateModalOpen(false);
+      return;
+    }
+
+    // Guard: prevent updates if deadline has passed
+    if (hasDeadlinePassed(updateModalTask.deadline) && updateModalTask.status !== "Completed") {
+      alert("Cannot submit update — task deadline has passed and is marked overdue.");
       setUpdateModalOpen(false);
       return;
     }
@@ -187,6 +207,13 @@ export default function IssueDetailsStaff() {
     // Guard if already completed
     if (proofModalTask.status === "Completed") {
       alert("Task already completed.");
+      setProofModalOpen(false);
+      return;
+    }
+
+    // Guard: prevent proof submission if deadline passed
+    if (hasDeadlinePassed(proofModalTask.deadline) && proofModalTask.status !== "Completed") {
+      alert("Cannot submit proof — task deadline has passed and is marked overdue.");
       setProofModalOpen(false);
       return;
     }
@@ -387,14 +414,18 @@ export default function IssueDetailsStaff() {
             userTasks.map((task) => {
               const proofSubmitted = Boolean(task.taskProofSubmitted);
               const isCompleted = task.status === "Completed";
+              const isOverdue = hasDeadlinePassed(task.deadline) && !isCompleted;
+
               return (
                 <div key={task._id} className="border p-4 rounded-md mb-4">
                   <div className="flex justify-between">
                     <div>
                       <h3 className="font-semibold text-lg">{task.title}</h3>
                       <p className="text-sm text-gray-600">{task.description}</p>
-                      <p className="text-xs text-gray-500">Deadline: {new Date(task.deadline).toLocaleDateString()}</p>
-                      <p className="text-xs text-gray-500">Status: {task.status}</p>
+                      <p className="text-xs text-gray-500">Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : "N/A"}</p>
+                      <p className="text-xs text-gray-500">
+                        Status: {isCompleted ? task.status : (isOverdue ? "Incomplete — Overdue" : task.status)}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-gray-600">Assigned By: {task.assignedBy?.name || "N/A"}</p>
@@ -402,17 +433,29 @@ export default function IssueDetailsStaff() {
                   </div>
 
                   <div className="mt-3">
-                    {/* Buttons are only shown when neither proof submitted nor completed */}
+                    {/* Buttons are only shown when neither proof submitted nor completed, and NOT overdue */}
                     {!proofSubmitted && !isCompleted ? (
-                      <div className="flex gap-2">
-                        <button className="px-3 py-1 bg-blue-500 text-white rounded-md" onClick={() => { setUpdateModalTask(task); setUpdateText(""); setUpdateModalOpen(true); }}>
-                          Give Task Update
-                        </button>
+                      isOverdue ? (
+                        <div>
+                          <span className="inline-block px-2 py-1 bg-red-100 text-red-800 rounded">Deadline passed — actions disabled</span>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <button
+                            className="px-3 py-1 bg-blue-500 text-white rounded-md"
+                            onClick={() => { setUpdateModalTask(task); setUpdateText(""); setUpdateModalOpen(true); }}
+                          >
+                            Give Task Update
+                          </button>
 
-                        <button className="px-3 py-1 bg-green-500 text-white rounded-md" onClick={() => { setProofModalTask(task); setProofText(""); setProofFiles([]); setProofModalOpen(true); }}>
-                          Submit Task Completion Proof
-                        </button>
-                      </div>
+                          <button
+                            className="px-3 py-1 bg-green-500 text-white rounded-md"
+                            onClick={() => { setProofModalTask(task); setProofText(""); setProofFiles([]); setProofModalOpen(true); }}
+                          >
+                            Submit Task Completion Proof
+                          </button>
+                        </div>
+                      )
                     ) : isCompleted ? (
                       <div>
                         <span className="inline-block px-2 py-1 bg-green-100 text-green-800 rounded">Completed / Approved</span>
@@ -485,15 +528,16 @@ export default function IssueDetailsStaff() {
                     {workerTasks.length === 0 ? <p className="text-gray-500">No tasks for this worker.</p> :
                       workerTasks.map((task) => {
                         const isCompleted = task.status === "Completed";
+                        const isOverdue = hasDeadlinePassed(task.deadline) && !isCompleted;
                         return (
                           <div key={task._id} className="p-2 bg-gray-50 rounded">
                             <div className="flex justify-between">
                               <div>
                                 <p className="font-semibold">{task.title}</p>
-                                <p className="text-xs text-gray-600">Deadline: {new Date(task.deadline).toLocaleDateString()}</p>
+                                <p className="text-xs text-gray-600">Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : "N/A"}</p>
                               </div>
                               <div>
-                                <p className="text-xs">Status: {task.status}</p>
+                                <p className="text-xs">Status: {isCompleted ? task.status : (isOverdue ? "Incomplete — Overdue" : task.status)}</p>
                               </div>
                             </div>
 
@@ -570,15 +614,16 @@ export default function IssueDetailsStaff() {
                     {coordTasks.length === 0 ? <p className="text-gray-500">No tasks for this coordinator.</p> :
                       coordTasks.map((task) => {
                         const isCompleted = task.status === "Completed";
+                        const isOverdue = hasDeadlinePassed(task.deadline) && !isCompleted;
                         return (
                           <div key={task._1d ? task._1d : task._id} className="p-2 bg-gray-50 rounded mb-2">
                             <div className="flex justify-between">
                               <div>
                                 <p className="font-semibold">{task.title}</p>
-                                <p className="text-xs text-gray-600">Deadline: {new Date(task.deadline).toLocaleDateString()}</p>
+                                <p className="text-xs text-gray-600">Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : "N/A"}</p>
                               </div>
                               <div>
-                                <p className="text-xs">Status: {task.status}</p>
+                                <p className="text-xs">Status: {isCompleted ? task.status : (isOverdue ? "Incomplete — Overdue" : task.status)}</p>
                               </div>
                             </div>
 
