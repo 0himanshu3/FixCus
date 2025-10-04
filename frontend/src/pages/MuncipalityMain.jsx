@@ -86,15 +86,23 @@ const MuncipalityMain = () => {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 text-center flex-1">
             Welcome, {user?.name}!
-          </h1>
-          {user?.accountApproved && (
-            <Link
-              to="/issues"
-              className="ml-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              Issues
-            </Link>
-          )}
+           </h1>
+            {user?.accountApproved && (
+              <div className="flex gap-4">
+                <Link
+                  to="/issues"
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                >
+                  Issues
+                </Link>
+                <Link
+                  to="/monthly-analysis"
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                >
+                  Monthly Analysis
+                </Link>
+              </div>
+            )}
         </div>
 
         {/* Message section */}

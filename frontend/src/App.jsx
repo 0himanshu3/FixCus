@@ -24,6 +24,7 @@ import ApplicationRequest from "./pages/ApplicationRequest";
 import IssueDetailsMunicipality from "./components/IssueDetailsMunicipality"; // If you have this component
 import IssuesMunicipality from "./components/IssuesMunicipality"; // If you have this component
 import CreateIssue from "./pages/CreateIssue";
+import MonthlyAnalysis from "./pages/MonthlyAnalysis";
 import Notification from "./pages/Notification";
 
 const App = () => {
@@ -53,7 +54,7 @@ const App = () => {
     switch (user?.role) {
       case "User":
         return <IssueDetails />;
-      case "Municipality":
+      case "Municipality Admin":
         return <IssueDetailsMunicipality />;
       case "Staff":
       case "Admin":
@@ -99,6 +100,7 @@ const App = () => {
           <Route path="/issue/:slug" element={getIssueDetailsComponent()} />
           <Route path="/create" element={<CreateIssue />} />
           <Route path="/municipality" element={<MuncipalityMain />} />
+          <Route path="/monthly-analysis" element={<MonthlyAnalysis />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/requests" element={<ApplicationRequest />} />
           <Route
