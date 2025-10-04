@@ -433,571 +433,836 @@ export default function IssueDetailsStaff() {
     }
 
     return (
-        <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
-            {/* Header */}
-            <h1 className="text-3xl font-bold">{issue.title}</h1>
-            <div className="flex flex-wrap gap-3">
-                {issue.category && <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full">{issue.category}</span>}
-                <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full">Priority: {issue.priority}</span>
-                <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full">Status: {issue.status}</span>
-            </div>
-            <p className="text-gray-600"><strong>Location:</strong> {issue.issueLocation}</p>
-            <p className="text-gray-600"><strong>Published:</strong> {new Date(issue.issuePublishDate).toLocaleDateString()}</p>
+  <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 px-4 py-8">
+    <div className="max-w-6xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-pink-400 to-pink-300 rounded-2xl p-6 shadow-2xl border-4 border-purple-600">
+        <h1 className="text-4xl font-black overflow-hidden text-purple-900 tracking-tight">{issue.title}</h1>
+        
+        <div className="flex flex-wrap gap-3 mt-4">
+          {issue.category && (
+            <span className="bg-purple-700 text-pink-100 px-4 py-2 rounded-full font-bold text-sm border-2 border-pink-300 shadow-md">
+              🎪 {issue.category}
+            </span>
+          )}
+          <span className="bg-pink-500 text-white px-4 py-2 rounded-full font-bold text-sm border-2 border-purple-300 shadow-md">
+            ⚡ Priority: {issue.priority}
+          </span>
+          <span className="bg-purple-600 text-pink-100 px-4 py-2 rounded-full font-bold text-sm border-2 border-pink-300 shadow-md">
+            📋 Status: {issue.status}
+          </span>
+        </div>
+      </div>
 
-            {assignedRole && <p className="text-green-700 font-semibold">You are assigned as {assignedRole}</p>}
+      {/* Info Card */}
+      <div className="bg-pink-200 rounded-xl p-5 shadow-lg border-4 border-purple-500">
+        <p className="text-purple-900 font-semibold text-lg">
+          <strong className="text-purple-700">📍 Location:</strong> {issue.issueDistrict + ', ' + issue.issueState + ', ' + issue.issueCountry}
+        </p>
+        <p className="text-purple-900 font-semibold text-lg mt-2">
+          <strong className="text-purple-700">📅 Published:</strong> {new Date(issue.issuePublishDate).toLocaleDateString()}
+        </p>
+      </div>
 
-            {/* Images */}
-            {issue.images?.length > 0 && (
-                <div className="space-y-2">
-                    <h2 className="text-xl font-semibold">Images</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        {issue.images.slice(0, 6).map((img, idx) => (
-                            <img key={idx} src={img} alt={`Issue ${idx}`} className="w-full h-32 object-cover rounded-md cursor-pointer hover:scale-105 transition-transform" onClick={() => { setCurrentImageIdx(idx); setShowImageSlider(true); }} />
-                        ))}
-                    </div>
-                </div>
-            )}
+      {/* Assigned Role Badge */}
+      {assignedRole && (
+        <div className="bg-gradient-to-r from-green-400 to-green-500 rounded-xl p-4 shadow-lg border-4 border-purple-600">
+          <p className="text-white font-black text-lg">🎭 You are assigned as {assignedRole}</p>
+        </div>
+      )}
 
-            <AnimatePresence>
-                {showImageSlider && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-                        <button className="absolute top-5 right-5 text-white text-3xl" onClick={() => setShowImageSlider(false)}>&times;</button>
-                        <div className="relative w-4/5 max-w-3xl">
-                            <img src={issue.images[currentImageIdx]} alt={`Slide ${currentImageIdx}`} className="w-full h-96 object-contain rounded-md" />
-                            <button className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white text-3xl" onClick={() => setCurrentImageIdx((p) => (p - 1 + issue.images.length) % issue.images.length)}>&#8592;</button>
-                            <button className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white text-3xl" onClick={() => setCurrentImageIdx((p) => (p + 1) % issue.images.length)}>&#8594;</button>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Videos */}
-            {issue.videos?.length > 0 && (
-                <div className="space-y-4">
-                    <h2 className="text-xl font-semibold">Videos</h2>
-                    {issue.videos.map((vid, idx) => <video key={idx} src={vid} controls className="w-full h-64 rounded-md" />)}
-                </div>
-            )}
-
-            {/* Upvotes/Downvotes/Comments (view-only) */}
-            <div className="flex flex-col gap-4 mt-4">
-                <div className="flex items-center gap-4">
-                    <div className="px-4 py-2 bg-green-500 text-white rounded-md">Upvotes: {issue.upvotes?.length || 0}</div>
-                    <div className="px-4 py-2 bg-red-500 text-white rounded-md">Downvotes: {issue.downvotes?.length || 0}</div>
-                </div>
-
-                <div className="space-y-2">
-                    <h2 className="text-xl font-semibold">Comments</h2>
-                    {issue.comments?.length > 0 ? issue.comments.map((c) => (
-                        <div key={c._id} className="border p-2 rounded-md bg-gray-50">
-                            <p><strong>{c.user?.name}</strong>: {c.content}</p>
-                            <p className="text-xs text-gray-500">{new Date(c.createdAt).toLocaleString()}</p>
-                        </div>
-                    )) : <p className="text-gray-500">No comments yet.</p>}
-                </div>
-            </div>
-
-            {/* ---------- Your tasks (Worker / Coordinator) ---------- */}
-            {(assignedRole === "Worker" || assignedRole === "Coordinator") && (
-                <div className="mt-6">
-                    <h2 className="text-2xl font-semibold">Your Assigned Tasks</h2>
-
-                    {userTasks.length === 0 ? (
-                        <p className="text-gray-500">No tasks assigned to you for this issue.</p>
-                    ) : (
-                        userTasks.map((task) => {
-                            const proofSubmitted = Boolean(task.taskProofSubmitted);
-                            const isCompleted = task.status === "Completed";
-                            const isOverdue = hasDeadlinePassed(task.deadline) && !isCompleted;
-
-                            return (
-                                <div key={task._id} className="border p-4 rounded-md mb-4">
-                                    <div className="flex justify-between">
-                                        <div>
-                                            <h3 className="font-semibold text-lg">{task.title}</h3>
-                                            <p className="text-sm text-gray-600">{task.description}</p>
-                                            <p className="text-xs text-gray-500">Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : "N/A"}</p>
-                                            <p className="text-xs text-gray-500">
-                                                Status: {isCompleted ? task.status : (isOverdue ? "Incomplete — Overdue" : task.status)}
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-sm text-gray-600">Assigned By: {task.assignedBy?.name || "N/A"}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-3">
-                                        {/* Buttons are only shown when neither proof submitted nor completed, and NOT overdue */}
-                                        {!proofSubmitted && !isCompleted ? (
-                                            isOverdue ? (
-                                                <div>
-                                                    <span className="inline-block px-2 py-1 bg-red-100 text-red-800 rounded">Deadline passed — actions disabled</span>
-                                                </div>
-                                            ) : (
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        className="px-3 py-1 bg-blue-500 text-white rounded-md"
-                                                        onClick={() => { setUpdateModalTask(task); setUpdateText(""); setUpdateModalOpen(true); }}
-                                                    >
-                                                        Give Task Update
-                                                    </button>
-
-                                                    <button
-                                                        className="px-3 py-1 bg-green-500 text-white rounded-md"
-                                                        onClick={() => { setProofModalTask(task); setProofText(""); setProofFiles([]); setProofModalOpen(true); }}
-                                                    >
-                                                        Submit Task Completion Proof
-                                                    </button>
-                                                </div>
-                                            )
-                                        ) : isCompleted ? (
-                                            <div>
-                                                <span className="inline-block px-2 py-1 bg-green-100 text-green-800 rounded">Completed / Approved</span>
-                                            </div>
-                                        ) : (
-                                            <div>
-                                                <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-800 rounded">Proof submitted — awaiting review</span>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Proof preview */}
-                                    {task.taskCompletionProof && (
-                                        <div className="mt-3 bg-gray-50 p-2 rounded">
-                                            <p className="font-semibold">Proof:</p>
-                                            <p>{task.taskCompletionProof}</p>
-                                            {task.taskProofImages?.length > 0 && (
-                                                <div className="mt-2 grid grid-cols-3 gap-2">
-                                                    {task.taskProofImages.map((pi, i) => <img key={i} src={pi} alt={`proof-${i}`} className="w-full h-20 object-cover rounded" />)}
-                                                </div>
-                                            )}
-                                            <p className="text-xs text-gray-500 mt-1">Proof Submitted: {task.taskProofSubmitted ? "Yes" : "No"}</p>
-                                        </div>
-                                    )}
-
-                                    {/* Updates */}
-                                    {task.taskUpdates?.length > 0 && (
-                                        <div className="mt-3">
-                                            <h4 className="font-semibold">Updates</h4>
-                                            <ul className="list-disc ml-5">
-                                                {(task.taskUpdates || []).map((u, idx) => (
-                                                    <li key={idx} className="text-sm text-gray-700">
-                                                        {u.updateText}
-                                                        <div className="text-xs text-gray-500">— {u.updatedBy?.name || "Unknown"} on {new Date(u.updatedAt).toLocaleString()}</div>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
-            )}
-
-            {/* ---------- Coordinator: workers & tasks (approve/reject while not completed) ---------- */}
-            {assignedRole === "Coordinator" && (
-                <div className="mt-6">
-                    <h2 className="text-2xl font-semibold">Workers Assigned to This Issue</h2>
-
-                    {workersAssigned.length === 0 ? <p className="text-gray-500">No workers assigned.</p> :
-                        workersAssigned.map((w) => {
-                            const workerTasks = Array.isArray(w.tasks) ? w.tasks : [];
-                            return (
-                                <div key={w.user._id} className="border p-4 rounded-md mb-4">
-                                    <div className="flex justify-between">
-                                        <div>
-                                            <h3 className="font-semibold">{w.user.name}</h3>
-                                            <p className="text-xs text-gray-500">{w.user.email}</p>
-                                        </div>
-                                        <div>
-                                            <button
-                                                className={`px-3 py-1 rounded-md text-white ${isAssigning || assignModalOpen ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500"
-                                                    }`}
-                                                onClick={() => {
-                                                    if (isAssigning || assignModalOpen) return; // prevent multiple clicks
-                                                    setAssignModalAssignee({ id: w.user.id, role: "Worker", name: w.user.name });
-                                                    setAssignModalData({ title: "", description: "", deadline: "" });
-                                                    setAssignModalOpen(true);
-                                                }}
-                                                disabled={isAssigning || assignModalOpen}
-                                            >
-                                                Assign Task
-                                            </button>
-
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-3 space-y-2">
-                                        {workerTasks.length === 0 ? <p className="text-gray-500">No tasks for this worker.</p> :
-                                            workerTasks.map((task) => {
-                                                const isCompleted = task.status === "Completed";
-                                                const isOverdue = hasDeadlinePassed(task.deadline) && !isCompleted;
-                                                return (
-                                                    <div key={task._id} className="p-2 bg-gray-50 rounded">
-                                                        <div className="flex justify-between">
-                                                            <div>
-                                                                <p className="font-semibold">{task.title}</p>
-                                                                <p className="text-xs text-gray-600">Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : "N/A"}</p>
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-xs">Status: {isCompleted ? task.status : (isOverdue ? "Incomplete — Overdue" : task.status)}</p>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* only show approve/reject while proof submitted and task not completed */}
-                                                        {task.taskProofSubmitted && !isCompleted && (
-                                                            <div className="mt-2 flex gap-2">
-                                                                <button className="px-3 py-1 bg-green-600 text-white rounded-md" onClick={() => approveOrRejectProof(task._id, true)}>Approve</button>
-                                                                <button className="px-3 py-1 bg-red-600 text-white rounded-md" onClick={() => approveOrRejectProof(task._id, false)}>Reject</button>
-                                                            </div>
-                                                        )}
-
-                                                        {isCompleted && (
-                                                            <div className="mt-2">
-                                                                <span className="inline-block px-2 py-1 bg-green-100 text-green-800 rounded">Completed / Approved</span>
-                                                            </div>
-                                                        )}
-
-                                                        {task.taskCompletionProof && (
-                                                            <div className="mt-2 text-sm">
-                                                                <p><strong>Proof:</strong> {task.taskCompletionProof}</p>
-                                                                {task.taskProofImages?.length > 0 && (
-                                                                    <div className="mt-2 grid grid-cols-3 gap-2">
-                                                                        {task.taskProofImages.map((pi, i) => <img key={i} src={pi} alt={`task-proof-${i}`} className="w-full h-20 object-cover rounded" />)}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-
-                                                        {task.taskUpdates?.length > 0 && (
-                                                            <div className="mt-2">
-                                                                <h4 className="font-semibold">Updates</h4>
-                                                                <ul className="list-disc ml-5">
-                                                                    {task.taskUpdates.map((u, idx) => (
-                                                                        <li key={idx} className="text-sm text-gray-700">{u.updateText} <div className="text-xs text-gray-500">— {u.updatedBy?.name || "Unknown"} on {new Date(u.updatedAt).toLocaleString()}</div></li>
-                                                                    ))}
-                                                                </ul>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })
-                                        }
-                                    </div>
-                                </div>
-                            );
-                        })
-                    }
-                </div>
-            )}
-
-            {/* ---------- Supervisor: coordinators & tasks (approve/reject while not completed) ---------- */}
-            {assignedRole === "Supervisor" && (
-                <div className="mt-6">
-                    <h2 className="text-2xl font-semibold">Coordinators Assigned to This Issue</h2>
-
-                    {coordinatorsAssigned.length === 0 ? <p className="text-gray-500">No coordinators assigned.</p> :
-                        coordinatorsAssigned.map((c) => {
-                            const coordTasks = Array.isArray(c.tasks) ? c.tasks : [];
-                            return (
-                                <div key={c.user._id} className="border p-4 rounded-md mb-4">
-                                    <div className="flex justify-between">
-                                        <div>
-                                            <h3 className="font-semibold">{c.user.name}</h3>
-                                            <p className="text-xs text-gray-500">{c.user.email}</p>
-                                        </div>
-                                        <div>
-                                            <button className="px-3 py-1 bg-blue-500 text-white rounded-md" onClick={() => { setAssignModalAssignee({ id: c.user.id, role: "Coordinator", name: c.user.name }); setAssignModalData({ title: "", description: "", deadline: "" }); setAssignModalOpen(true); }}>
-                                                Assign Task
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="mt-3">
-                                        {coordTasks.length === 0 ? <p className="text-gray-500">No tasks for this coordinator.</p> :
-                                            coordTasks.map((task) => {
-                                                const isCompleted = task.status === "Completed";
-                                                const isOverdue = hasDeadlinePassed(task.deadline) && !isCompleted;
-                                                return (
-                                                    <div key={task._1d ? task._1d : task._id} className="p-2 bg-gray-50 rounded mb-2">
-                                                        <div className="flex justify-between">
-                                                            <div>
-                                                                <p className="font-semibold">{task.title}</p>
-                                                                <p className="text-xs text-gray-600">Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : "N/A"}</p>
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-xs">Status: {isCompleted ? task.status : (isOverdue ? "Incomplete — Overdue" : task.status)}</p>
-                                                            </div>
-                                                        </div>
-
-                                                        {task.taskProofSubmitted && !isCompleted && (
-                                                            <div className="mt-2 flex gap-2">
-                                                                <button className="px-3 py-1 bg-green-600 text-white rounded-md" onClick={() => approveOrRejectProof(task._id, true)}>Approve</button>
-                                                                <button className="px-3 py-1 bg-red-600 text-white rounded-md" onClick={() => approveOrRejectProof(task._id, false)}>Reject</button>
-                                                            </div>
-                                                        )}
-
-                                                        {isCompleted && (
-                                                            <div className="mt-2">
-                                                                <span className="inline-block px-2 py-1 bg-green-100 text-green-800 rounded">Completed / Approved</span>
-                                                            </div>
-                                                        )}
-
-                                                        {task.taskCompletionProof && (
-                                                            <div className="mt-2 text-sm">
-                                                                <p><strong>Proof:</strong> {task.taskCompletionProof}</p>
-                                                                {task.taskProofImages?.length > 0 && (
-                                                                    <div className="mt-2 grid grid-cols-3 gap-2">
-                                                                        {task.taskProofImages.map((pi, i) => <img key={i} src={pi} alt={`coord-proof-${i}`} className="w-full h-20 object-cover rounded" />)}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-
-                                                        {task.taskUpdates?.length > 0 && (
-                                                            <div className="mt-2">
-                                                                <h4 className="font-semibold">Updates</h4>
-                                                                <ul className="list-disc ml-5">
-                                                                    {task.taskUpdates.map((u, idx) => (
-                                                                        <li key={idx} className="text-sm text-gray-700">{u.updateText} <div className="text-xs text-gray-500">— {u.updatedBy?.name || "Unknown"} on {new Date(u.updatedAt).toLocaleString()}</div></li>
-                                                                    ))}
-                                                                </ul>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })
-                                        }
-                                    </div>
-                                </div>
-                            );
-                        })
-                    }
-
-                    <div className="mt-6 border p-4 rounded-md">
-                        <h3 className="font-semibold mb-2">Resolve Issue</h3>
-                        <p className="text-sm text-gray-600 mb-3">Previously you could enter a quick summary — now use the new button below to submit a full resolution report with images and ratings for staff.</p>
-                        <div className="flex gap-2">
-                            <button className="px-3 py-1 bg-green-500 text-white rounded-md" onClick={openResolveModal}>Submit Issue Resolution Report and Resolve Issue</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ---------------- MODALS ---------------- */}
-
-            {/* Update Modal */}
-            <AnimatePresence>
-                {updateModalOpen && updateModalTask && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
-                        <div className="bg-white p-6 rounded-md w-96 relative">
-                            <button className="absolute top-2 right-3 text-xl font-bold" onClick={() => setUpdateModalOpen(false)}>&times;</button>
-                            <h3 className="text-lg font-semibold mb-2">Add Update — {updateModalTask.title}</h3>
-                            <textarea rows={4} value={updateText} onChange={(e) => setUpdateText(e.target.value)} className="w-full border p-2 rounded-md mb-3" placeholder="Describe progress..."></textarea>
-                            <div className="flex gap-2 justify-end">
-                                <button className="px-3 py-1 bg-gray-300 rounded-md" onClick={() => setUpdateModalOpen(false)}>Cancel</button>
-                                <button className="px-3 py-1 bg-blue-600 text-white rounded-md" onClick={submitTaskUpdate}>Submit Update</button>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Proof Modal */}
-            <AnimatePresence>
-                {proofModalOpen && proofModalTask && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
-                        <div className="bg-white p-6 rounded-md w-96 relative">
-                            <button className="absolute top-2 right-3 text-xl font-bold" onClick={() => setProofModalOpen(false)}>&times;</button>
-                            <h3 className="text-lg font-semibold mb-2">Submit Proof — {proofModalTask.title}</h3>
-                            <textarea rows={3} value={proofText} onChange={(e) => setProofText(e.target.value)} className="w-full border p-2 rounded-md mb-2" placeholder="Description of proof (required)"></textarea>
-                            <input type="file" accept="image/*" multiple onChange={(e) => setProofFiles(Array.from(e.target.files))} className="mb-3" />
-                            {proofUploadProgress.length > 0 && (
-                                <div className="mb-2">
-                                    <p className="text-sm text-gray-600">Upload progress:</p>
-                                    {proofUploadProgress.map((p, i) => <div key={i} className="text-xs text-gray-700">File {i + 1}: {p}%</div>)}
-                                </div>
-                            )}
-                            <div className="flex gap-2 justify-end">
-                                <button className="px-3 py-1 bg-gray-300 rounded-md" onClick={() => setProofModalOpen(false)}>Cancel</button>
-                                <button className="px-3 py-1 bg-green-600 text-white rounded-md" onClick={submitTaskProof}>Submit Proof</button>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-2">Images are uploaded to Firebase and URLs are sent to the server.</p>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Assign Modal */}
-            <AnimatePresence>
-                {assignModalOpen && assignModalAssignee && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
-                        <div className="bg-white p-6 rounded-md w-96 relative">
-                            <button className="absolute top-2 right-3 text-xl font-bold" onClick={() => setAssignModalOpen(false)}>&times;</button>
-                            <h3 className="text-lg font-semibold mb-2">Assign Task to {assignModalAssignee.name} ({assignModalAssignee.role})</h3>
-                            <input type="text" placeholder="Title" value={assignModalData.title} onChange={(e) => setAssignModalData({ ...assignModalData, title: e.target.value })} className="w-full border p-2 rounded-md mb-2" />
-                            <textarea placeholder="Description" value={assignModalData.description} onChange={(e) => setAssignModalData({ ...assignModalData, description: e.target.value })} className="w-full border p-2 rounded-md mb-2"></textarea>
-                            <input type="date" min={new Date().toISOString().split("T")[0]} value={assignModalData.deadline} onChange={(e) => setAssignModalData({ ...assignModalData, deadline: e.target.value })} className="w-full border p-2 rounded-md mb-3" />
-                            <div className="flex gap-2 justify-end">
-                                <button className="px-3 py-1 bg-gray-300 rounded-md" onClick={() => setAssignModalOpen(false)}>Cancel</button>
-                                <button className="px-3 py-1 bg-green-600 text-white rounded-md" onClick={assignTaskToAssignee}>Assign</button>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Resolve Modal (Supervisor) */}
-           {/* Resolve Modal (Supervisor) */}
-<AnimatePresence>
-  {resolveModalOpen && (
-  <motion.div
-    key="resolve-modal"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 bg-black/60 z-50 overflow-y-auto" // Added overflow-y-auto here
-    style={{ WebkitOverflowScrolling: "touch" }}
-  >
-    <div className="min-h-screen px-4 py-8 flex items-center justify-center"> {/* Wrapper for centering */}
-      <div
-        className="bg-white p-6 rounded-md w-full max-w-3xl relative"
-        style={{
-          maxHeight: "calc(100vh - 4rem)",
-          overflowY: "auto",
-          WebkitOverflowScrolling: "touch",
-          overscrollBehavior: "contain",
-        }}
-      >
-        <button
-          className="absolute top-2 right-3 text-xl font-bold"
-          onClick={() => setResolveModalOpen(false)}
-        >
-          &times;
-        </button>
-
-        <h3 className="text-lg font-semibold mb-2">Submit Issue Resolution Report & Resolve Issue</h3>
-
-        <label className="block text-sm font-medium mb-1">Summary of resolution (required)</label>
-        <textarea
-          rows={4}
-          value={resolveSummary}
-          onChange={(e) => setResolveSummary(e.target.value)}
-          className="w-full border p-2 rounded-md mb-3"
-          placeholder="Describe what was done, outcomes, next steps..."
-        />
-
-        <label className="block text-sm font-medium mb-1">Resolution images / proof (optional)</label>
-        <input
-          type="file"
-          accept="image/*"
-          multiple
-          onChange={(e) => setResolveFiles(Array.from(e.target.files))}
-          className="mb-3"
-        />
-        {resolveUploadProgress.length > 0 && (
-          <div className="mb-2">
-            <p className="text-sm text-gray-600">Upload progress:</p>
-            {resolveUploadProgress.map((p, i) => (
-              <div key={i} className="text-xs text-gray-700">File {i + 1}: {p}%</div>
+      {/* Images Section */}
+      {issue.images?.length > 0 && (
+        <div className="bg-gradient-to-br from-pink-300 to-pink-200 rounded-xl p-5 shadow-xl border-4 border-purple-600">
+          <h2 className="text-2xl font-black text-purple-900 mb-4">🎨 Images</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {issue.images.slice(0, 6).map((img, idx) => (
+              <img
+                key={idx}
+                src={img}
+                alt={`Issue ${idx}`}
+                className="w-full h-36 object-cover rounded-lg cursor-pointer hover:scale-110 transition-transform border-4 border-purple-400 shadow-md"
+                onClick={() => { setCurrentImageIdx(idx); setShowImageSlider(true); }}
+              />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Image Slider Modal */}
+      <AnimatePresence>
+        {showImageSlider && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/95"
+          >
+            <button
+              className="absolute top-5 right-5 text-pink-300 text-5xl hover:text-pink-100 font-bold"
+              onClick={() => setShowImageSlider(false)}
+            >
+              &times;
+            </button>
+            <div className="relative w-4/5 max-w-3xl">
+              <img
+                src={issue.images[currentImageIdx]}
+                alt={`Slide ${currentImageIdx}`}
+                className="w-full h-96 object-contain rounded-xl border-4 border-pink-400 shadow-2xl"
+              />
+              <button
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
+                onClick={() => setCurrentImageIdx((p) => (p - 1 + issue.images.length) % issue.images.length)}
+              >
+                &#8592;
+              </button>
+              <button
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
+                onClick={() => setCurrentImageIdx((p) => (p + 1) % issue.images.length)}
+              >
+                &#8594;
+              </button>
+            </div>
+          </motion.div>
         )}
+      </AnimatePresence>
 
-        <div className="mt-4">
-          <h4 className="font-semibold mb-2">Rate staff performance</h4>
-          <p className="text-xs text-gray-500 mb-2">
-            Provide a rating (1-5) and optional comment for each worker/coordinator involved.
-          </p>
+      {/* Videos Section */}
+      {issue.videos?.length > 0 && (
+        <div className="bg-gradient-to-br from-pink-300 to-pink-200 rounded-xl p-5 shadow-xl border-4 border-purple-600">
+          <h2 className="text-2xl font-black text-purple-900 mb-4">🎬 Videos</h2>
+          <div className="space-y-4">
+            {issue.videos.map((vid, idx) => (
+              <video key={idx} src={vid} controls className="w-full h-64 rounded-lg border-4 border-purple-400 shadow-md" />
+            ))}
+          </div>
+        </div>
+      )}
 
+      {/* Upvotes/Downvotes/Comments */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-4 justify-center">
+          <div className="px-6 py-3 bg-gradient-to-r from-green-400 to-green-500 text-white rounded-full font-black text-lg shadow-xl border-4 border-purple-600">
+            👍 Upvotes: {issue.upvotes?.length || 0}
+          </div>
+          <div className="px-6 py-3 bg-gradient-to-r from-red-400 to-red-500 text-white rounded-full font-black text-lg shadow-xl border-4 border-purple-600">
+            👎 Downvotes: {issue.downvotes?.length || 0}
+          </div>
+        </div>
+
+        <div className="bg-pink-200 rounded-xl p-5 shadow-xl border-4 border-purple-600">
+          <h2 className="text-2xl font-black overflow-hidden text-purple-900 mb-4">💬 Comments</h2>
           <div className="space-y-3">
-            {(
-              (issue?.staffsAssigned || []).filter((s) => {
-                if (!s.user) return false;
-                const u = s.user || {};
-                return !(
-                  (u._id && String(u._id) === String(user._id)) ||
-                  (u.id && String(u.id) === String(user._id)) ||
-                  (u.email && u.email === user.email)
-                );
-              })
-            ).map((s) => {
-              const uid = s.user._id || s.user.id || s.user?.email || String(s.user?.name) || String(Math.random());
-              const r = resolveRatings[uid] || { rating: 5, comment: "", role: s.role, name: s.user.name || s.user.email, userId: uid };
+            {issue.comments?.length > 0 ? (
+              issue.comments.map((c) => (
+                <div key={c._id} className="bg-white rounded-lg p-4 shadow-md border-2 border-pink-400">
+                  <p className="text-purple-900 font-semibold">
+                    <strong className="text-purple-700">{c.user?.name}</strong>: {c.content}
+                  </p>
+                  <p className="text-sm text-purple-600 mt-2">
+                    🎪 {new Date(c.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-purple-700 font-semibold">No comments yet.</p>
+            )}
+          </div>
+        </div>
+      </div>
 
-              if (!resolveRatings[uid]) {
-                Promise.resolve().then(() => {
-                  setResolveRatings((prev) => {
-                    if (prev && prev[uid]) return prev;
-                    return { ...prev, [uid]: r };
-                  });
-                });
-              }
+      {/* Worker / Coordinator: Your Assigned Tasks */}
+      {(assignedRole === "Worker" || assignedRole === "Coordinator") && (
+        <div className="bg-gradient-to-r from-pink-300 to-pink-200 rounded-xl p-6 shadow-xl border-4 border-purple-600">
+          <h2 className="text-3xl font-black text-purple-900 mb-4">🎯 Your Assigned Tasks</h2>
+
+          {userTasks.length === 0 ? (
+            <p className="text-purple-700 font-semibold">No tasks assigned to you for this issue.</p>
+          ) : (
+            userTasks.map((task) => {
+              const proofSubmitted = Boolean(task.taskProofSubmitted);
+              const isCompleted = task.status === "Completed";
+              const isOverdue = hasDeadlinePassed(task.deadline) && !isCompleted;
 
               return (
-                <div key={uid} className="p-3 border rounded-md">
-                  <div className="flex justify-between items-center">
+                <div key={task._id} className="bg-white rounded-lg p-4 mb-4 shadow-md border-2 border-pink-400">
+                  <div className="flex justify-between">
                     <div>
-                      <p className="font-semibold">
-                        {r.name} <span className="text-xs text-gray-500">({s.role})</span>
+                      <h3 className="font-black text-xl text-purple-900">{task.title}</h3>
+                      <p className="text-sm text-purple-700">{task.description}</p>
+                      <p className="text-xs text-purple-600 mt-1">
+                        📅 Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : "N/A"}
                       </p>
-                      <p className="text-xs text-gray-500">{s.user.email}</p>
+                      <p className="text-xs text-purple-600">
+                        📋 Status: {isCompleted ? task.status : (isOverdue ? "Incomplete — Overdue" : task.status)}
+                      </p>
                     </div>
-
-                    <div className="flex items-center gap-3">
-                      <label className="text-sm">Rating</label>
-                      <select
-                        value={r.rating}
-                        onChange={(e) =>
-                          setResolveRatings((prev) => ({ ...prev, [uid]: { ...r, rating: Number(e.target.value) } }))
-                        }
-                        className="border p-1 rounded"
-                      >
-                        <option value={1}>1</option>
-                        <option value={2}>2</option>
-                        <option value={3}>3</option>
-                        <option value={4}>4</option>
-                        <option value={5}>5</option>
-                      </select>
+                    <div className="text-right">
+                      <p className="text-sm text-purple-700">👤 Assigned By: {task.assignedBy?.name || "N/A"}</p>
                     </div>
                   </div>
 
-                  <textarea
-                    rows={2}
-                    placeholder="Optional comment"
-                    value={r.comment}
-                    onChange={(e) =>
-                      setResolveRatings((prev) => ({ ...prev, [uid]: { ...r, comment: e.target.value } }))
-                    }
-                    className="w-full border p-2 rounded-md mt-2"
-                  />
+                  <div className="mt-3">
+                    {!proofSubmitted && !isCompleted ? (
+                      isOverdue ? (
+                        <span className="inline-block px-4 py-2 bg-red-100 text-red-800 rounded-full font-bold border-2 border-red-400">
+                          ⏰ Deadline passed — actions disabled
+                        </span>
+                      ) : (
+                        <div className="flex gap-2">
+                          <button
+                            className="px-4 py-2 bg-purple-600 text-pink-100 rounded-full font-bold hover:bg-purple-700 shadow-md border-2 border-pink-300 transform hover:scale-105 transition-all"
+                            onClick={() => { setUpdateModalTask(task); setUpdateText(""); setUpdateModalOpen(true); }}
+                          >
+                            📝 Give Task Update
+                          </button>
+                          <button
+                            className="px-4 py-2 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 shadow-md border-2 border-purple-300 transform hover:scale-105 transition-all"
+                            onClick={() => { setProofModalTask(task); setProofText(""); setProofFiles([]); setProofModalOpen(true); }}
+                          >
+                            ✅ Submit Task Completion Proof
+                          </button>
+                        </div>
+                      )
+                    ) : isCompleted ? (
+                      <span className="inline-block px-4 py-2 bg-green-100 text-green-800 rounded-full font-bold border-2 border-green-400">
+                        ✅ Completed / Approved
+                      </span>
+                    ) : (
+                      <span className="inline-block px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full font-bold border-2 border-yellow-400">
+                        ⏳ Proof submitted — awaiting review
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Proof preview */}
+                  {task.taskCompletionProof && (
+                    <div className="mt-3 bg-pink-50 p-3 rounded-lg border-2 border-purple-300">
+                      <p className="font-bold text-purple-900">📸 Proof:</p>
+                      <p className="text-purple-800">{task.taskCompletionProof}</p>
+                      {task.taskProofImages?.length > 0 && (
+                        <div className="mt-2 grid grid-cols-3 gap-2">
+                          {task.taskProofImages.map((pi, i) => (
+                            <img key={i} src={pi} alt={`proof-${i}`} className="w-full h-20 object-cover rounded border-2 border-purple-300" />
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-xs text-purple-600 mt-1">
+                        Proof Submitted: {task.taskProofSubmitted ? "Yes" : "No"}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Updates */}
+                  {task.taskUpdates?.length > 0 && (
+                    <div className="mt-3">
+                      <h4 className="font-black text-purple-900">📋 Updates</h4>
+                      <ul className="list-disc ml-5 space-y-1">
+                        {(task.taskUpdates || []).map((u, idx) => (
+                          <li key={idx} className="text-sm text-purple-800">
+                            {u.updateText}
+                            <div className="text-xs text-purple-600">
+                              — {u.updatedBy?.name || "Unknown"} on {new Date(u.updatedAt).toLocaleString()}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               );
-            })}
+            })
+          )}
+        </div>
+      )}
+
+      {/* Coordinator: Workers & Tasks */}
+      {assignedRole === "Coordinator" && (
+        <div className="bg-gradient-to-r from-pink-300 to-pink-200 rounded-xl p-6 shadow-xl border-4 border-purple-600">
+          <h2 className="text-3xl font-black text-purple-900 mb-4">👷 Workers Assigned to This Issue</h2>
+
+          {workersAssigned.length === 0 ? (
+            <p className="text-purple-700 font-semibold">No workers assigned.</p>
+          ) : (
+            workersAssigned.map((w) => {
+              const workerTasks = Array.isArray(w.tasks) ? w.tasks : [];
+              return (
+                <div key={w.user._id} className="bg-white rounded-lg p-4 mb-4 shadow-md border-2 border-pink-400">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-black text-xl text-purple-900">{w.user.name}</h3>
+                      <p className="text-xs text-purple-600">{w.user.email}</p>
+                    </div>
+                    <button
+                      className={`px-4 py-2 rounded-full text-white font-bold shadow-md border-2 transform hover:scale-105 transition-all ${
+                        isAssigning || assignModalOpen
+                          ? "bg-gray-400 cursor-not-allowed border-gray-500"
+                          : "bg-purple-600 hover:bg-purple-700 border-pink-300"
+                      }`}
+                      onClick={() => {
+                        if (isAssigning || assignModalOpen) return;
+                        setAssignModalAssignee({ id: w.user.id, role: "Worker", name: w.user.name });
+                        setAssignModalData({ title: "", description: "", deadline: "" });
+                        setAssignModalOpen(true);
+                      }}
+                      disabled={isAssigning || assignModalOpen}
+                    >
+                      🎯 Assign Task
+                    </button>
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    {workerTasks.length === 0 ? (
+                      <p className="text-purple-700 font-semibold">No tasks for this worker.</p>
+                    ) : (
+                      workerTasks.map((task) => {
+                        const isCompleted = task.status === "Completed";
+                        const isOverdue = hasDeadlinePassed(task.deadline) && !isCompleted;
+                        return (
+                          <div key={task._id} className="p-3 bg-pink-50 rounded-lg border-2 border-purple-300">
+                            <div className="flex justify-between">
+                              <div>
+                                <p className="font-bold text-purple-900">{task.title}</p>
+                                <p className="text-xs text-purple-700">
+                                  📅 Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : "N/A"}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-purple-700">
+                                  📋 Status: {isCompleted ? task.status : (isOverdue ? "Incomplete — Overdue" : task.status)}
+                                </p>
+                              </div>
+                            </div>
+
+                            {task.taskProofSubmitted && !isCompleted && (
+                              <div className="mt-2 flex gap-2">
+                                <button
+                                  className="px-3 py-1 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 shadow-md border-2 border-purple-300"
+                                  onClick={() => approveOrRejectProof(task._id, true)}
+                                >
+                                  ✅ Approve
+                                </button>
+                                <button
+                                  className="px-3 py-1 bg-red-600 text-white rounded-full font-bold hover:bg-red-700 shadow-md border-2 border-purple-300"
+                                  onClick={() => approveOrRejectProof(task._id, false)}
+                                >
+                                  ❌ Reject
+                                </button>
+                              </div>
+                            )}
+
+                            {isCompleted && (
+                              <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-800 rounded-full font-bold border-2 border-green-400">
+                                ✅ Completed / Approved
+                              </span>
+                            )}
+
+                            {task.taskCompletionProof && (
+                              <div className="mt-2 text-sm">
+                                <p className="text-purple-900">
+                                  <strong>📸 Proof:</strong> {task.taskCompletionProof}
+                                </p>
+                                {task.taskProofImages?.length > 0 && (
+                                  <div className="mt-2 grid grid-cols-3 gap-2">
+                                    {task.taskProofImages.map((pi, i) => (
+                                      <img key={i} src={pi} alt={`task-proof-${i}`} className="w-full h-20 object-cover rounded border-2 border-purple-300" />
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {task.taskUpdates?.length > 0 && (
+                              <div className="mt-2">
+                                <h4 className="font-bold text-purple-900">📋 Updates</h4>
+                                <ul className="list-disc ml-5">
+                                  {task.taskUpdates.map((u, idx) => (
+                                    <li key={idx} className="text-sm text-purple-800">
+                                      {u.updateText}
+                                      <div className="text-xs text-purple-600">
+                                        — {u.updatedBy?.name || "Unknown"} on {new Date(u.updatedAt).toLocaleString()}
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {/* Supervisor: Coordinators & Tasks */}
+      {assignedRole === "Supervisor" && (
+        <div className="bg-gradient-to-r from-pink-300 to-pink-200 rounded-xl p-6 shadow-xl border-4 border-purple-600">
+          <h2 className="text-3xl font-black text-purple-900 mb-4">🎭 Coordinators Assigned to This Issue</h2>
+
+          {coordinatorsAssigned.length === 0 ? (
+            <p className="text-purple-700 font-semibold">No coordinators assigned.</p>
+          ) : (
+            coordinatorsAssigned.map((c) => {
+              const coordTasks = Array.isArray(c.tasks) ? c.tasks : [];
+              return (
+                <div key={c.user._id} className="bg-white rounded-lg p-4 mb-4 shadow-md border-2 border-pink-400">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-black text-xl text-purple-900">{c.user.name}</h3>
+                      <p className="text-xs text-purple-600">{c.user.email}</p>
+                    </div>
+                    <button
+                      className="px-4 py-2 bg-purple-600 text-pink-100 rounded-full font-bold hover:bg-purple-700 shadow-md border-2 border-pink-300 transform hover:scale-105 transition-all"
+                      onClick={() => {
+                        setAssignModalAssignee({ id: c.user.id, role: "Coordinator", name: c.user.name });
+                        setAssignModalData({ title: "", description: "", deadline: "" });
+                        setAssignModalOpen(true);
+                      }}
+                    >
+                      🎯 Assign Task
+                    </button>
+                  </div>
+
+                  <div className="mt-3 space-y-2">
+                    {coordTasks.length === 0 ? (
+                      <p className="text-purple-700 font-semibold">No tasks for this coordinator.</p>
+                    ) : (
+                      coordTasks.map((task) => {
+                        const isCompleted = task.status === "Completed";
+                        const isOverdue = hasDeadlinePassed(task.deadline) && !isCompleted;
+                        return (
+                          <div key={task._1d ? task._1d : task._id} className="p-3 bg-pink-50 rounded-lg border-2 border-purple-300">
+                            <div className="flex justify-between">
+                              <div>
+                                <p className="font-bold text-purple-900">{task.title}</p>
+                                <p className="text-xs text-purple-700">
+                                  📅 Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : "N/A"}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-purple-700">
+                                  📋 Status: {isCompleted ? task.status : (isOverdue ? "Incomplete — Overdue" : task.status)}
+                                </p>
+                              </div>
+                            </div>
+
+                            {task.taskProofSubmitted && !isCompleted && (
+                              <div className="mt-2 flex gap-2">
+                                <button
+                                  className="px-3 py-1 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 shadow-md border-2 border-purple-300"
+                                  onClick={() => approveOrRejectProof(task._id, true)}
+                                >
+                                  ✅ Approve
+                                </button>
+                                <button
+                                  className="px-3 py-1 bg-red-600 text-white rounded-full font-bold hover:bg-red-700 shadow-md border-2 border-purple-300"
+                                  onClick={() => approveOrRejectProof(task._id, false)}
+                                >
+                                  ❌ Reject
+                                </button>
+                              </div>
+                            )}
+
+                            {isCompleted && (
+                              <span className="inline-block mt-2 px-3 py-1 bg-green-100 text-green-800 rounded-full font-bold border-2 border-green-400">
+                                ✅ Completed / Approved
+                              </span>
+                            )}
+
+                            {task.taskCompletionProof && (
+                              <div className="mt-2 text-sm">
+                                <p className="text-purple-900">
+                                  <strong>📸 Proof:</strong> {task.taskCompletionProof}
+                                </p>
+                                {task.taskProofImages?.length > 0 && (
+                                  <div className="mt-2 grid grid-cols-3 gap-2">
+                                    {task.taskProofImages.map((pi, i) => (
+                                      <img key={i} src={pi} alt={`coord-proof-${i}`} className="w-full h-20 object-cover rounded border-2 border-purple-300" />
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {task.taskUpdates?.length > 0 && (
+                              <div className="mt-2">
+                                <h4 className="font-bold text-purple-900">📋 Updates</h4>
+                                <ul className="list-disc ml-5">
+                                  {task.taskUpdates.map((u, idx) => (
+                                    <li key={idx} className="text-sm text-purple-800">
+                                      {u.updateText}
+                                      <div className="text-xs text-purple-600">
+                                        — {u.updatedBy?.name || "Unknown"} on {new Date(u.updatedAt).toLocaleString()}
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+
+          {/* Resolve Issue Section */}
+          <div className="mt-6 bg-white rounded-xl p-5 shadow-lg border-4 border-purple-500">
+            <h3 className="font-black text-2xl overflow hidden text-purple-900 mb-3">🎊 Resolve Issue</h3>
+            <p className="text-sm text-purple-700 mb-4">
+              Previously you could enter a quick summary — now use the new button below to submit a full resolution report with images and ratings for staff.
+            </p>
+            <button
+              className="w-full px-6 py-3 bg-green-600 text-white rounded-full font-black text-lg hover:bg-green-700 shadow-lg border-4 border-purple-500 transform hover:scale-105 transition-all"
+              onClick={openResolveModal}
+            >
+              ✅ Submit Issue Resolution Report and Resolve Issue
+            </button>
           </div>
         </div>
+      )}
 
-        <div className="flex gap-2 justify-end mt-4">
-          <button className="px-3 py-1 bg-gray-300 rounded-md" onClick={() => setResolveModalOpen(false)}>Cancel</button>
-          <button
-            className={`px-3 py-1 bg-green-600 text-white rounded-md ${isResolving ? "opacity-60 cursor-not-allowed" : ""}`}
-            onClick={submitResolution}
-            disabled={isResolving}
+      {/* ---------------- MODALS ---------------- */}
+
+      {/* Update Modal */}
+      <AnimatePresence>
+        {updateModalOpen && updateModalTask && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-purple-900/90 z-50 flex items-center justify-center px-4"
           >
-            {isResolving ? "Submitting..." : "Submit & Resolve"}
-          </button>
-        </div>
-      </div>
+            <div className="bg-gradient-to-br from-pink-200 to-pink-300 p-6 rounded-2xl w-full max-w-md relative shadow-2xl border-4 border-purple-600">
+              <button
+                className="absolute top-2 right-3 text-3xl font-black text-purple-900 hover:text-purple-700"
+                onClick={() => setUpdateModalOpen(false)}
+              >
+                &times;
+              </button>
+              <h3 className="text-2xl font-black text-purple-900 mb-3">📝 Add Update — {updateModalTask.title}</h3>
+              <textarea
+                rows={4}
+                value={updateText}
+                onChange={(e) => setUpdateText(e.target.value)}
+                className="w-full border-4 border-purple-500 p-3 rounded-lg mb-4 text-purple-900 font-semibold focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+                placeholder="Describe progress..."
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  className="px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400"
+                  onClick={() => setUpdateModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-purple-700 text-pink-100 rounded-full font-bold border-2 border-pink-400 hover:bg-purple-800 shadow-md"
+                  onClick={submitTaskUpdate}
+                >
+                  Submit Update
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Proof Modal */}
+      <AnimatePresence>
+        {proofModalOpen && proofModalTask && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-purple-900/90 z-50 flex items-center justify-center px-4"
+          >
+            <div className="bg-gradient-to-br from-pink-200 to-pink-300 p-6 rounded-2xl w-full max-w-md relative shadow-2xl border-4 border-purple-600">
+              <button
+                className="absolute top-2 right-3 text-3xl font-black text-purple-900 hover:text-purple-700"
+                onClick={() => setProofModalOpen(false)}
+              >
+                &times;
+              </button>
+              <h3 className="text-2xl font-black text-purple-900 mb-3">📸 Submit Proof — {proofModalTask.title}</h3>
+              <textarea
+                rows={3}
+                value={proofText}
+                onChange={(e) => setProofText(e.target.value)}
+                className="w-full border-4 border-purple-500 p-3 rounded-lg mb-3 text-purple-900 font-semibold focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+                placeholder="Description of proof (required)"
+              />
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setProofFiles(Array.from(e.target.files))}
+                className="mb-3 w-full text-purple-900 font-semibold"
+              />
+              {proofUploadProgress.length > 0 && (
+                <div className="mb-3 bg-white rounded-lg p-2 border-2 border-purple-400">
+                  <p className="text-sm text-purple-700 font-bold">Upload progress:</p>
+                  {proofUploadProgress.map((p, i) => (
+                    <div key={i} className="text-xs text-purple-800">File {i + 1}: {p}%</div>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2 justify-end">
+                <button
+                  className="px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400"
+                  onClick={() => setProofModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-green-600 text-white rounded-full font-bold border-2 border-purple-400 hover:bg-green-700 shadow-md"
+                  onClick={submitTaskProof}
+                >
+                  Submit Proof
+                </button>
+              </div>
+              <p className="text-xs text-purple-700 mt-3 font-semibold">
+                Images are uploaded to Firebase and URLs are sent to the server.
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Assign Modal */}
+      <AnimatePresence>
+        {assignModalOpen && assignModalAssignee && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-purple-900/90 z-50 flex items-center justify-center px-4"
+          >
+            <div className="bg-gradient-to-br from-pink-200 to-pink-300 p-6 rounded-2xl w-full max-w-md relative shadow-2xl border-4 border-purple-600">
+              <button
+                className="absolute top-2 right-3 text-3xl font-black text-purple-900 hover:text-purple-700"
+                onClick={() => setAssignModalOpen(false)}
+              >
+                &times;
+              </button>
+              <h3 className="text-2xl font-black text-purple-900 mb-3">
+                🎯 Assign Task to {assignModalAssignee.name} ({assignModalAssignee.role})
+              </h3>
+              <input
+                type="text"
+                placeholder="Title"
+                value={assignModalData.title}
+                onChange={(e) => setAssignModalData({ ...assignModalData, title: e.target.value })}
+                className="w-full border-4 border-purple-500 p-3 rounded-lg mb-3 text-purple-900 font-semibold focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+              />
+              <textarea
+                placeholder="Description"
+                value={assignModalData.description}
+                onChange={(e) => setAssignModalData({ ...assignModalData, description: e.target.value })}
+                className="w-full border-4 border-purple-500 p-3 rounded-lg mb-3 text-purple-900 font-semibold focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+              />
+              <input
+                type="date"
+                min={new Date().toISOString().split("T")[0]}
+                value={assignModalData.deadline}
+                onChange={(e) => setAssignModalData({ ...assignModalData, deadline: e.target.value })}
+                className="w-full border-4 border-purple-500 p-3 rounded-lg mb-4 text-purple-900 font-semibold focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+              />
+              <div className="flex gap-2 justify-end">
+                <button
+                  className="px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400"
+                  onClick={() => setAssignModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="px-4 py-2 bg-green-600 text-white rounded-full font-bold border-2 border-purple-400 hover:bg-green-700 shadow-md"
+                  onClick={assignTaskToAssignee}
+                >
+                  Assign
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Resolve Modal (Supervisor) */}
+      <AnimatePresence>
+        {resolveModalOpen && (
+          <motion.div
+            key="resolve-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-purple-900/95 z-50 overflow-y-auto"
+            style={{ WebkitOverflowScrolling: "touch" }}
+          >
+            <div className="min-h-screen px-4 py-8 flex items-center justify-center">
+              <div
+                className="bg-gradient-to-br from-pink-200 to-pink-300 p-6 rounded-2xl w-full max-w-3xl relative shadow-2xl border-4 border-purple-600"
+                style={{
+                  maxHeight: "calc(100vh - 4rem)",
+                  overflowY: "auto",
+                  WebkitOverflowScrolling: "touch",
+                  overscrollBehavior: "contain",
+                }}
+              >
+                <button
+                  className="absolute top-2 right-3 text-3xl font-black text-purple-900 hover:text-purple-700"
+                  onClick={() => setResolveModalOpen(false)}
+                >
+                  &times;
+                </button>
+
+                <h3 className="text-2xl font-black text-purple-900 mb-4">
+                  🎊 Submit Issue Resolution Report & Resolve Issue
+                </h3>
+
+                <label className="block text-sm font-black text-purple-900 mb-2">Summary of resolution (required)</label>
+                <textarea
+                  rows={4}
+                  value={resolveSummary}
+                  onChange={(e) => setResolveSummary(e.target.value)}
+                  className="w-full border-4 border-purple-500 p-3 rounded-lg mb-4 text-purple-900 font-semibold focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+                  placeholder="Describe what was done, outcomes, next steps..."
+                />
+
+                <label className="block text-sm font-black text-purple-900 mb-2">
+                  Resolution images / proof (optional)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e) => setResolveFiles(Array.from(e.target.files))}
+                  className="mb-4 w-full text-purple-900 font-semibold"
+                />
+                {resolveUploadProgress.length > 0 && (
+                  <div className="mb-4 bg-white rounded-lg p-2 border-2 border-purple-400">
+                    <p className="text-sm text-purple-700 font-bold">Upload progress:</p>
+                    {resolveUploadProgress.map((p, i) => (
+                      <div key={i} className="text-xs text-purple-800">File {i + 1}: {p}%</div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-4">
+                  <h4 className="font-black text-xl text-purple-900 mb-3">⭐ Rate staff performance</h4>
+                  <p className="text-xs text-purple-700 mb-3 font-semibold">
+                    Provide a rating (1-5) and optional comment for each worker/coordinator involved.
+                  </p>
+
+                  <div className="space-y-3">
+                    {(
+                      (issue?.staffsAssigned || []).filter((s) => {
+                        if (!s.user) return false;
+                        const u = s.user || {};
+                        return !(
+                          (u._id && String(u._id) === String(user._id)) ||
+                          (u.id && String(u.id) === String(user._id)) ||
+                          (u.email && u.email === user.email)
+                        );
+                      })
+                    ).map((s) => {
+                      const uid = s.user._id || s.user.id || s.user?.email || String(s.user?.name) || String(Math.random());
+                      const r = resolveRatings[uid] || {
+                        rating: 5,
+                        comment: "",
+                        role: s.role,
+                        name: s.user.name || s.user.email,
+                        userId: uid,
+                      };
+
+                      if (!resolveRatings[uid]) {
+                        Promise.resolve().then(() => {
+                          setResolveRatings((prev) => {
+                            if (prev && prev[uid]) return prev;
+                            return { ...prev, [uid]: r };
+                          });
+                        });
+                      }
+
+                      return (
+                        <div key={uid} className="p-4 bg-white rounded-lg shadow-md border-2 border-pink-400">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="font-black text-purple-900">
+                                {r.name} <span className="text-xs text-purple-600">({s.role})</span>
+                              </p>
+                              <p className="text-xs text-purple-600">{s.user.email}</p>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                              <label className="text-sm font-bold text-purple-900">Rating</label>
+                              <select
+                                value={r.rating}
+                                onChange={(e) =>
+                                  setResolveRatings((prev) => ({
+                                    ...prev,
+                                    [uid]: { ...r, rating: Number(e.target.value) },
+                                  }))
+                                }
+                                className="border-2 border-purple-500 p-2 rounded-lg text-purple-900 font-bold focus:border-pink-500 focus:ring-2 focus:ring-pink-300"
+                              >
+                                <option value={1}>1</option>
+                                <option value={2}>2</option>
+                                <option value={3}>3</option>
+                                <option value={4}>4</option>
+                                <option value={5}>5</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <textarea
+                            rows={2}
+                            placeholder="Optional comment"
+                            value={r.comment}
+                            onChange={(e) =>
+                              setResolveRatings((prev) => ({
+                                ...prev,
+                                [uid]: { ...r, comment: e.target.value },
+                              }))
+                            }
+                            className="w-full border-2 border-purple-500 p-2 rounded-lg mt-3 text-purple-900 font-semibold focus:border-pink-500 focus:ring-2 focus:ring-pink-300"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="flex gap-2 justify-end mt-6">
+                  <button
+                    className="px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400"
+                    onClick={() => setResolveModalOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className={`px-4 py-2 bg-green-600 text-white rounded-full font-bold border-2 border-purple-400 hover:bg-green-700 shadow-md ${
+                      isResolving ? "opacity-60 cursor-not-allowed" : ""
+                    }`}
+                    onClick={submitResolution}
+                    disabled={isResolving}
+                  >
+                    {isResolving ? "Submitting..." : "✅ Submit & Resolve"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
-  </motion.div>
-)}
+  </div>
+);
 
-</AnimatePresence>
-
-
-
-        </div>
-    );
 }

@@ -132,41 +132,51 @@ function IssueDetailsMunicipality() {
     );
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-      <h1 className="text-3xl font-bold">{issue.title}</h1>
-      <div className="flex flex-wrap gap-3">
-        {issue.category && (
-          <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full">
-            {issue.category}
+  <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 px-4 py-8">
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-pink-400 to-pink-300 rounded-2xl p-6 shadow-2xl border-4 border-purple-600 dotted">
+        <h1 className="text-3xl font-black text-purple-900 tracking-tight overflow-hidden">
+          {issue.title}
+        </h1>
+        
+        <div className="flex flex-wrap gap-3 mt-4">
+          {issue.category && (
+            <span className="bg-purple-700 text-pink-100 px-4 py-2 rounded-full font-bold text-sm border-2 border-pink-300 shadow-md">
+              🎪 {issue.category}
+            </span>
+          )}
+          <span className="bg-pink-500 text-white px-4 py-2 rounded-full font-bold text-sm border-2 border-purple-300 shadow-md">
+            ⚡ Priority: {issue.priority}
           </span>
-        )}
-        <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full">
-          Priority: {issue.priority}
-        </span>
-        <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full">
-          Status: {issue.status}
-        </span>
+          <span className="bg-purple-600 text-pink-100 px-4 py-2 rounded-full font-bold text-sm border-2 border-pink-300 shadow-md">
+            📋 Status: {issue.status}
+          </span>
+        </div>
       </div>
 
-      <p className="text-gray-600">
-        <strong>Location:</strong> {issue.issueLocation}
-      </p>
-      <p className="text-gray-600">
-        <strong>Published:</strong>{" "}
-        {new Date(issue.issuePublishDate).toLocaleDateString()}
-      </p>
+      {/* Info Card */}
+      <div className="bg-pink-200 rounded-xl p-5 shadow-lg border-4 border-purple-500">
+        <p className="text-purple-900 font-semibold text-lg">
+          <strong className="text-purple-700">📍 Location:</strong> {issue.issueDistrict + ', ' + issue.issueState + ', ' + issue.issueCountry}
+        </p>
+        <p className="text-purple-900 font-semibold text-lg mt-2">
+          <strong className="text-purple-700">📅 Published:</strong>{" "}
+          {new Date(issue.issuePublishDate).toLocaleDateString()}
+        </p>
+      </div>
 
       {/* Images Section */}
       {issue.images && issue.images.length > 0 && (
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold">Images</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <div className="bg-gradient-to-br from-pink-300 to-pink-200 rounded-xl p-5 shadow-xl border-4 border-purple-600">
+          <h2 className="text-2xl font-black text-purple-900 mb-4">🎨 Images</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {issue.images.slice(0, 3).map((img, idx) => (
               <img
                 key={idx}
                 src={img}
                 alt={`Issue ${idx}`}
-                className="w-full h-32 object-cover rounded-md cursor-pointer hover:scale-105 transition-transform"
+                className="w-full h-36 object-cover rounded-lg cursor-pointer hover:scale-110 transition-transform border-4 border-purple-400 shadow-md"
                 onClick={() => {
                   setCurrentImageIdx(idx);
                   setShowImageSlider(true);
@@ -177,9 +187,9 @@ function IssueDetailsMunicipality() {
           {issue.images.length > 3 && (
             <button
               onClick={() => setShowImageSlider(true)}
-              className="mt-2 px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-900"
+              className="mt-4 px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-300 transform hover:scale-105 transition-all"
             >
-              View More
+              🎭 View More
             </button>
           )}
         </div>
@@ -189,13 +199,13 @@ function IssueDetailsMunicipality() {
       <AnimatePresence>
         {showImageSlider && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/95"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <button
-              className="absolute top-5 right-5 text-white text-3xl"
+              className="absolute top-5 right-5 text-pink-300 text-5xl hover:text-pink-100 font-bold"
               onClick={() => setShowImageSlider(false)}
             >
               &times;
@@ -205,16 +215,16 @@ function IssueDetailsMunicipality() {
               <img
                 src={issue.images[currentImageIdx]}
                 alt={`Slide ${currentImageIdx}`}
-                className="w-full h-96 object-contain rounded-md"
+                className="w-full h-96 object-contain rounded-xl border-4 border-pink-400 shadow-2xl"
               />
               <button
-                className="absolute left-2 top-1/2 transform -translate-y-1/2 text-white text-3xl"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
                 onClick={handlePrevImage}
               >
                 &#8592;
               </button>
               <button
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-white text-3xl"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
                 onClick={handleNextImage}
               >
                 &#8594;
@@ -226,141 +236,142 @@ function IssueDetailsMunicipality() {
 
       {/* Videos Section */}
       {issue.videos && issue.videos.length > 0 && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Videos</h2>
-          {issue.videos.map((vid, idx) => (
-            <video
-              key={idx}
-              src={vid}
-              controls
-              className="w-full h-64 rounded-md"
-            />
-          ))}
+        <div className="bg-gradient-to-br from-pink-300 to-pink-200 rounded-xl p-5 shadow-xl border-4 border-purple-600">
+          <h2 className="text-2xl font-black text-purple-900 mb-4">🎬 Videos</h2>
+          <div className="space-y-4">
+            {issue.videos.map((vid, idx) => (
+              <video
+                key={idx}
+                src={vid}
+                controls
+                className="w-full h-64 rounded-lg border-4 border-purple-400 shadow-md"
+              />
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Upvotes / Downvotes (View Only) */}
-      <div className="flex items-center gap-4">
-        <div className="px-4 py-2 bg-green-500 text-white rounded-md">
-          Upvotes: {issue.upvotes?.length || 0}
+      {/* Upvotes / Downvotes */}
+      <div className="flex items-center gap-4 justify-center">
+        <div className="px-6 py-3 bg-gradient-to-r from-green-400 to-green-500 text-white rounded-full font-black text-lg shadow-xl border-4 border-purple-600">
+          👍 Upvotes: {issue.upvotes?.length || 0}
         </div>
-        <div className="px-4 py-2 bg-red-500 text-white rounded-md">
-          Downvotes: {issue.downvotes?.length || 0}
+        <div className="px-6 py-3 bg-gradient-to-r from-red-400 to-red-500 text-white rounded-full font-black text-lg shadow-xl border-4 border-purple-600">
+          👎 Downvotes: {issue.downvotes?.length || 0}
         </div>
       </div>
 
-      {/* Comments (View Only) */}
-      <div className="mt-6 space-y-4">
-        <h2 className="text-xl font-semibold">Comments</h2>
-        <div className="space-y-2">
+      {/* Comments Section */}
+      <div className="bg-pink-200 rounded-xl p-5 shadow-xl border-4 border-purple-600">
+        <h2 className="text-2xl font-black overflow-hidden text-purple-900 mb-4">💬 Comments</h2>
+        <div className="space-y-3">
           {issue.comments && issue.comments.length > 0 ? (
             issue.comments.map((c) => (
               <div
                 key={c._id}
-                className="border border-gray-200 rounded-md p-2 bg-gray-50"
+                className="bg-white rounded-lg p-4 shadow-md border-2 border-pink-400"
               >
-                <p className="text-gray-700">{c.content}</p>
-                <p className="text-xs text-gray-500">
-                  By {c.user.name} on {new Date(c.createdAt).toLocaleString()}
+                <p className="text-purple-900 font-medium">{c.content}</p>
+                <p className="text-sm text-purple-600 mt-2">
+                  🎪 By {c.user.name} on {new Date(c.createdAt).toLocaleString()}
                 </p>
               </div>
             ))
           ) : (
-            <p className="text-gray-500">No comments yet.</p>
+            <p className="text-purple-700 font-semibold">No comments yet.</p>
           )}
         </div>
       </div>
 
       {/* Municipality Action: Take Up Issue */}
       {issue.status === "Open" && !issue.issueTakenUpBy && (
-        <div className="mt-6 space-y-2 border-t border-gray-300 pt-4">
-          <h2 className="text-xl font-semibold">Take Up Issue</h2>
+        <div className="bg-gradient-to-r from-pink-300 to-pink-200 rounded-xl p-6 shadow-xl border-4 border-purple-600">
+          <h2 className="text-2xl font-black text-purple-900 mb-4">🎯 Take Up Issue</h2>
           <input
             type="date"
             value={deadline}
             onChange={(e) => setDeadline(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2"
-            min={new Date().toISOString().split("T")[0]} // prevent past dates
+            className="border-4 border-purple-500 rounded-lg px-4 py-3 w-full mb-4 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+            min={new Date().toISOString().split("T")[0]}
           />
           <button
             onClick={handleTakeUpIssue}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="w-full px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-black text-lg hover:bg-purple-800 shadow-lg border-4 border-pink-400 transform hover:scale-105 transition-all"
           >
-            Take Up & Set Deadline
+            🎪 Take Up & Set Deadline
           </button>
         </div>
       )}
 
       {/* Municipality Action: Assign Staff */}
-        {issue.issueTakenUpBy && issue.issueTakenUpBy._id === user._id && (
-          <div className="mt-6 space-y-2 border-t border-gray-300 pt-4">
-            <h2 className="text-xl font-semibold">Assign Staff</h2>
-            <select
-              value={roleName}
-              onChange={(e) => setRoleName(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 w-full"
-              required
-            >
-              <option value="">Select Role</option>
-              <option value="Worker">Worker</option>
-              <option value="Supervisor">Supervisor</option>
-              <option value="Coordinator">Coordinator</option>
-            </select>
-            <select
-          value={staffEmail}
-          onChange={(e) => setStaffEmail(e.target.value)}
-          className="border border-gray-300 rounded-md px-3 py-2 w-full"
-          required
-        >
-          <option value="">Select Staff</option>
-          {staff.map((s) => (
-            <option 
-              key={s._id} 
-              value={s.email}
-            >
-              {`${s.name} (${s.email}) — ${s.available ? 'Available' : 'Busy'}`}
-            </option>
-          ))}
-        </select>
-
-    <button
-      onClick={handleAssignStaff}
-      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-      disabled={!roleName || !staffEmail || assigningStaff}
-    >
-      {assigningStaff ? "Assigning..." : "Assign Staff"}
-    </button>
-
-
-    {/* Display assigned staff */}
-    <div className="mt-4 space-y-2">
-      <h3 className="font-semibold text-lg">Assigned Staff</h3>
-      {issue.staffsAssigned && issue.staffsAssigned.length > 0 ? (
-        issue.staffsAssigned.map((s, idx) => (
-          <div
-            key={idx}
-            className="p-2 bg-gray-100 rounded-md border border-gray-200"
+      {issue.issueTakenUpBy && issue.issueTakenUpBy._id === user._id && (
+        <div className="bg-gradient-to-r from-pink-300 to-pink-200 rounded-xl p-6 shadow-xl border-4 border-purple-600">
+          <h2 className="text-2xl font-black overflow-hidden text-purple-900 mb-4">👥 Assign Staff</h2>
+          
+          <select
+            value={roleName}
+            onChange={(e) => setRoleName(e.target.value)}
+            className="border-4 border-purple-500 rounded-lg px-4 py-3 w-full mb-4 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+            required
           >
-            <p>
-              <strong>Role:</strong> {s.role}
-            </p>
-            <p>
-              <strong>Name:</strong> {s.user?.name || "N/A"}
-            </p>
-            <p>
-              <strong>Email:</strong> {s.user?.email || "N/A"}
-            </p>
+            <option value="">Select Role</option>
+            <option value="Worker">Worker</option>
+            <option value="Supervisor">Supervisor</option>
+            <option value="Coordinator">Coordinator</option>
+          </select>
+
+          <select
+            value={staffEmail}
+            onChange={(e) => setStaffEmail(e.target.value)}
+            className="border-4 border-purple-500 rounded-lg px-4 py-3 w-full mb-4 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+            required
+          >
+            <option value="">Select Staff</option>
+            {staff.map((s) => (
+              <option key={s._id} value={s.email}>
+                {`${s.name} (${s.email}) — ${s.available ? 'Available' : 'Busy'}`}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={handleAssignStaff}
+            className="w-full px-6 py-3 bg-green-600 text-white rounded-full font-black text-lg hover:bg-green-700 shadow-lg border-4 border-purple-500 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!roleName || !staffEmail || assigningStaff}
+          >
+            {assigningStaff ? "Assigning..." : "✅ Assign Staff"}
+          </button>
+
+          {/* Display assigned staff */}
+          <div className="mt-6 space-y-3">
+            <h3 className="font-black text-xl text-purple-900">🎭 Assigned Staff</h3>
+            {issue.staffsAssigned && issue.staffsAssigned.length > 0 ? (
+              issue.staffsAssigned.map((s, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 bg-white rounded-lg shadow-md border-2 border-pink-400"
+                >
+                  <p className="text-purple-900 font-semibold">
+                    <strong>Role:</strong> {s.role}
+                  </p>
+                  <p className="text-purple-900 font-semibold">
+                    <strong>Name:</strong> {s.user?.name || "N/A"}
+                  </p>
+                  <p className="text-purple-900 font-semibold">
+                    <strong>Email:</strong> {s.user?.email || "N/A"}
+                  </p>
+                </div>
+              ))
+            ) : (
+              <p className="text-purple-700 font-semibold">No staff assigned yet.</p>
+            )}
           </div>
-        ))
-      ) : (
-        <p className="text-gray-500">No staff assigned yet.</p>
+        </div>
       )}
     </div>
   </div>
-)}
+);
 
-    </div>
-  );
 }
 
 export default IssueDetailsMunicipality;
