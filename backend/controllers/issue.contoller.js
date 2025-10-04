@@ -229,16 +229,17 @@ export const editComment = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
-
-
 export const getIssueBySlug = async (req, res) => {
   const { slug } = req.params;
 
   try {
     const issue = await Issue.findOne({ slug })
       .populate("reportedBy", "name email")
-      .populate("staffsAssigned", "name email")
+      .populate("issueTakenUpBy", "name municipalityName email") // populate municipality
+      .populate({
+        path: "staffsAssigned.user", // populate user inside staffsAssigned
+        select: "name email",        // only return name + email
+      })
       .populate({
         path: "comments.user",
         select: "name email",
@@ -248,7 +249,13 @@ export const getIssueBySlug = async (req, res) => {
       return res.status(404).json({ success: false, message: "Issue not found" });
     }
 
-    // Explicitly send all fields including images, videos, and comments
+    // Transform staffsAssigned to include role + user details
+    const formattedStaffs = issue.staffsAssigned.map((s) => ({
+      role: s.role,
+      user: s.user ? { name: s.user.name, email: s.user.email } : null,
+    }));
+
+    // Include deadline and issueTakenUpBy
     const issueData = {
       _id: issue._id,
       title: issue.title,
@@ -262,10 +269,12 @@ export const getIssueBySlug = async (req, res) => {
       images: issue.images,
       videos: issue.videos,
       reportedBy: issue.reportedBy,
-      staffsAssigned: issue.staffsAssigned,
+      staffsAssigned: formattedStaffs,
       upvotes: issue.upvotes,
       downvotes: issue.downvotes,
       comments: issue.comments,
+      deadline: issue.deadline,
+      issueTakenUpBy: issue.issueTakenUpBy,
       createdAt: issue.createdAt,
       updatedAt: issue.updatedAt,
     };
@@ -276,6 +285,7 @@ export const getIssueBySlug = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 
 export const getCompletedIssues = async (req, res) => {
   try {
@@ -351,5 +361,119 @@ export const getMonthlyAnalysis = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
+export const takeUpIssue = async (req, res) => {
+  try {
+    const { issueId, deadline } = req.body;
+    console.log(issueId, deadline);
+    
+    if (!issueId || !deadline) {
+      return res.status(400).json({ success: false, message: "Issue ID and deadline are required" });
+    }
+
+    const issue = await Issue.findById(issueId);
+    console.log(issue);
+    
+    if (!issue) {
+      return res.status(404).json({ success: false, message: "Issue not found" });
+    }
+
+    if (issue.status !== "Open") {
+      return res.status(400).json({ success: false, message: "Only open issues can be taken up" });
+    }
+
+    // Check that deadline is not in the past
+    const selectedDeadline = new Date(deadline);
+    const now = new Date();
+    now.setHours(0,0,0,0); // ignore time, compare dates only
+    if (selectedDeadline < now) {
+      return res.status(400).json({ success: false, message: "Deadline cannot be in the past" });
+    }
+
+    // Assign the municipality and set deadline
+    issue.issueTakenUpBy = req.municipality._id;
+    issue.deadline = selectedDeadline;
+    issue.status = "In Progress";
+
+    await issue.save();
+
+    res.status(200).json({ success: true, message: "Issue successfully taken up", issue });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const assignStaff = async (req, res) => {
+  try {
+    const { issueId, staffEmail, role } = req.body;
+    console.log(issueId, staffEmail, role);
+    
+    if (!issueId || !staffEmail || !role) {
+      return res.status(400).json({ message: "Issue ID, Staff Email, and Role are required" });
+    }
+
+    // Find issue
+    const issue = await Issue.findById(issueId);
+    if (!issue) {
+      return res.status(404).json({ message: "Issue not found" });
+    }
+
+    // Find staff by email
+    const staff = await User.findOne({ email: staffEmail });
+    if (!staff) {
+      return res.status(404).json({ message: "Staff not found" });
+    }
+    console.log(staff);
+    
+
+    if(staff.role !== "Municipality Staff"){
+      return res.status(400).json({ message: "User is not a Municipality Staff" });
+    }
+    console.log(issue, staff, role);
+    
+    // Check if staff already assigned with same role
+    const alreadyAssigned = issue.staffsAssigned.some(
+      (s) => s.user.toString() === staff._id.toString() && s.role === role
+    );
+    if (alreadyAssigned) {
+      return res.status(400).json({ message: "Staff already assigned to this issue with this role" });
+    }
+
+    // Assign staff
+    issue.staffsAssigned.push({ role, user: staff._id });
+    await issue.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Staff assigned successfully",
+      issue,
+    });
+  } catch (error) {
+    console.error("Error assigning staff:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+// Get assigned staff for an issue
+export const getAssignedStaff = async (req, res) => {
+  try {
+    const { issueId } = req.body; // issueId from body
+
+    if (!issueId) {
+      return res.status(400).json({ message: "Issue ID is required" });
+    }
+
+    const issue = await Issue.findById(issueId).populate("staffsAssigned.user", "name email role");
+    if (!issue) {
+      return res.status(404).json({ message: "Issue not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Assigned staff fetched successfully",
+      assignedStaff: issue.staffsAssigned, // contains [{ role, user: {name,email,role} }]
+    });
+  } catch (error) {
+    console.error("Error fetching assigned staff:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

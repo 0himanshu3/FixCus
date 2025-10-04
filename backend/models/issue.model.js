@@ -22,6 +22,19 @@ const CommentSchema = new mongoose.Schema(
   { _id: true }
 );
 
+// Assigned staff sub-schema
+const AssignedStaffSchema = new mongoose.Schema(
+  {
+    role: {
+      type: String,
+      enum: ["Supervisor", "Worker", "Inspector", "Coordinator", "Other"], // customize as needed
+      required: true,
+    },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  },
+  { _id: true }
+);
+
 // Main Issue schema
 const IssueSchema = new mongoose.Schema(
   {
@@ -37,7 +50,10 @@ const IssueSchema = new mongoose.Schema(
     issueState: { type: String },
     issueCountry: { type: String },
     issuePublishDate: { type: Date, required: true },
-    staffsAssigned: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+
+    // Now stores array of objects (role + user)
+    staffsAssigned: [AssignedStaffSchema],
+
     reportedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     status: { type: String, enum: ["Open", "In Progress", "Resolved"], default: "Open" },
 
@@ -45,6 +61,10 @@ const IssueSchema = new mongoose.Schema(
     upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     downvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     comments: [CommentSchema],
+
+    // Municipality fields
+    issueTakenUpBy: { type: mongoose.Schema.Types.ObjectId, ref: "Municipality" },
+    deadline: { type: Date },
   },
   { timestamps: true }
 );
