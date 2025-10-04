@@ -7,6 +7,8 @@ import {
   sendTaskEscalationNotificationToStaff,
   sendTaskAssignmentNotification 
 } from "./notification.controller.js";
+import Feedback from "../models/feedback.model.js";
+import mongoose from "mongoose";
 
 export const createIssue = async (req, res) => {
   try {
@@ -965,4 +967,55 @@ export const getPendingIssues = async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch pending issues" });
   }
+};
+
+export const submitFeedback = async (req, res, next) => {
+    const { issueId, ...feedbackData } = req.body;
+    const userId = req.user.id; // Assuming user ID is available from auth middleware
+
+    // 1. Validate Input
+    if (!issueId || !mongoose.Types.ObjectId.isValid(issueId)) {
+        return res.status(400).json({ success: false, message: "A valid issue ID is required." });
+    }
+
+    if (!feedbackData.resolved || !feedbackData.satisfactionRating) {
+        return res.status(400).json({ success: false, message: "Required feedback fields are missing." });
+    }
+
+    try {
+        // 2. Verify the issue exists and is marked as 'Resolved'
+        const issue = await Issue.findById(issueId);
+        if (!issue) {
+            return res.status(404).json({ success: false, message: "Issue not found." });
+        }
+        if (issue.status !== "Resolved") {
+            return res.status(400).json({ success: false, message: "Feedback can only be submitted for resolved issues." });
+        }
+
+        // 3. Check if this user has already submitted feedback for this issue
+        const existingFeedback = await Feedback.findOne({ issue: issueId, submittedBy: userId });
+        if (existingFeedback) {
+            return res.status(409).json({ success: false, message: "You have already submitted feedback for this issue." });
+        }
+
+        // 4. Create and save the new feedback document
+        const newFeedback = new Feedback({
+            ...feedbackData,
+            issue: issueId,
+            submittedBy: userId,
+        });
+
+        await newFeedback.save();
+
+        // 6. Send success response
+        res.status(201).json({
+            success: true,
+            message: "Feedback submitted successfully.",
+            feedback: newFeedback,
+        });
+
+    } catch (error) {
+        console.error("Feedback submission error:", error);
+        res.status(500).json({ success: false, message: "Internal server error while submitting feedback." });
+    }
 };
