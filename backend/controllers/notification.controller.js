@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { sendEmail } from "../utils/sendEmail.js";
-// import { io } from "../server.js";
+import { io } from "../server.js";
 
 //Send notification when an issue is assigned to a staff
 export const sendIssueAssignedNotification = async (issue, staffId) => {
@@ -144,6 +144,12 @@ export const markNotificationAsRead = async (req, res, next) => {
 
         if (!updatedNotification) return next(new ApiError(404, "Notification not found"));
 
+        // Emit socket event for real-time update
+        io.to(updatedNotification.userId.toString()).emit("notification-updated", {
+            action: "read",
+            notificationId: updatedNotification._id
+        });
+
         return res.status(200).json(new ApiResponse(200, updatedNotification, "Notification updated successfully"));
     } catch (error) {
         next(error);
@@ -157,6 +163,12 @@ export const deleteNotification = async (req, res, next) => {
         const deletedNotification = await Notification.findByIdAndDelete(notificationId);
 
         if (!deletedNotification) return next(new ApiError(404, "Notification not found"));
+
+        // Emit socket event for real-time update
+        io.to(deletedNotification.userId.toString()).emit("notification-updated", {
+            action: "delete",
+            notificationId: deletedNotification._id
+        });
 
         return res.status(200).json(new ApiResponse(200, null, "Notification deleted successfully"));
     } catch (error) {

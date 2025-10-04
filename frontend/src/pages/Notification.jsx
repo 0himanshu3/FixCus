@@ -1,24 +1,23 @@
 import React, { useEffect } from 'react';
 import { FaCheck, FaTrashAlt, FaBell, FaRegBell } from 'react-icons/fa';
 import { useNavigate } from "react-router-dom";
-// import { io } from "socket.io-client";
 
-// const socket = io("http://localhost:3000"); //!future socket io use
-
-const Notification = ({ notifications = [], fetchNotifications, userId }) => {
+const Notification = ({ notifications = [], fetchNotifications, userId, socket }) => {
   const navigate = useNavigate();
 
-//   useEffect(() => {
-//     if (userId) {
-//       socket.emit("join", userId);
-//       socket.on("new-notification", () => {
-//         fetchNotifications(); // fetch latest notifications
-//       });
-//     }
-//     return () => {
-//       socket.off("new-notification");
-//     };
-//   }, [userId, fetchNotifications]);
+  useEffect(() => {
+    if (userId && socket) {
+      socket.emit("join", userId);
+      socket.on("new-notification", () => {
+        fetchNotifications(); // fetch latest notifications
+      });
+    }
+    return () => {
+      if (socket) {
+        socket.off("new-notification");
+      }
+    };
+  }, [userId, fetchNotifications, socket]);
 
   const markAsRead = async (notificationId) => {
     try {
@@ -27,6 +26,10 @@ const Notification = ({ notifications = [], fetchNotifications, userId }) => {
         credentials: "include",
       });
       fetchNotifications();
+      // Emit socket event for real-time update
+      if (socket) {
+        socket.emit("notification-updated", { userId, action: "read", notificationId });
+      }
     } catch (error) {
       console.error("Error marking notification as read:", error);
     }
@@ -39,6 +42,10 @@ const Notification = ({ notifications = [], fetchNotifications, userId }) => {
         credentials: "include",
       });
       fetchNotifications();
+      // Emit socket event for real-time update
+      if (socket) {
+        socket.emit("notification-updated", { userId, action: "delete", notificationId });
+      }
     } catch (error) {
       console.error("Error deleting notification:", error);
     }

@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { getUser } from "./redux/slices/authSlice";
+import { io } from "socket.io-client";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -65,6 +66,7 @@ const App = () => {
   };
 
   const [notifications, setNotifications] = useState([]);
+  const [socket, setSocket] = useState(null);
   const fetchNotifications = async () => {
     try {
       const res = await fetch("http://localhost:3000/api/v1/notification", {
@@ -77,21 +79,41 @@ const App = () => {
     }
   };
 
-  //!TODO: integrate socket io for real-time notifications
-  // Fetch notifications on mount and poll every 30 seconds
+  // Socket.io setup for real-time notifications
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user?._id) {
+      const newSocket = io("http://localhost:3000");
+      setSocket(newSocket);
+
+      // Join user's room
+      newSocket.emit("join", user._id);
+
+      // Listen for new notifications
+      newSocket.on("new-notification", () => {
+        fetchNotifications();
+      });
+
+      // Listen for notification updates (read/delete)
+      newSocket.on("notification-updated", () => {
+        fetchNotifications();
+      });
+
+      // Initial fetch
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(interval);
+
+      return () => {
+        newSocket.off("new-notification");
+        newSocket.off("notification-updated");
+        newSocket.disconnect();
+      };
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?._id]);
 
   return (
     <Router>
       <Routes>
         {/* Routes with Header & Footer */}
-        <Route element={<MainLayout />}>
+        <Route element={<MainLayout notifications={notifications} />}>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/gallery" element={<Gallery />} />
@@ -105,7 +127,7 @@ const App = () => {
           <Route path="/admin/requests" element={<ApplicationRequest />} />
           <Route
             path="/notification"
-            element={<Notification notifications={notifications} fetchNotifications={fetchNotifications} />}
+            element={<Notification notifications={notifications} fetchNotifications={fetchNotifications} userId={user?._id} socket={socket} />}
           />
         </Route>
 
