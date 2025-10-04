@@ -1,5 +1,5 @@
 import express from "express";
-import { addComment, createIssue, deleteComment, downvoteIssue, editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff } from "../controllers/issue.contoller.js";
+import { addComment, createIssue, deleteComment, downvoteIssue, editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue } from "../controllers/issue.contoller.js";
 import { isAuthenticated, protectMunicipality } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -22,6 +22,26 @@ router.put("/comment/:commentId", isAuthenticated, editComment);
 
 // Delete a comment
 router.delete("/comment/:commentId", isAuthenticated, deleteComment);
+
+
+
+// Assign task
+router.post("/assign", isAuthenticated, assignTask);
+
+// Get tasks for user (filter by issueId)
+router.get("/forUser/:userId", isAuthenticated, getTasksForUser);
+
+// Worker: Add task update
+router.post("/update/:taskId", isAuthenticated, updateTask);
+
+// Worker: Submit task proof
+router.post("/submitProof/:taskId", isAuthenticated, submitTaskProof);
+
+// Coordinator: Approve / Reject proof
+router.post("/approveReject/:taskId", isAuthenticated, approveRejectTaskProof);
+
+// Supervisor resolves the issue
+router.post("/resolve/:issueId", isAuthenticated,  resolveIssue);
 
 router.get("/:slug",isAuthenticated, getIssueBySlug);
 
