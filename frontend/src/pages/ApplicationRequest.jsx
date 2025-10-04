@@ -34,48 +34,53 @@ const ApplicationRequest = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-5xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Pending Municipality Applications</h1>
+  <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 py-8">
+    <div className="max-w-5xl mx-auto px-4">
+      <h1 className="text-4xl font-black text-yellow-300 mb-6 overflow-hidden" style={{ textShadow: '3px 3px 0px rgba(236, 72, 153, 0.5)' }}>
+        🏛️ Pending Municipality Applications
+      </h1>
 
-        <div className="overflow-x-auto bg-white shadow rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-           <thead className="bg-gray-50">
-  <tr>
-    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-        Municipality Name
-      </th>
-      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-        Admin Name
-      </th>
-      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-        Status
-      </th>
-      <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-        Actions
-      </th>
-    </tr>
-  </thead>
+      <div className="bg-gradient-to-br from-pink-200 to-pink-300 shadow-xl rounded-2xl border-4 border-purple-600 overflow-hidden">
+        {/* SCROLLABLE TABLE */}
+        <div className="max-h-[600px] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: '#9333ea #f9a8d4' }}>
+          <table className="min-w-full divide-y divide-purple-300">
+            <thead className="bg-purple-700 text-yellow-300 sticky top-0 z-10">
+              <tr>
+                <th className="px-6 py-3 text-center text-sm font-black uppercase tracking-wider">
+                  Municipality Name
+                </th>
+                <th className="px-6 py-3 text-center text-sm font-black uppercase tracking-wider">
+                  Admin Name
+                </th>
+                <th className="px-6 py-3 text-center text-sm font-black uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-center text-sm font-black uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
 
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-purple-300">
               {requests.map(request => (
-                <tr key={request._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">{request.municipalityName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{request.adminName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                      ${request.status === 'pending' ? 'bg-yellow-200 text-yellow-800' :
-                        request.status === 'approved' ? 'bg-green-200 text-green-800' :
-                        'bg-red-200 text-red-800'}`}>
-                      {request.status}
+                <tr key={request._id} className="hover:bg-pink-100 bg-white/70 transition-colors duration-200">
+                  <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-purple-900">{request.municipalityName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center font-bold text-purple-900">{request.adminName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-black rounded-full border-2 ${
+                      request.status === 'pending' ? 'bg-yellow-300 text-purple-900 border-yellow-500' :
+                      request.status === 'approved' ? 'bg-green-400 text-white border-green-600' :
+                      'bg-red-400 text-white border-red-600'
+                    }`}>
+                      {request.status.toUpperCase()}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap text-center overflow-hidden">
                     <button
                       onClick={() => setSelectedRequest(request)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                      className="bg-purple-700 text-pink-100 px-4 py-2 rounded-full font-bold hover:bg-purple-800 border-2 border-pink-300 shadow-md transition-all duration-200 will-change-transform"
                     >
-                      View
+                      👁️ View
                     </button>
                   </td>
                 </tr>
@@ -83,59 +88,86 @@ const ApplicationRequest = () => {
             </tbody>
           </table>
         </div>
+      </div>
 
-        {selectedRequest && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-            <div className="bg-white rounded-lg shadow-lg w-2/3 max-w-2xl p-6 relative">
-              <button
-                onClick={() => setSelectedRequest(null)}
-                className="absolute top-3 right-3 text-gray-500 hover:text-gray-900"
-              >
-                ✕
-              </button>
-              <h2 className="text-2xl font-bold mb-4">{selectedRequest.municipalityName} - {selectedRequest.adminName}</h2>
-              <p className="mb-2"><strong>Status:</strong> <span className="text-yellow-600">{selectedRequest.status}</span></p>
-              <p className="mb-4"><strong>Address:</strong> {selectedRequest.address}</p>
-              <p className="mb-4"><strong>Message:</strong> {selectedRequest.message}</p>
+      {/* MODAL */}
+      {selectedRequest && (
+        <div className="fixed inset-0 bg-purple-900/95 flex justify-center items-center z-50 p-4">
+          <div className="bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl shadow-2xl w-full max-w-2xl p-6 relative border-4 border-purple-600 max-h-[90vh] overflow-y-auto">
+            <button
+              onClick={() => setSelectedRequest(null)}
+              className="absolute top-3 right-3 text-3xl font-black text-purple-900 hover:text-purple-700"
+            >
+              ✕
+            </button>
+            
+            <h2 className="text-3xl font-black text-purple-900 mb-4 overflow-hidden">
+              {selectedRequest.municipalityName}
+            </h2>
+            <p className="text-xl font-bold text-purple-800 mb-6">👤 {selectedRequest.adminName}</p>
+            
+            <div className="space-y-4">
+              <div className="bg-white/70 p-4 rounded-lg border-4 border-purple-500">
+                <p className="font-bold text-purple-900">
+                  <strong className="text-purple-700">📋 Status:</strong>{' '}
+                  <span className={`px-3 py-1 rounded-full text-sm font-black ${
+                    selectedRequest.status === 'pending' ? 'bg-yellow-300 text-purple-900' :
+                    selectedRequest.status === 'approved' ? 'bg-green-400 text-white' :
+                    'bg-red-400 text-white'
+                  }`}>
+                    {selectedRequest.status.toUpperCase()}
+                  </span>
+                </p>
+              </div>
 
-              <div className="mb-4">
-                <strong>Supporting Documents:</strong>
+              <div className="bg-white/70 p-4 rounded-lg border-4 border-purple-500">
+                <p className="font-bold text-purple-900">
+                  <strong className="text-purple-700">📍 Address:</strong> {selectedRequest.address}
+                </p>
+              </div>
+
+              <div className="bg-white/70 p-4 rounded-lg border-4 border-purple-500">
+                <p className="font-bold text-purple-700 mb-2">💬 Message:</p>
+                <p className="font-semibold text-purple-900">{selectedRequest.message}</p>
+              </div>
+
+              <div className="bg-white/70 p-4 rounded-lg border-4 border-purple-500">
+                <p className="font-bold text-purple-700 mb-2">📎 Supporting Documents:</p>
                 {selectedRequest.supportingDocuments.length === 0 ? (
-                  <p className="text-gray-500">No documents uploaded.</p>
+                  <p className="font-semibold text-purple-600 italic">No documents uploaded.</p>
                 ) : (
-                  <ul className="list-disc ml-5">
+                  <ul className="list-disc ml-5 space-y-1">
                     {selectedRequest.supportingDocuments.map((doc, idx) => (
-                      <li key={idx}>{doc}</li>
+                      <li key={idx} className="font-semibold text-purple-900">{doc}</li>
                     ))}
                   </ul>
                 )}
               </div>
-
-              <div className="flex justify-end gap-4">
-                {selectedRequest.status === 'pending' && (
-                  <>
-                    <button
-                      onClick={() => handleReject(selectedRequest._id)}
-                      className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-                    >
-                      Reject
-                    </button>
-                    <button
-                      onClick={() => handleApprove(selectedRequest._id)}
-                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                    >
-                      Approve
-                    </button>
-                  </>
-                )}
-              </div>
             </div>
-          </div>
-        )}
 
-      </div>
+            {selectedRequest.status === 'pending' && (
+              <div className="flex justify-end gap-4 mt-6 overflow-hidden">
+                <button
+                  onClick={() => handleReject(selectedRequest._id)}
+                  className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-full font-black hover:brightness-110 border-2 border-white shadow-lg transition-all duration-200 will-change-transform"
+                >
+                  ❌ Reject
+                </button>
+                <button
+                  onClick={() => handleApprove(selectedRequest._id)}
+                  className="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-full font-black hover:brightness-110 border-2 border-white shadow-lg transition-all duration-200 will-change-transform"
+                >
+                  ✅ Approve
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
-  )
+  </div>
+);
+
 }
 
 export default ApplicationRequest
