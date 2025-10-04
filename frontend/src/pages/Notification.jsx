@@ -91,38 +91,52 @@ const Notification = ({ notifications = [], fetchNotifications, userId, socket }
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-white rounded-xl shadow-sm">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center">
-          <FaBell className="text-blue-600 mr-3" size={24} />
-          <h1 className="text-2xl font-bold text-gray-800">Notifications</h1>
-        </div>
-        <div className="text-sm text-gray-500">
-          {notifications.length} {notifications.length === 1 ? "notification" : "notifications"}
+  <div className="min-h-screen bg-gray-50 p-6">
+    <div className="max-w-4xl mx-auto">
+      
+      {/* Header */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-purple-100 p-3 rounded-lg text-purple-600">
+              <FaBell size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+              <p className="text-sm text-gray-500 mt-1">
+                {notifications.length} {notifications.length === 1 ? "notification" : "notifications"}
+              </p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          {notifications.length > 0 && (
+            <div className="flex gap-3">
+              <button
+                onClick={markAllAsRead}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition shadow"
+              >
+                Mark All Read
+              </button>
+              <button
+                onClick={deleteAllNotifications}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition shadow"
+              >
+                Clear All
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex justify-end space-x-3 mb-4">
-        <button
-          onClick={markAllAsRead}
-          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition-all"
-        >
-          Mark All as Read
-        </button>
-        <button
-          onClick={deleteAllNotifications}
-          className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-all"
-        >
-          Clear All
-        </button>
-      </div>
-
+      {/* Notifications List */}
       {notifications.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-10 bg-gray-50 rounded-lg">
-          <FaRegBell className="text-gray-400 mb-3" size={40} />
-          <p className="text-lg font-medium text-gray-500">No notifications yet</p>
-          <p className="text-sm text-gray-400 mt-1">You're all caught up!</p>
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+            <FaRegBell className="text-gray-400" size={32} />
+          </div>
+          <p className="text-lg font-semibold text-gray-900 mb-1">No notifications yet</p>
+          <p className="text-sm text-gray-500">You're all caught up!</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -130,63 +144,70 @@ const Notification = ({ notifications = [], fetchNotifications, userId, socket }
             <div
               key={notif._id}
               onClick={() => handleView(notif.url)}
-              className={`p-4 rounded-lg border cursor-pointer flex justify-between items-center transition-all duration-300
-                ${
-                  notif.isRead
-                    ? "bg-white border-gray-200 hover:bg-gray-100"
-                    : "bg-blue-50 border-blue-200 hover:bg-blue-100"
-                }`}
+              className={`bg-white rounded-xl shadow border cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                notif.isRead
+                  ? "border-gray-200"
+                  : "border-purple-300 bg-purple-50"
+              }`}
             >
-              {/* Left Side - Bell Icon & Message */}
-              <div className="flex items-start space-x-3 w-full">
-                <div className={`mt-1 flex-shrink-0 ${notif.isRead ? "text-gray-400" : "text-blue-500"}`}>
-                  <FaBell size={16} />
-                </div>
-                <div className="w-full">
-                  <p className={`text-gray-800 ${!notif.isRead ? "font-medium" : ""} overflow-hidden text-ellipsis`}>
-                    {notif.message.length > 200 ? notif.message.slice(0, 200) + "..." : notif.message}
-                  </p>
-                  <div className="flex items-center mt-1 text-xs">
-                    <span className="text-gray-500">{timeAgo(notif.createdAt)}</span>
-                    <span className="mx-2 text-gray-300">•</span>
-                    <span className="text-gray-500 hover:text-gray-700 cursor-help" title={new Date(notif.createdAt).toLocaleString()}>
-                      Full timestamp
-                    </span>
+              <div className="p-5 flex justify-between items-start gap-4">
+                
+                {/* Left - Icon & Content */}
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                    notif.isRead ? "bg-gray-100 text-gray-400" : "bg-purple-100 text-purple-600"
+                  }`}>
+                    <FaBell size={16} />
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-gray-800 ${!notif.isRead ? "font-semibold" : ""} break-words`}>
+                      {notif.message.length > 200 ? notif.message.slice(0, 200) + "..." : notif.message}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                      <span>{timeAgo(notif.createdAt)}</span>
+                      <span>•</span>
+                      <span className="hover:text-gray-700 cursor-help" title={new Date(notif.createdAt).toLocaleString()}>
+                        {new Date(notif.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Right Side - Buttons */}
-              <div className="flex space-x-2 flex-shrink-0">
-                {!notif.isRead && (
+                {/* Right - Action Buttons */}
+                <div className="flex gap-2 flex-shrink-0">
+                  {!notif.isRead && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markAsRead(notif._id);
+                      }}
+                      title="Mark as Read"
+                      className="p-2 rounded-lg text-green-600 hover:bg-green-100 transition"
+                    >
+                      <FaCheck size={16} />
+                    </button>
+                  )}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      markAsRead(notif._id);
+                      deleteNotification(notif._id);
                     }}
-                    title="Mark as Read"
-                    className="p-2 rounded-full text-blue-600 hover:bg-blue-200 transition-colors"
+                    title="Delete"
+                    className="p-2 rounded-lg text-red-600 hover:bg-red-100 transition"
                   >
-                    <FaCheck size={16} />
+                    <FaTrashAlt size={16} />
                   </button>
-                )}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteNotification(notif._id);
-                  }}
-                  title="Delete Notification"
-                  className="p-2 rounded-full text-red-500 hover:bg-red-100 transition-colors"
-                >
-                  <FaTrashAlt size={16} />
-                </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
     </div>
-  );
+  </div>
+);
+
 };
 
 export default Notification;
