@@ -41,7 +41,7 @@ const App = () => {
         return <Issues />;
       case "Municipality Admin":
         return <IssuesMunicipality />;
-      case "Staff":
+      case "Municipality Staff":
       case "Admin":
         return <IssuesStaff />;
       default:
@@ -55,7 +55,7 @@ const App = () => {
         return <IssueDetails />;
       case "Municipality Admin":
         return <IssueDetailsMunicipality />;
-      case "Staff":
+      case "Municipality Staff":
       case "Admin":
         return <IssueDetailsStaff />;
       default:
