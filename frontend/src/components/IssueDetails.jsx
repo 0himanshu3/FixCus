@@ -114,7 +114,7 @@ function IssueDetails() {
     setIsSubmittingFeedback(true);
     try {
       const imageUrls = await uploadFilesToFirebase(feedbackFiles, setFeedbackUploadProgress);
-      const res = await fetch(`http://localhost:3000/api/v1/issues/feedback`, {
+      const res = await fetch(`http://localhost:3000/api/v1/issues/submitFeedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
