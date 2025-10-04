@@ -98,240 +98,242 @@ function Issues() {
   };
 
   return (
-    <div className="relative">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">All Issues</h1>
-          <div className="flex gap-3">
+  <div className="relative min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="bg-gradient-to-r from-pink-400 to-pink-300 rounded-2xl p-6 shadow-2xl border-4 border-purple-600 mb-8">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <h1 className="text-4xl font-black text-purple-900 overflow-hidden">🎪 All Issues</h1>
+          <div className="flex gap-3 overflow-hidden">
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-6 rounded-lg shadow transition-colors duration-200"
+              className="bg-purple-600 hover:bg-purple-700 text-pink-100 py-2 px-6 rounded-full shadow-lg font-bold border-2 border-pink-300 transition-all duration-200 will-change-transform"
             >
-              Filter
+              🔍 Filter
             </button>
             <button
               onClick={handleAddIssue}
-              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg shadow transition-colors duration-200 flex items-center gap-2"
+              className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-all duration-200 flex items-center gap-2 will-change-transform"
             >
-              Publish Issue
+              ➕ Publish Issue
             </button>
           </div>
         </div>
-
-        {/* Loading / Empty / Issues List */}
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
-        ) : issues.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-            <h3 className="mt-4 text-lg font-medium text-gray-900">
-              No issues found
-            </h3>
-            <p className="mt-2 text-gray-500">
-              Get started by creating your first issue.
-            </p>
-            <button
-              onClick={handleAddIssue}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Publish Issue
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {issues.map((event) => (
-              <motion.div
-                key={event._id}
-                className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200 hover:shadow-2xl transition-all duration-300 group flex flex-col"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {event.image ? (
-                  <div className="h-48 overflow-hidden">
-                    <img
-                      src={event.image}
-                      alt={event.title}
-                      className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-                    />
-                  </div>
-                ) : (
-                  <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-12 w-12"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                )}
-
-                <div className="p-6 flex-grow">
-                  <h2 className="text-2xl font-semibold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors duration-300">
-                    {event.title}
-                  </h2>
-
-                  {event.category && (
-                    <span className="inline-block bg-blue-100 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full mb-3">
-                      {event.category}
-                    </span>
-                  )}
-
-                  <p className="text-sm text-gray-500 mb-2">
-                    <strong>Priority:</strong> {event.priority}
-                  </p>
-                  <p className="text-sm text-gray-500 mb-2">
-                    <strong>Status:</strong> {event.status}
-                  </p>
-                  <p className="text-sm text-gray-500 mb-2">
-                    <strong>Location:</strong> {event.eventLocation}
-                  </p>
-                  <p className="text-sm text-gray-500 mb-2">
-                    <strong>Published:</strong>{" "}
-                    {new Date(event.issuePublishDate).toLocaleDateString()}
-                  </p>
-                </div>
-
-                <div className="px-6 pb-6">
-                  <button
-                    onClick={() => handleViewIssue(event.slug)}
-                    className="w-full bg-gray-800 hover:bg-gray-900 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                  >
-                    View Details
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
       </div>
 
-      {/* Filter Modal */}
-      {isFilterOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Blurred Background */}
-          <div
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-            onClick={() => setIsFilterOpen(false)}
-          />
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-pink-400"></div>
+        </div>
+      ) : issues.length === 0 ? (
+        <div className="text-center py-12 bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl border-4 border-purple-600 shadow-xl">
+          <h3 className="mt-4 text-2xl font-black text-purple-900">
+            🎭 No issues found
+          </h3>
+          <p className="mt-2 text-purple-800 font-semibold">
+            Get started by creating your first issue.
+          </p>
+          <div className="mt-4 overflow-hidden inline-block">
+            <button
+              onClick={handleAddIssue}
+              className="px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-400 transition-all duration-200 will-change-transform"
+            >
+              ➕ Publish Issue
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {issues.map((event) => (
+      <motion.div
+        key={event._id}
+        className="relative bg-gradient-to-br from-yellow-100 to-pink-200 rounded-2xl shadow-xl border-8 border-double border-purple-700 hover:shadow-2xl transition-shadow duration-300 overflow-hidden group"
+        whileTap={{ scale: 0.98 }}
+      >
+        {/* Shimmer overlay on hover */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000 pointer-events-none"></div>
 
-          {/* Modal Content */}
-          <div className="relative bg-white rounded-xl shadow-lg w-full max-w-md p-6 z-10">
-            <h2 className="text-xl font-semibold mb-4">Filter Issues</h2>
-
-            <div className="space-y-3">
-              {/* Title */}
-              <input
-                type="text"
-                placeholder="Title"
-                value={filters.title}
-                onChange={(e) =>
-                  setFilters({ ...filters, title: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              />
-
-              {/* Category Dropdown */}
-              <select
-                value={filters.category}
-                onChange={(e) =>
-                  setFilters({ ...filters, category: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              >
-                <option value="">All Categories</option>
-                {issueCategories.map((cat, idx) => (
-                  <option key={idx} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-
-              {/* Priority Dropdown */}
-              <select
-                value={filters.priority}
-                onChange={(e) =>
-                  setFilters({ ...filters, priority: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              >
-                <option value="">All Priorities</option>
-                {priorityLevels.map((level, idx) => (
-                  <option key={idx} value={level}>
-                    {level}
-                  </option>
-                ))}
-              </select>
-
-              {/* Status Dropdown */}
-              <select
-                value={filters.status}
-                onChange={(e) =>
-                  setFilters({ ...filters, status: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              >
-                <option value="">All Status</option>
-                {statusOptions.map((s, idx) => (
-                  <option key={idx} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-
-              {/* Location */}
-              <input
-                type="text"
-                placeholder="Location"
-                value={filters.location}
-                onChange={(e) =>
-                  setFilters({ ...filters, location: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              />
-
-              {/* Recency */}
-              <select
-                value={filters.recency}
-                onChange={(e) =>
-                  setFilters({ ...filters, recency: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              >
-                <option value="">Sort by Recency</option>
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-              </select>
+        {/* Animated corner decorations */}
+        <div className="absolute top-0 left-0 w-16 h-16 border-t-8 border-l-8 border-pink-500 rounded-tl-2xl group-hover:border-yellow-400 transition-all duration-300 animate-pulse"></div>
+        <div className="absolute top-0 right-0 w-16 h-16 border-t-8 border-r-8 border-pink-500 rounded-tr-2xl group-hover:border-yellow-400 transition-all duration-300 animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+        <div className="absolute bottom-0 left-0 w-16 h-16 border-b-8 border-l-8 border-pink-500 rounded-bl-2xl group-hover:border-yellow-400 transition-all duration-300 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+        <div className="absolute bottom-0 right-0 w-16 h-16 border-b-8 border-r-8 border-pink-500 rounded-br-2xl group-hover:border-yellow-400 transition-all duration-300 animate-pulse" style={{ animationDelay: '0.3s' }}></div>
+        
+        {/* Priority ribbon with hover bounce */}
+        <div className="absolute top-6 -left-2 bg-gradient-to-r from-red-600 to-pink-600 text-white px-8 py-1 font-black text-xs shadow-lg transform -rotate-12 border-2 border-red-800 group-hover:scale-110 transition-transform duration-300">
+          ⚡ {event.priority}
+        </div>
+        
+        {/* Status badge with hover bounce */}
+        <div className="absolute top-6 -right-2 bg-purple-700 text-yellow-300 px-6 py-1 font-black text-xs shadow-lg transform rotate-12 border-2 border-yellow-300 group-hover:scale-110 transition-transform duration-300">
+          {event.status}
+        </div>
+        
+        <div className="p-8 pt-12">
+          {/* Header */}
+          <div className="text-center mb-4">
+            <div className="text-xs font-black text-purple-700 tracking-widest mb-1">MUNICIPAL ISSUE</div>
+            <h2 className="text-3xl font-black text-purple-900 overflow-hidden uppercase leading-tight group-hover:text-pink-700 transition-colors duration-300" style={{ textShadow: '2px 2px 0px rgba(236, 72, 153, 0.3)' }}>
+              {event.title}
+            </h2>
+            <div className="text-xs font-black text-purple-700 tracking-widest mt-1">━━ COMPLAINT REPORT ━━</div>
+          </div>
+          
+          {/* Category badge with glow */}
+          {event.category && (
+            <div className="text-center mb-4 overflow-hidden">
+              <span className="inline-block bg-purple-700 text-yellow-300 text-sm font-black px-5 py-2 rounded-full border-4 border-yellow-300 uppercase shadow-lg group-hover:shadow-yellow-300/50 transition-shadow duration-300">
+                🎪 {event.category}
+              </span>
             </div>
-
-            <div className="flex justify-end mt-6 gap-3">
-              <button
-                onClick={handleResetFilters}
-                className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
-              >
-                Reset
-              </button>
-              <button
-                onClick={handleApplyFilters}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
-                Apply
-              </button>
+          )}
+          
+          {/* Info box with border color change */}
+          <div className="bg-white/70 rounded-lg p-4 mb-4 border-4 border-purple-500 shadow-inner group-hover:border-pink-500 group-hover:bg-white/90 transition-all duration-300">
+            <div className="space-y-2 text-sm text-purple-900 font-bold">
+              <p className="flex items-center justify-between">
+                <span>📍 DISTRICT:</span>
+                <span className="text-right">{event.issueDistrict}</span>
+              </p>
+              <div className="border-t-2 border-dashed border-purple-300"></div>
+              <p className="flex items-center justify-between">
+                <span>📅 REPORTED:</span>
+                <span>{new Date(event.issuePublishDate).toLocaleDateString()}</span>
+              </p>
             </div>
           </div>
+          
+          {/* Button with gradient animation */}
+          <div className="overflow-hidden">
+            <button
+              onClick={() => handleViewIssue(event.slug)}
+              className="w-full bg-gradient-to-r from-purple-700 via-pink-600 to-purple-700 text-yellow-300 py-4 rounded-full font-black shadow-lg border-4 border-yellow-300 uppercase text-lg tracking-wider hover:brightness-110 hover:shadow-yellow-300/50 transition-all duration-300 will-change-transform relative overflow-hidden group"
+            >
+              <span className="relative z-10 cursor-pointer">VIEW ISSUE DETAILS</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700"></div>
+            </button>
+          </div>
+        </div>
+        
+        {/* Ticket stub ID with bounce */}
+        <div className="absolute bottom-2 right-2 bg-purple-900 text-yellow-300 px-2 py-1 rounded font-black text-xs border border-yellow-300 group-hover:scale-110 transition-transform duration-300">
+          #{event._id.slice(-6).toUpperCase()}
+        </div>
+      </motion.div>
+
+          ))}
         </div>
       )}
     </div>
-  );
+
+    {isFilterOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div
+          className="absolute inset-0 bg-purple-900/90 backdrop-blur-sm"
+          onClick={() => setIsFilterOpen(false)}
+        />
+
+        <div className="relative bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl shadow-2xl w-full max-w-md p-6 z-10 border-4 border-purple-600">
+          <h2 className="text-2xl font-black text-purple-900 mb-4 overflow-hidden">🔍 Filter Issues</h2>
+
+          <div className="space-y-3">
+            <input
+              type="text"
+              placeholder="Title"
+              value={filters.title}
+              onChange={(e) =>
+                setFilters({ ...filters, title: e.target.value })
+              }
+              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+            />
+
+            <select
+              value={filters.category}
+              onChange={(e) =>
+                setFilters({ ...filters, category: e.target.value })
+              }
+              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+            >
+              <option value="">All Categories</option>
+              {issueCategories.map((cat, idx) => (
+                <option key={idx} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filters.priority}
+              onChange={(e) =>
+                setFilters({ ...filters, priority: e.target.value })
+              }
+              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+            >
+              <option value="">All Priorities</option>
+              {priorityLevels.map((level, idx) => (
+                <option key={idx} value={level}>
+                  {level}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filters.status}
+              onChange={(e) =>
+                setFilters({ ...filters, status: e.target.value })
+              }
+              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+            >
+              <option value="">All Status</option>
+              {statusOptions.map((s, idx) => (
+                <option key={idx} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+
+            <input
+              type="text"
+              placeholder="Location"
+              value={filters.location}
+              onChange={(e) =>
+                setFilters({ ...filters, location: e.target.value })
+              }
+              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+            />
+
+            <select
+              value={filters.recency}
+              onChange={(e) =>
+                setFilters({ ...filters, recency: e.target.value })
+              }
+              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+            >
+              <option value="">Sort by Recency</option>
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+            </select>
+          </div>
+
+          <div className="flex justify-end mt-6 gap-3 overflow-hidden">
+            <button
+              onClick={handleResetFilters}
+              className="px-6 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400 transition-all duration-200 will-change-transform"
+            >
+              🔄 Reset
+            </button>
+            <button
+              onClick={handleApplyFilters}
+              className="px-6 py-2 bg-purple-700 text-pink-100 rounded-full font-bold border-2 border-pink-400 hover:bg-purple-800 shadow-md transition-all duration-200 will-change-transform"
+            >
+              ✅ Apply
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+);
+
 }
 
 export default Issues;
