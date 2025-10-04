@@ -4,6 +4,72 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
 import axios from "axios";
 
+// --- MODIFICATION START: New component to render formatted AI analysis ---
+const AnalysisRenderer = ({ analysis }) => {
+  if (!analysis) return null;
+
+  // Define sections with titles and corresponding emojis
+  const sections = [
+    { title: "Overall Sentiment & Satisfaction", emoji: "📊" },
+    { title: "Resolution Analysis", emoji: "📈" },
+    { title: "Key Strengths", emoji: "✨" },
+    { title: "Areas for Improvement", emoji: "⚠️" },
+    { title: "Actionable Suggestions", emoji: "💡" },
+    { title: "Final Verdict", emoji: "⚖️" },
+  ];
+
+  // Parse the analysis string into a structured object
+  const parsedAnalysis = sections.reduce((acc, section, index) => {
+    const nextSection = sections[index + 1];
+    const startPattern = `**${section.title}**`;
+    
+    const startIndex = analysis.indexOf(startPattern);
+    if (startIndex === -1) return acc;
+
+    let endIndex;
+    if (nextSection) {
+        const nextStartPattern = `**${nextSection.title}**`;
+        endIndex = analysis.indexOf(nextStartPattern, startIndex);
+    }
+
+    const contentRaw = analysis.substring(startIndex + startPattern.length, endIndex === -1 ? undefined : endIndex).trim();
+    
+    // Process content for bullet points
+    const contentLines = contentRaw.split('\n').filter(line => line.trim() !== '').map(line => line.replace(/^[*-]\s*/, ''));
+
+    acc[section.title] = contentLines;
+    return acc;
+  }, {});
+  
+  return (
+    <div className="space-y-4">
+      {sections.map(section => {
+        const content = parsedAnalysis[section.title];
+        if (!content || content.length === 0) return null;
+
+        return (
+          <div key={section.title} className="bg-white/50 p-4 rounded-lg shadow border-2 border-pink-300">
+            <h3 className="text-xl font-black text-purple-900 mb-2">
+              {section.emoji} {section.title}
+            </h3>
+            <div className="text-purple-800 space-y-2">
+              {content.length > 1 ? (
+                <ul className="list-disc list-inside space-y-1">
+                  {content.map((item, idx) => <li key={idx}>{item}</li>)}
+                </ul>
+              ) : (
+                <p>{content[0]}</p>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+// --- MODIFICATION END ---
+
+
 function IssueDetailsMunicipality() {
   const { slug } = useParams();
   const [issue, setIssue] = useState(null);
@@ -22,10 +88,15 @@ function IssueDetailsMunicipality() {
   // State for new modals and data
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  const [citizenFeedbacks, setCitizenFeedbacks] = useState([]); // Changed to plural and initialized as array
+  const [citizenFeedbacks, setCitizenFeedbacks] = useState([]); 
   const [supervisorReport, setSupervisorReport] = useState(null);
   const [loadingFeedback, setLoadingFeedback] = useState(false);
   const [loadingReport, setLoadingReport] = useState(false);
+
+  // State for AI Analysis Modal
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState("");
+  const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
 
   async function fetchStaff() {
     try {
@@ -69,13 +140,13 @@ function IssueDetailsMunicipality() {
 
   useEffect(() => {
     const originalOverflow = window.getComputedStyle(document.body).overflow;
-    if (showImageSlider || showFeedbackModal || showReportModal) {
+    if (showImageSlider || showFeedbackModal || showReportModal || showAnalysisModal) {
       document.body.style.overflow = "hidden";
     }
     return () => {
       document.body.style.overflow = originalOverflow;
     };
-  }, [showImageSlider, showFeedbackModal, showReportModal]);
+  }, [showImageSlider, showFeedbackModal, showReportModal, showAnalysisModal]);
 
   const handleTakeUpIssue = async () => {
     if (!deadline) return alert("Please set a deadline before taking up the issue");
@@ -130,10 +201,10 @@ function IssueDetailsMunicipality() {
     setShowFeedbackModal(true);
     try {
       const res = await axios.get(`http://localhost:3000/api/v1/issues/feedback/${issue._id}`, { withCredentials: true });
-      setCitizenFeedbacks(res.data.feedbacks || []); // Expect an array
+      setCitizenFeedbacks(res.data.feedbacks || []);
     } catch (error) {
       console.error("Error fetching citizen feedback:", error);
-      setCitizenFeedbacks([]); // Set to empty array on error
+      setCitizenFeedbacks([]);
     } finally {
       setLoadingFeedback(false);
     }
@@ -150,6 +221,26 @@ function IssueDetailsMunicipality() {
       setSupervisorReport(null);
     } finally {
       setLoadingReport(false);
+    }
+  };
+  
+  const handleGenerateAnalysis = async () => {
+    setIsGeneratingAnalysis(true);
+    setShowAnalysisModal(true);
+    setAiAnalysis("");
+
+    try {
+      const res = await axios.post(
+        `http://localhost:3000/api/v1/issues/analyze-feedback`,
+        { issueId: issue._id },
+        { withCredentials: true }
+      );
+      setAiAnalysis(res.data.analysis);
+    } catch (error) {
+      console.error("Error generating AI analysis:", error);
+      setAiAnalysis("Failed to generate the analysis. Please check the server logs and try again.");
+    } finally {
+      setIsGeneratingAnalysis(false);
     }
   };
 
@@ -420,20 +511,30 @@ function IssueDetailsMunicipality() {
             {isResolved && (
               <div className="mt-8 pt-6 border-t-4 border-dashed border-purple-500">
                 <h3 className="font-black text-xl text-purple-900 mb-4">Post-Resolution Reports</h3>
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <button
-                        onClick={handleViewFeedback}
-                        className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-full font-black text-lg hover:bg-blue-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all"
-                    >
-                        📢 View Citizen Feedback
-                    </button>
-                    <button
-                        onClick={handleViewReport}
-                        className="flex-1 px-6 py-3 bg-teal-600 text-white rounded-full font-black text-lg hover:bg-teal-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all"
-                    >
-                        📜 View Supervisor Report
-                    </button>
-                </div>
+                <div className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                      <button
+                          onClick={handleViewFeedback}
+                          className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-full font-black text-lg hover:bg-blue-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all"
+                      >
+                          📢 View Citizen Feedback
+                      </button>
+                      <button
+                          onClick={handleViewReport}
+                          className="flex-1 px-6 py-3 bg-teal-600 text-white rounded-full font-black text-lg hover:bg-teal-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all"
+                      >
+                          📜 View Supervisor Report
+                      </button>
+                  </div>
+                  <div>
+                      <button
+                          onClick={handleGenerateAnalysis}
+                          className="w-full px-6 py-3 bg-indigo-600 text-white rounded-full font-black text-lg hover:bg-indigo-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all"
+                      >
+                          🤖 Generate AI Feedback Analysis
+                      </button>
+                  </div>
+              </div>
               </div>
             )}
           </div>
@@ -450,35 +551,35 @@ function IssueDetailsMunicipality() {
                 {loadingFeedback ? (
                     <div className="flex justify-center items-center h-48"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div></div>
                 ) : citizenFeedbacks.length > 0 ? (
-                <div className="space-y-4">
-                  {citizenFeedbacks.map((feedback) => (
-                    <div key={feedback._id} className="p-4 bg-white rounded-lg shadow-md border-2 border-pink-400 text-purple-800 space-y-2">
-                        <p><strong>Submitted By:</strong> {feedback.submittedBy?.name || 'Anonymous'}</p>
-                        <p><strong>Date:</strong> {new Date(feedback.createdAt).toLocaleString()}</p>
-                        <hr className="border-purple-300"/>
-                        <p><strong>Issue Resolved:</strong> <span className="font-bold">{feedback.resolved}</span></p>
-                        <p><strong>Resolution Time:</strong> {feedback.resolutionTime}</p>
-                        <p><strong>Resolution Quality:</strong> {feedback.resolutionQuality}</p>
-                        <p><strong>Staff Professionalism:</strong> {feedback.staffProfessionalism}</p>
-                        <hr className="border-purple-300"/>
-                        <p><strong>Overall Satisfaction:</strong> <span className="font-bold">{feedback.satisfactionRating} / 5</span></p>
-                        <p><strong>Complaint Taken Seriously:</strong> {feedback.takenSeriously}</p>
-                        <p><strong>Clear Communication:</strong> {feedback.clearCommunication}</p>
-                        <p><strong>Future Trust:</strong> {feedback.futureTrust}</p>
-                        <p><strong>Would Use System Again:</strong> {feedback.useSystemAgain}</p>
-                        {feedback.suggestions && <div><strong>Suggestions:</strong><blockquote className="mt-1 p-2 bg-purple-100 border-l-4 border-purple-400 italic">{feedback.suggestions}</blockquote></div>}
-                        {feedback.additionalComments && <div><strong>Additional Comments:</strong><blockquote className="mt-1 p-2 bg-purple-100 border-l-4 border-purple-400 italic">{feedback.additionalComments}</blockquote></div>}
-                        {feedback.photos && feedback.photos.length > 0 && (
-                            <div>
-                                <h3 className="font-bold mt-4">Attached Photos:</h3>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-                                    {feedback.photos.map((photo, idx) => <img key={idx} src={photo} alt="Feedback" className="w-full h-24 object-cover rounded-md border-2 border-purple-400"/>)}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                  ))}
-                </div>
+                <div className="space-y-4">
+                  {citizenFeedbacks.map((feedback) => (
+                    <div key={feedback._id} className="p-4 bg-white rounded-lg shadow-md border-2 border-pink-400 text-purple-800 space-y-2">
+                        <p><strong>Submitted By:</strong> {feedback.submittedBy?.name || 'Anonymous'}</p>
+                        <p><strong>Date:</strong> {new Date(feedback.createdAt).toLocaleString()}</p>
+                        <hr className="border-purple-300"/>
+                        <p><strong>Issue Resolved:</strong> <span className="font-bold">{feedback.resolved}</span></p>
+                        <p><strong>Resolution Time:</strong> {feedback.resolutionTime}</p>
+                        <p><strong>Resolution Quality:</strong> {feedback.resolutionQuality}</p>
+                        <p><strong>Staff Professionalism:</strong> {feedback.staffProfessionalism}</p>
+                        <hr className="border-purple-300"/>
+                        <p><strong>Overall Satisfaction:</strong> <span className="font-bold">{feedback.satisfactionRating} / 5</span></p>
+                        <p><strong>Complaint Taken Seriously:</strong> {feedback.takenSeriously}</p>
+                        <p><strong>Clear Communication:</strong> {feedback.clearCommunication}</p>
+                        <p><strong>Future Trust:</strong> {feedback.futureTrust}</p>
+                        <p><strong>Would Use System Again:</strong> {feedback.useSystemAgain}</p>
+                        {feedback.suggestions && <div><strong>Suggestions:</strong><blockquote className="mt-1 p-2 bg-purple-100 border-l-4 border-purple-400 italic">{feedback.suggestions}</blockquote></div>}
+                        {feedback.additionalComments && <div><strong>Additional Comments:</strong><blockquote className="mt-1 p-2 bg-purple-100 border-l-4 border-purple-400 italic">{feedback.additionalComments}</blockquote></div>}
+                        {feedback.photos && feedback.photos.length > 0 && (
+                            <div>
+                                <h3 className="font-bold mt-4">Attached Photos:</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+                                    {feedback.photos.map((photo, idx) => <img key={idx} src={photo} alt="Feedback" className="w-full h-24 object-cover rounded-md border-2 border-purple-400"/>)}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                  ))}
+                </div>
                 ) : (
                     <p className="text-center font-bold text-purple-700 py-10">No citizen feedback has been submitted for this issue yet.</p>
                 )}
@@ -524,8 +625,9 @@ function IssueDetailsMunicipality() {
                                                 <p className="font-bold text-lg">{staff.name} <span className="text-sm font-medium text-purple-600">({staff.role})</span></p>
                                                 <p className="text-xs text-gray-500">{staff.email}</p>
                                             </div>
-                  _MOD_
+                                            <p className="text-lg font-black text-purple-700">Rating: {staff.rating} / 5</p>
                                         </div>
+                                        {staff.comment && <blockquote className="mt-2 text-sm p-2 bg-gray-50 border-l-4 border-gray-300 italic">"{staff.comment}"</blockquote>}
                                     </div>
                                 ))}
                             </div>
@@ -538,6 +640,27 @@ function IssueDetailsMunicipality() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* AI Analysis Modal */}
+      <AnimatePresence>
+        {showAnalysisModal && (
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/95 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <div className="bg-gradient-to-br from-pink-200 to-pink-100 rounded-xl p-6 shadow-xl border-4 border-purple-600 w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
+                <button onClick={() => setShowAnalysisModal(false)} className="absolute top-4 right-4 text-purple-700 text-4xl hover:text-pink-500 font-bold">&times;</button>
+                <h2 className="text-2xl font-black text-purple-900 mb-4">🤖 AI Feedback Analysis</h2>
+                {isGeneratingAnalysis ? (
+                    <div className="flex flex-col justify-center items-center h-48 space-y-4">
+                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                      <p className="font-semibold text-purple-700">Generating summary, please wait...</p>
+                    </div>
+                ) : (
+                  <AnalysisRenderer analysis={aiAnalysis} />
+                )}
+              </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
