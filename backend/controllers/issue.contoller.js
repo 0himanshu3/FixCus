@@ -2,6 +2,7 @@ import Issue from "../models/issue.model.js";
 import { Task } from "../models/task.model.js";
 import { User } from "../models/user.model.js";
 import { Municipality } from "../models/muncipality.model.js";
+import {ResolutionReport} from "../models/resolutionReport.model.js";
 import { 
   sendTaskEscalationNotificationToStaff,
   sendTaskAssignmentNotification 
@@ -724,21 +725,103 @@ export const approveRejectTaskProof = async (req, res) => {
 export const resolveIssue = async (req, res) => {
   try {
     const { issueId } = req.params;
-    const { summary } = req.body;
+    const { summary, resolutionImages = [], staffPerformance = [] } = req.body;
 
+    // Basic validation
+    if (!summary || typeof summary !== "string" || summary.trim().length === 0) {
+      return res.status(400).json({ message: "Summary is required" });
+    }
+    if (!Array.isArray(resolutionImages)) {
+      return res.status(400).json({ message: "resolutionImages must be an array" });
+    }
+    if (!Array.isArray(staffPerformance)) {
+      return res.status(400).json({ message: "staffPerformance must be an array" });
+    }
+
+    // Load issue
     const issue = await Issue.findById(issueId);
     if (!issue) return res.status(404).json({ message: "Issue not found" });
 
+    // Prevent double-resolve
+    if (String(issue.status).toLowerCase() === "resolved") {
+      return res.status(400).json({ message: "Issue already resolved" });
+    }
+
+    // Optional: Enforce role-based permission (uncomment if you keep role on req.user)
+    // if (!req.user || req.user.role !== "Supervisor") {
+    //   return res.status(403).json({ message: "Only supervisors can resolve issues" });
+    // }
+
+    // sanitize & normalize staffPerformance entries, and filter out any entry that matches the supervisor
+    const supervisorEmail = req.user?.email?.toLowerCase?.();
+    const supervisorIdStr = req.user?._id ? String(req.user._id) : null;
+
+    const cleanedStaff = staffPerformance
+      .filter((p) => p && (p.email || p.name)) // must have at least an email or name
+      .map((p) => {
+        const item = {
+          name: String(p.name || "").trim(),
+          email: String(p.email || "").trim(),
+          role: String(p.role || "").trim(),
+          rating: Number.isFinite(Number(p.rating)) ? Number(p.rating) : 0,
+          comment: String(p.comment || "").trim(),
+        };
+
+        // attach userId if valid ObjectId provided
+        if (p.userId) {
+          try {
+            item.userId = mongoose.Types.ObjectId(String(p.userId));
+          } catch (e) {
+            // ignore invalid ObjectId (optional)
+          }
+        }
+        return item;
+      })
+      // remove supervisor (defensive)
+      .filter((p) => {
+        if (!p) return false;
+        if (supervisorEmail && p.email && p.email.toLowerCase() === supervisorEmail) return false;
+        if (supervisorIdStr && p.userId && String(p.userId) === supervisorIdStr) return false;
+        return true;
+      })
+      // ensure rating range
+      .map((p) => {
+        if (typeof p.rating !== "number" || Number.isNaN(p.rating)) p.rating = 0;
+        if (p.rating < 1) p.rating = 1;
+        if (p.rating > 5) p.rating = 5;
+        return p;
+      });
+
+    // Create resolution report
+    const report = new ResolutionReport({
+      issue: issue._id,
+      summary: summary.trim(),
+      images: resolutionImages.map(String),
+      supervisor: req.user._id,
+      staffPerformance: cleanedStaff
+    });
+
+    await report.save();
+
+    // Update issue: status + resolvedBy + resolvedAt + reference to report + optional human summary
     issue.status = "Resolved";
-    issue.resolutionSummary = summary;
     issue.resolvedBy = req.user._id;
     issue.resolvedAt = Date.now();
-
+    issue.resolutionReport = report._id;            // requires Issue schema to have this field (see note)
     await issue.save();
-    res.status(200).json({ message: "Issue resolved successfully" });
+
+    // return populated report for convenience
+    const populatedReport = await ResolutionReport.findById(report._id)
+      .populate("supervisor", "name email")
+      .lean();
+
+    return res.status(200).json({
+      message: "Issue resolved successfully",
+      resolutionReport: populatedReport
+    });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server Error" });
+    console.error("resolveIssue error:", err);
+    return res.status(500).json({ message: "Server Error" });
   }
 };
 
