@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
@@ -24,9 +24,10 @@ import ApplicationRequest from "./pages/ApplicationRequest";
 import IssueDetailsMunicipality from "./components/IssueDetailsMunicipality"; // If you have this component
 import IssuesMunicipality from "./components/IssuesMunicipality"; // If you have this component
 import CreateIssue from "./pages/CreateIssue";
+import Notification from "./pages/Notification";
 
 const App = () => {
-  const { user } = useSelector((state) => state.auth);
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -62,6 +63,29 @@ const App = () => {
     }
   };
 
+  const [notifications, setNotifications] = useState([]);
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch("http://localhost:3000/api/v1/notification", {
+        credentials: "include",
+      });
+      const data = await res.json();
+      setNotifications(data.data || []);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+    }
+  };
+
+  //!TODO: integrate socket io for real-time notifications
+  // Fetch notifications on mount and poll every 30 seconds
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated]);
+
   return (
     <Router>
       <Routes>
@@ -77,6 +101,10 @@ const App = () => {
           <Route path="/municipality" element={<MuncipalityMain />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/requests" element={<ApplicationRequest />} />
+          <Route
+            path="/notification"
+            element={<Notification notifications={notifications} fetchNotifications={fetchNotifications} />}
+          />
         </Route>
 
         {/* Public Routes */}

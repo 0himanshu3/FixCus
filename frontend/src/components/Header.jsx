@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/slices/authSlice";
 import { FaBell, FaTimes, FaBars } from "react-icons/fa";
 
-const Header = () => {
+const Header = ({ notifications }) => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -16,6 +16,8 @@ const Header = () => {
     dispatch(logout());
     navigate("/login");
   };
+
+  const unreadCount = notifications?.filter((n) => !n.isRead).length || 0;
 
   // Function to check if link is active
   const isActive = (path) => location.pathname === path;
@@ -176,7 +178,20 @@ const Header = () => {
             </Link>
           )}
   
-          
+          {/* Notifications */}
+          {isAuthenticated && (
+            <Link to="/notification" className="relative">
+              <FaBell
+                size={22}
+                className="text-gray-700 hover:text-gray-900 transition duration-200"
+              />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </Link>
+          )}
   
           {/* Mobile Hamburger */}
           <button
