@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import LocationPicker from "../components/LocationPicker";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { app } from "../firebase";
+import { useNavigate } from "react-router-dom";
 
 export default function CreateIssue() {
   const [formData, setFormData] = useState({ title: "", content: "", category: "", images: [], videos: [] });
@@ -11,6 +12,7 @@ export default function CreateIssue() {
   const [location, setLocation] = useState(null);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const categories = [
     "Education & Skill Development",
@@ -76,7 +78,10 @@ export default function CreateIssue() {
           issuePublishDate: new Date()
         })
       });
-      if (res.ok) window.alert("Issue created successfully!");
+      if (res.ok) {
+        window.alert("Issue created successfully!");
+        navigate("/");
+      }
       else setError("Failed to create issue.");
     } catch (err) {
       setError("Something went wrong.");

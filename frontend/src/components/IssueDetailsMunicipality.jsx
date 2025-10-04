@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
+import axios from "axios";
 
 function IssueDetailsMunicipality() {
   const { slug } = useParams();
@@ -14,6 +15,26 @@ function IssueDetailsMunicipality() {
   const [roleName, setRoleName] = useState("");
   const [staffEmail, setStaffEmail] = useState(""); // ✅ use staff email instead of ID
   const { user } = useSelector((state) => state.auth);
+  const [staff, setStaff] = useState([]);
+  const [loadingStaff, setLoadingStaff] = useState(false);
+  const [assigningStaff, setAssigningStaff] = useState(false);
+
+
+  async function fetchStaff() {
+    try {
+      setLoadingStaff(true)
+      const res = await axios.get(`http://localhost:3000/api/v1/auth/staff`, {
+        withCredentials: true
+      })
+      console.log(res.data);
+      setStaff(res.data || [])
+    } catch (err) {
+      console.error('fetchStaff', err)
+      setStaff([])
+    } finally {
+      setLoadingStaff(false)
+    }
+  }
 
   const fetchIssue = async () => {
     setIsLoading(true);
@@ -26,7 +47,7 @@ function IssueDetailsMunicipality() {
       if (res.ok) {
         const data = await res.json();
         setIssue(data.issue);
-        setStaffAssignments(data.issue.staffAssignments || []);
+        setStaffAssignments(data.issue.staffsAssigned || []);
       }
     } catch (err) {
       console.error(err);
@@ -37,6 +58,7 @@ function IssueDetailsMunicipality() {
 
   useEffect(() => {
     fetchIssue();
+    fetchStaff();
   }, [slug]);
 
   const handleTakeUpIssue = async () => {
@@ -54,24 +76,39 @@ function IssueDetailsMunicipality() {
     }
   };
 
-  const handleAssignStaff = async () => {
-    if (!roleName || !staffEmail) return alert("Role name and staff email are required");
+  const handleAssignStaff = async (e) => {
+    e.preventDefault?.(); // safeguard if called from form
+
+    if (!roleName || !staffEmail) {
+      alert("Role name and staff email are required");
+      return;
+    }
+
+    if (assigningStaff) return; // Prevent duplicate submits
+
+    setAssigningStaff(true);
     try {
       const res = await fetch(`http://localhost:3000/api/v1/issues/assign-staff`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ issueId: issue._id, role: roleName, staffEmail }), // ✅ pass staff email
+        body: JSON.stringify({ issueId: issue._id, role: roleName, staffEmail }),
       });
       if (res.ok) {
         setRoleName("");
         setStaffEmail("");
         fetchIssue();
+      } else {
+        alert("Failed to assign staff.");
       }
     } catch (err) {
       console.error(err);
+      alert("Something went wrong.");
+    } finally {
+      setAssigningStaff(false);
     }
   };
+
 
   const handleNextImage = () =>
     setCurrentImageIdx((prev) => (prev + 1) % issue.images.length);
@@ -255,29 +292,45 @@ function IssueDetailsMunicipality() {
       )}
 
       {/* Municipality Action: Assign Staff */}
-{issue.issueTakenUpBy && issue.issueTakenUpBy._id === user._id && (
-  <div className="mt-6 space-y-2 border-t border-gray-300 pt-4">
-    <h2 className="text-xl font-semibold">Assign Staff</h2>
-    <input
-      type="text"
-      placeholder="Role Name"
-      value={roleName}
-      onChange={(e) => setRoleName(e.target.value)}
-      className="border border-gray-300 rounded-md px-3 py-2 w-full"
-    />
-    <input
-      type="email"
-      placeholder="Staff Email"
-      value={staffEmail}
-      onChange={(e) => setStaffEmail(e.target.value)}
-      className="border border-gray-300 rounded-md px-3 py-2 w-full"
-    />
+        {issue.issueTakenUpBy && issue.issueTakenUpBy._id === user._id && (
+          <div className="mt-6 space-y-2 border-t border-gray-300 pt-4">
+            <h2 className="text-xl font-semibold">Assign Staff</h2>
+            <select
+              value={roleName}
+              onChange={(e) => setRoleName(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-2 w-full"
+              required
+            >
+              <option value="">Select Role</option>
+              <option value="Worker">Worker</option>
+              <option value="Supervisor">Supervisor</option>
+              <option value="Coordinator">Coordinator</option>
+            </select>
+            <select
+          value={staffEmail}
+          onChange={(e) => setStaffEmail(e.target.value)}
+          className="border border-gray-300 rounded-md px-3 py-2 w-full"
+          required
+        >
+          <option value="">Select Staff</option>
+          {staff.map((s) => (
+            <option 
+              key={s._id} 
+              value={s.email}
+            >
+              {`${s.name} (${s.email}) — ${s.available ? 'Available' : 'Busy'}`}
+            </option>
+          ))}
+        </select>
+
     <button
       onClick={handleAssignStaff}
       className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+      disabled={!roleName || !staffEmail || assigningStaff}
     >
-      Assign Staff
+      {assigningStaff ? "Assigning..." : "Assign Staff"}
     </button>
+
 
     {/* Display assigned staff */}
     <div className="mt-4 space-y-2">
