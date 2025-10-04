@@ -1200,3 +1200,142 @@ export const analyzeFeedback = async (req, res) => {
         res.status(500).json({ success: false, message: `Failed to generate AI analysis: ${error.message}` });
     }
 };
+
+export const reassignTaskToCoordinator = async (req, res) => {
+  const { taskId } = req.params;
+  const { coordinatorId, deadline } = req.body;
+  console.log(req.body);
+  
+  const actorId = req.user && req.user._id;
+
+  if (!coordinatorId) {
+    return res.status(400).json({ success: false, message: "coordinatorId is required" });
+  }
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const origTask = await Task.findById(taskId).session(session);
+    if (!origTask) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ success: false, message: "Original task not found" });
+    }
+
+    // Only allow the supervisor who is assigned this task to reassign it
+    if (
+      !origTask.assignedTo ||
+      String(origTask.assignedTo) !== String(actorId) ||
+      origTask.roleOfAssignee !== "Supervisor"
+    ) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(403).json({ success: false, message: "Not authorized to reassign this task" });
+    }
+
+    // Ensure coordinator exists
+    const coordinatorUser = await User.findById(coordinatorId).session(session);
+    if (!coordinatorUser) {
+      await session.abortTransaction();
+      session.endSession();
+      console.log("Coordinator user not found:", coordinatorId);
+      
+      return res.status(404).json({ success: false, message: "Coordinator user not found" });
+    }
+
+    // Prepare new task doc with same details but new assignee and deadline
+    const newTaskData = {
+      title: origTask.title,
+      description: origTask.description,
+      issueId: origTask.issueId,
+      assignedBy: actorId, // supervisor reassigns
+      assignedTo: coordinatorUser._id,
+      roleOfAssignee: "Coordinator",
+      status: "Pending",
+      deadline: deadline ? new Date(deadline) : origTask.deadline,
+      taskUpdates: [], // start fresh for the new task
+      taskCompletionProof: undefined,
+      taskProofImages: [],
+      taskProofSubmitted: false,
+      hasEscalated: false,
+      escalatedFrom: origTask._id,
+    };
+
+    // Create new task
+    const newTask = await Task.create([newTaskData], { session });
+    // newTask is an array because create([...])
+    const created = newTask[0];
+
+    // Delete original task
+    await Task.findByIdAndDelete(origTask._id, { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res.status(200).json({
+      success: true,
+      message: "Task reassigned to coordinator",
+      task: created,
+    });
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error("reassignTaskToCoordinator error:", err);
+    return res.status(500).json({ success: false, message: "Server error", error: err.message });
+  }
+};
+
+/**
+ * Supervisor completes their task directly (no approval step)
+ * - Updates task fields: status -> Completed, attaches completion text and proof images
+ * POST /api/v1/tasks/supervisor/complete/:taskId
+ * body: { completionText?: String, proofImages?: [String] }
+ */
+export const completeTaskBySupervisor = async (req, res) => {
+  const { taskId } = req.params;
+  const { completionText, proofImages = [] } = req.body;
+  const actorId = req.user && req.user._id;
+
+  if (!completionText && (!Array.isArray(proofImages) || proofImages.length === 0)) {
+    return res.status(400).json({
+      success: false,
+      message: "Provide completionText or at least one proof image URL",
+    });
+  }
+
+  try {
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    // Only allow the supervisor assigned to this task to complete it
+    if (
+      !task.assignedTo ||
+      String(task.assignedTo) !== String(actorId) ||
+      task.roleOfAssignee !== "Supervisor"
+    ) {
+      return res.status(403).json({ success: false, message: "Not authorized to complete this task" });
+    }
+
+    // Update fields and mark completed
+    if (completionText) task.taskCompletionProof = completionText;
+    if (Array.isArray(proofImages) && proofImages.length > 0) task.taskProofImages = proofImages;
+    task.taskProofSubmitted = true;
+    task.status = "Completed";
+    // if you want to keep audit trail add an update entry to taskUpdates
+    task.taskUpdates = task.taskUpdates || [];
+    task.taskUpdates.push({
+      updateText: completionText ? `Completed by supervisor: ${completionText}` : "Completed by supervisor",
+      updatedBy: actorId,
+      updatedAt: new Date(),
+    });
+
+    await task.save();
+
+    return res.status(200).json({ success: true, message: "Task completed by supervisor", task });
+  } catch (err) {
+    console.error("completeTaskBySupervisor error:", err);
+    return res.status(500).json({ success: false, message: "Server error", error: err.message });
+  }
+};

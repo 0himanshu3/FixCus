@@ -1,5 +1,5 @@
 import express from "express";
-import { addComment, createIssue, deleteComment, downvoteIssue, getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback, getFeedbackForIssue, getReportForIssue, analyzeFeedback } from "../controllers/issue.contoller.js";
+import { addComment, createIssue, deleteComment, downvoteIssue, getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback, getFeedbackForIssue, getReportForIssue, analyzeFeedback, reassignTaskToCoordinator, completeTaskBySupervisor } from "../controllers/issue.contoller.js";
 import { isAuthenticated, protectMunicipality } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -50,7 +50,20 @@ router.get('/feedback/:issueId', isAuthenticated, getFeedbackForIssue);
 router.get('/report/:issueId', isAuthenticated, getReportForIssue);
 
 router.post("/analyze-feedback", isAuthenticated, analyzeFeedback);
+
+
+router.post(
+  "/reassign/:taskId",
+  isAuthenticated,
+  reassignTaskToCoordinator
+);
+
+// Supervisor completes their task themselves (no approval)
+router.post(
+  "/completeBySupervisor/:taskId",
+  isAuthenticated,
+  completeTaskBySupervisor
+);
+
 router.get("/:slug",isAuthenticated, getIssueBySlug);
-
-
 export default router;
