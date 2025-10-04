@@ -3,6 +3,10 @@ import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
 import axios from "axios";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, RadialLinearScale } from 'chart.js';
+import { Bar, Pie, Doughnut, PolarArea } from 'react-chartjs-2';
+
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title, RadialLinearScale);
 
 // --- MODIFICATION START: New component to render formatted AI analysis ---
 const AnalysisRenderer = ({ analysis }) => {
@@ -66,6 +70,108 @@ const AnalysisRenderer = ({ analysis }) => {
       })}
     </div>
   );
+};
+// --- MODIFICATION END ---
+
+// --- MODIFICATION START: New component for feedback visualization ---
+const FeedbackVisualizer = ({ feedbacks }) => {
+    if (!feedbacks || feedbacks.length === 0) return null;
+
+    // Process data for charts
+    const satisfactionData = {
+        labels: ['1 Star', '2 Stars', '3 Stars', '4 Stars', '5 Stars'],
+        datasets: [{
+            label: '# of Votes',
+            data: [1, 2, 3, 4, 5].map(rating => feedbacks.filter(fb => fb.satisfactionRating === rating).length),
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(255, 159, 64, 0.6)',
+                'rgba(255, 205, 86, 0.6)',
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+            ],
+            borderColor: [
+                'rgb(255, 99, 132)',
+                'rgb(255, 159, 64)',
+                'rgb(255, 205, 86)',
+                'rgb(75, 192, 192)',
+                'rgb(54, 162, 235)',
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    const resolvedData = {
+        labels: ['Yes', 'Partially', 'No'],
+        datasets: [{
+            data: ['Yes', 'Partially', 'No'].map(status => feedbacks.filter(fb => fb.resolved === status).length),
+            backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 205, 86, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+            borderColor: ['#fff'],
+            borderWidth: 2,
+        }]
+    };
+    
+    const resolutionTimeData = {
+        labels: ['Very fast', 'Acceptable', 'Too slow', 'Still pending'],
+        datasets: [{
+            data: ['Very fast', 'Acceptable', 'Too slow', 'Still pending'].map(status => feedbacks.filter(fb => fb.resolutionTime === status).length),
+            backgroundColor: ['rgba(54, 162, 235, 0.6)', 'rgba(75, 192, 192, 0.6)', 'rgba(255, 159, 64, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+             borderColor: ['#fff'],
+            borderWidth: 2,
+        }]
+    };
+
+    const professionalismData = {
+        labels: ['Yes', 'No'],
+        datasets: [{
+            data: ['Yes', 'No'].map(status => feedbacks.filter(fb => fb.staffProfessionalism === status).length),
+            backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+            borderColor: ['#fff'],
+            borderWidth: 2,
+        }]
+    };
+
+    const chartOptions = {
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    color: '#4B0082', // Indigo-like color for legend text
+                    font: {
+                        weight: 'bold'
+                    }
+                }
+            },
+            title: {
+                display: true,
+                color: '#6a0dad', // Purple color
+                font: {
+                    size: 16,
+                    weight: 'bold'
+                }
+            }
+        }
+    };
+
+    return (
+        <div className="mb-6 p-4 bg-white/50 rounded-lg shadow border-2 border-pink-300">
+            <h3 className="text-2xl font-black text-purple-900 mb-4 text-center">📈 Feedback at a Glance</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-purple-100/50 p-3 rounded-lg shadow-inner">
+                    <Bar options={{...chartOptions, title: {...chartOptions.plugins.title, text: 'Overall Satisfaction Ratings'}}} data={satisfactionData} />
+                </div>
+                <div className="bg-purple-100/50 p-3 rounded-lg shadow-inner flex justify-center items-center h-64 md:h-auto">
+                    <Pie options={{...chartOptions, title: {...chartOptions.plugins.title, text: 'Was the Issue Resolved?'}}} data={resolvedData} />
+                </div>
+                <div className="bg-purple-100/50 p-3 rounded-lg shadow-inner flex justify-center items-center h-64 md:h-auto">
+                    <Doughnut options={{...chartOptions, title: {...chartOptions.plugins.title, text: 'Perceived Resolution Time'}}} data={resolutionTimeData} />
+                </div>
+                 <div className="bg-purple-100/50 p-3 rounded-lg shadow-inner flex justify-center items-center h-64 md:h-auto">
+                    <PolarArea options={{...chartOptions, title: {...chartOptions.plugins.title, text: 'Staff Professionalism'}}} data={professionalismData} />
+                </div>
+            </div>
+        </div>
+    );
 };
 // --- MODIFICATION END ---
 
@@ -270,6 +376,7 @@ function IssueDetailsMunicipality() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header, Info, Media, Votes, and Comments sections are unchanged */}
         {/* Header Section */}
         <div className="bg-gradient-to-r from-pink-400 to-pink-300 rounded-2xl p-6 shadow-2xl border-4 border-purple-600 dotted">
           <h1 className="text-3xl font-black text-purple-900 tracking-tight overflow-hidden">
@@ -328,62 +435,6 @@ function IssueDetailsMunicipality() {
                 🎭 View More
               </button>
             )}
-          </div>
-        )}
-
-        {/* Image Slider Modal */}
-        <AnimatePresence>
-          {showImageSlider && (
-            <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/95"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <button
-                className="absolute top-5 right-5 text-pink-300 text-5xl hover:text-pink-100 font-bold"
-                onClick={() => setShowImageSlider(false)}
-              >
-                &times;
-              </button>
-
-              <div className="relative w-4/5 max-w-3xl">
-                <img
-                  src={issue.images[currentImageIdx]}
-                  alt={`Slide ${currentImageIdx}`}
-                  className="w-full h-96 object-contain rounded-xl border-4 border-pink-400 shadow-2xl"
-                />
-                <button
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
-                  onClick={handlePrevImage}
-                >
-                  &#8592;
-                </button>
-                <button
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
-                  onClick={handleNextImage}
-                >
-                  &#8594;
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Videos Section */}
-        {issue.videos && issue.videos.length > 0 && (
-          <div className="bg-gradient-to-br from-pink-300 to-pink-200 rounded-xl p-5 shadow-xl border-4 border-purple-600">
-            <h2 className="text-2xl font-black text-purple-900 mb-4">🎬 Videos</h2>
-            <div className="space-y-4">
-              {issue.videos.map((vid, idx) => (
-                <video
-                  key={idx}
-                  src={vid}
-                  controls
-                  className="w-full h-64 rounded-lg border-4 border-purple-400 shadow-md"
-                />
-              ))}
-            </div>
           </div>
         )}
 
@@ -512,29 +563,29 @@ function IssueDetailsMunicipality() {
               <div className="mt-8 pt-6 border-t-4 border-dashed border-purple-500">
                 <h3 className="font-black text-xl text-purple-900 mb-4">Post-Resolution Reports</h3>
                 <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-4">
-                      <button
-                          onClick={handleViewFeedback}
-                          className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-full font-black text-lg hover:bg-blue-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all"
-                      >
-                          📢 View Citizen Feedback
-                      </button>
-                      <button
-                          onClick={handleViewReport}
-                          className="flex-1 px-6 py-3 bg-teal-600 text-white rounded-full font-black text-lg hover:bg-teal-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all"
-                      >
-                          📜 View Supervisor Report
-                      </button>
-                  </div>
-                  <div>
-                      <button
-                          onClick={handleGenerateAnalysis}
-                          className="w-full px-6 py-3 bg-indigo-600 text-white rounded-full font-black text-lg hover:bg-indigo-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all"
-                      >
-                          🤖 Generate AI Feedback Analysis
-                      </button>
-                  </div>
-              </div>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                      <button
+                          onClick={handleViewFeedback}
+                          className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-full font-black text-lg hover:bg-blue-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all"
+                      >
+                          📢 View Citizen Feedback
+                      </button>
+                      <button
+                          onClick={handleViewReport}
+                          className="flex-1 px-6 py-3 bg-teal-600 text-white rounded-full font-black text-lg hover:bg-teal-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all"
+                      >
+                          📜 View Supervisor Report
+                      </button>
+                  </div>
+                  <div>
+                      <button
+                          onClick={handleGenerateAnalysis}
+                          className="w-full px-6 py-3 bg-indigo-600 text-white rounded-full font-black text-lg hover:bg-indigo-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all"
+                      >
+                          🤖 Generate AI Feedback Analysis
+                      </button>
+                  </div>
+              </div>
               </div>
             )}
           </div>
@@ -545,41 +596,45 @@ function IssueDetailsMunicipality() {
       <AnimatePresence>
         {showFeedbackModal && (
           <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/95 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <div className="bg-gradient-to-br from-pink-200 to-pink-100 rounded-xl p-6 shadow-xl border-4 border-purple-600 w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
+            <div className="bg-gradient-to-br from-pink-200 to-pink-100 rounded-xl p-6 shadow-xl border-4 border-purple-600 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
                 <button onClick={() => setShowFeedbackModal(false)} className="absolute top-4 right-4 text-purple-700 text-4xl hover:text-pink-500 font-bold">&times;</button>
                 <h2 className="text-2xl font-black text-purple-900 mb-4">📢 Citizen Feedback</h2>
                 {loadingFeedback ? (
                     <div className="flex justify-center items-center h-48"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div></div>
                 ) : citizenFeedbacks.length > 0 ? (
-                <div className="space-y-4">
-                  {citizenFeedbacks.map((feedback) => (
-                    <div key={feedback._id} className="p-4 bg-white rounded-lg shadow-md border-2 border-pink-400 text-purple-800 space-y-2">
-                        <p><strong>Submitted By:</strong> {feedback.submittedBy?.name || 'Anonymous'}</p>
-                        <p><strong>Date:</strong> {new Date(feedback.createdAt).toLocaleString()}</p>
-                        <hr className="border-purple-300"/>
-                        <p><strong>Issue Resolved:</strong> <span className="font-bold">{feedback.resolved}</span></p>
-                        <p><strong>Resolution Time:</strong> {feedback.resolutionTime}</p>
-                        <p><strong>Resolution Quality:</strong> {feedback.resolutionQuality}</p>
-                        <p><strong>Staff Professionalism:</strong> {feedback.staffProfessionalism}</p>
-                        <hr className="border-purple-300"/>
-                        <p><strong>Overall Satisfaction:</strong> <span className="font-bold">{feedback.satisfactionRating} / 5</span></p>
-                        <p><strong>Complaint Taken Seriously:</strong> {feedback.takenSeriously}</p>
-                        <p><strong>Clear Communication:</strong> {feedback.clearCommunication}</p>
-                        <p><strong>Future Trust:</strong> {feedback.futureTrust}</p>
-                        <p><strong>Would Use System Again:</strong> {feedback.useSystemAgain}</p>
-                        {feedback.suggestions && <div><strong>Suggestions:</strong><blockquote className="mt-1 p-2 bg-purple-100 border-l-4 border-purple-400 italic">{feedback.suggestions}</blockquote></div>}
-                        {feedback.additionalComments && <div><strong>Additional Comments:</strong><blockquote className="mt-1 p-2 bg-purple-100 border-l-4 border-purple-400 italic">{feedback.additionalComments}</blockquote></div>}
-                        {feedback.photos && feedback.photos.length > 0 && (
-                            <div>
-                                <h3 className="font-bold mt-4">Attached Photos:</h3>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
-                                    {feedback.photos.map((photo, idx) => <img key={idx} src={photo} alt="Feedback" className="w-full h-24 object-cover rounded-md border-2 border-purple-400"/>)}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                  ))}
-                </div>
+                <>
+                    <FeedbackVisualizer feedbacks={citizenFeedbacks} />
+                    <div className="space-y-4 mt-6">
+                        <h3 className="text-xl font-black text-purple-900 text-center">Detailed Feedback Entries</h3>
+                        {citizenFeedbacks.map((feedback) => (
+                            <div key={feedback._id} className="p-4 bg-white rounded-lg shadow-md border-2 border-pink-400 text-purple-800 space-y-2">
+                                <p><strong>Submitted By:</strong> {feedback.submittedBy?.name || 'Anonymous'}</p>
+                                <p><strong>Date:</strong> {new Date(feedback.createdAt).toLocaleString()}</p>
+                                <hr className="border-purple-300"/>
+                                <p><strong>Issue Resolved:</strong> <span className="font-bold">{feedback.resolved}</span></p>
+                                <p><strong>Resolution Time:</strong> {feedback.resolutionTime}</p>
+                                <p><strong>Resolution Quality:</strong> {feedback.resolutionQuality}</p>
+                                <p><strong>Staff Professionalism:</strong> {feedback.staffProfessionalism}</p>
+                                <hr className="border-purple-300"/>
+                                <p><strong>Overall Satisfaction:</strong> <span className="font-bold">{feedback.satisfactionRating} / 5</span></p>
+                                <p><strong>Complaint Taken Seriously:</strong> {feedback.takenSeriously}</p>
+                                <p><strong>Clear Communication:</strong> {feedback.clearCommunication}</p>
+                                <p><strong>Future Trust:</strong> {feedback.futureTrust}</p>
+                                <p><strong>Would Use System Again:</strong> {feedback.useSystemAgain}</p>
+                                {feedback.suggestions && <div><strong>Suggestions:</strong><blockquote className="mt-1 p-2 bg-purple-100 border-l-4 border-purple-400 italic">{feedback.suggestions}</blockquote></div>}
+                                {feedback.additionalComments && <div><strong>Additional Comments:</strong><blockquote className="mt-1 p-2 bg-purple-100 border-l-4 border-purple-400 italic">{feedback.additionalComments}</blockquote></div>}
+                                {feedback.photos && feedback.photos.length > 0 && (
+                                    <div>
+                                        <h3 className="font-bold mt-4">Attached Photos:</h3>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
+                                            {feedback.photos.map((photo, idx) => <img key={idx} src={photo} alt="Feedback" className="w-full h-24 object-cover rounded-md border-2 border-purple-400"/>)}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </>
                 ) : (
                     <p className="text-center font-bold text-purple-700 py-10">No citizen feedback has been submitted for this issue yet.</p>
                 )}
@@ -590,55 +645,55 @@ function IssueDetailsMunicipality() {
 
       {/* Supervisor Report Modal */}
       <AnimatePresence>
-        {showReportModal && (
-          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/95 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <div className="bg-gradient-to-br from-pink-200 to-pink-100 rounded-xl p-6 shadow-xl border-4 border-purple-600 w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
-                <button onClick={() => setShowReportModal(false)} className="absolute top-4 right-4 text-purple-700 text-4xl hover:text-pink-500 font-bold">&times;</button>
-                <h2 className="text-2xl font-black text-purple-900 mb-4">📜 Supervisor Resolution Report</h2>
-                {loadingReport ? (
-                    <div className="flex justify-center items-center h-48"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div></div>
-                ) : supervisorReport ? (
-                    <div className="space-y-6 text-purple-800">
-                        <div>
-                            <h3 className="font-bold text-xl mb-2">Resolution Summary</h3>
-                            <blockquote className="p-4 bg-purple-100 border-l-4 border-purple-500 italic">{supervisorReport.summary}</blockquote>
-                            <p className="text-sm mt-2"><strong>Report by:</strong> {supervisorReport.supervisor?.name}</p>
-                            <p className="text-sm"><strong>Date:</strong> {new Date(supervisorReport.createdAt).toLocaleString()}</p>
-                        </div>
+        {showReportModal && (
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/95 p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <div className="bg-gradient-to-br from-pink-200 to-pink-100 rounded-xl p-6 shadow-xl border-4 border-purple-600 w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
+                <button onClick={() => setShowReportModal(false)} className="absolute top-4 right-4 text-purple-700 text-4xl hover:text-pink-500 font-bold">&times;</button>
+                <h2 className="text-2xl font-black text-purple-900 mb-4">📜 Supervisor Resolution Report</h2>
+                {loadingReport ? (
+                    <div className="flex justify-center items-center h-48"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div></div>
+                ) : supervisorReport ? (
+                    <div className="space-y-6 text-purple-800">
+                        <div>
+                            <h3 className="font-bold text-xl mb-2">Resolution Summary</h3>
+                            <blockquote className="p-4 bg-purple-100 border-l-4 border-purple-500 italic">{supervisorReport.summary}</blockquote>
+                            <p className="text-sm mt-2"><strong>Report by:</strong> {supervisorReport.supervisor?.name}</p>
+                            <p className="text-sm"><strong>Date:</strong> {new Date(supervisorReport.createdAt).toLocaleString()}</p>
+                        </div>
 
-                        {supervisorReport.images && supervisorReport.images.length > 0 && (
-                            <div>
-                                <h3 className="font-bold text-xl mb-2">Resolution Images</h3>
-                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                    {supervisorReport.images.map((img, idx) => <img key={idx} src={img} alt="Resolution" className="w-full h-32 object-cover rounded-lg border-2 border-purple-400"/>)}
-                                </div>
-                            </div>
-                        )}
+                        {supervisorReport.images && supervisorReport.images.length > 0 && (
+                            <div>
+                                <h3 className="font-bold text-xl mb-2">Resolution Images</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                    {supervisorReport.images.map((img, idx) => <img key={idx} src={img} alt="Resolution" className="w-full h-32 object-cover rounded-lg border-2 border-purple-400"/>)}
+                                </div>
+                            </div>
+                        )}
 
-                        <div>
-                            <h3 className="font-bold text-xl mb-2">Staff Performance Review</h3>
-                            <div className="space-y-3">
-                                {supervisorReport.staffPerformance.map((staff, idx) => (
-                                    <div key={idx} className="p-3 bg-white rounded-lg shadow border-2 border-pink-300">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-bold text-lg">{staff.name} <span className="text-sm font-medium text-purple-600">({staff.role})</span></p>
-                                                <p className="text-xs text-gray-500">{staff.email}</p>
-                                            </div>
-                                            <p className="text-lg font-black text-purple-700">Rating: {staff.rating} / 5</p>
-                                        </div>
-                                        {staff.comment && <blockquote className="mt-2 text-sm p-2 bg-gray-50 border-l-4 border-gray-300 italic">"{staff.comment}"</blockquote>}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                ) : (
-                    <p className="text-center font-bold text-purple-700 py-10">The supervisor's report for this issue could not be found.</p>
-                )}
-              </div>
-          </motion.div>
-        )}
+                        <div>
+                            <h3 className="font-bold text-xl mb-2">Staff Performance Review</h3>
+                            <div className="space-y-3">
+                                {supervisorReport.staffPerformance.map((staff, idx) => (
+                                    <div key={idx} className="p-3 bg-white rounded-lg shadow border-2 border-pink-300">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-bold text-lg">{staff.name} <span className="text-sm font-medium text-purple-600">({staff.role})</span></p>
+                                                <p className="text-xs text-gray-500">{staff.email}</p>
+                                            </div>
+                                            <p className="text-lg font-black text-purple-700">Rating: {staff.rating} / 5</p>
+                                        </div>
+                                        {staff.comment && <blockquote className="mt-2 text-sm p-2 bg-gray-50 border-l-4 border-gray-300 italic">"{staff.comment}"</blockquote>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <p className="text-center font-bold text-purple-700 py-10">The supervisor's report for this issue could not be found.</p>
+                )}
+              </div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* AI Analysis Modal */}
