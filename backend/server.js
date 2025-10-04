@@ -4,6 +4,7 @@ import http, { createServer } from "http";
 import { Server } from "socket.io";
 import cron from "node-cron";
 import { escalateOverdueTasksService } from "./controllers/issue.contoller.js";
+import { sendDeadlineRemindersService } from "./controllers/notification.controller.js";
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -29,6 +30,7 @@ io.on("connection", (socket) => {
 export {io}
 
 
+// Run escalation service every hour
 cron.schedule("0 * * * *", async () => {
   try {
     console.log("[CRON] Running escalateOverdueTasksService");
@@ -39,7 +41,28 @@ cron.schedule("0 * * * *", async () => {
   }
 });
 
+// Run deadline reminders twice daily (9 AM and 6 PM)
+cron.schedule("0 9,18 * * *", async () => {
+  try {
+    console.log("[CRON] Running sendDeadlineRemindersService");
+    const result = await sendDeadlineRemindersService();
+    console.log("[CRON] Deadline reminders summary:", result);
+  } catch (err) {
+    console.error("[CRON] Deadline reminders error:", err);
+  }
+});
+
 server.listen(process.env.PORT || 3000, () => {
     console.log(`Server is running on port ${process.env.PORT || 3000}`);
     console.log(`Socket.IO server is ready`);
 });
+
+// (async () => {
+//   try {
+//     console.log("Manual escalation started");
+//     const result = await escalateOverdueTasksService();
+//     console.log("Manual escalation finished, summary:", result);
+//   } catch (err) {
+//     console.error("Manual escalation error:", err);
+//   }
+// })();

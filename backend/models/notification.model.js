@@ -22,7 +22,15 @@ const notificationSchema = new Schema({
             'issue-completed',      
             'issue-rejected',       
             'task-assigned',        
-            'role-change',          
+            'role-change',
+            'issue-escalation',
+            'task-escalation-coordinator',
+            'task-escalation-supervisor',
+            'task-escalated-from-worker',
+            'task-escalated-from-coordinator',
+            'task-deadline-reminder',
+            'task-completed',
+            'task-status-update',
             'general'               
         ],
         required: true

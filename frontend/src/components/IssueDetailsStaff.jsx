@@ -7,16 +7,11 @@ import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/
 import { app } from "../firebase";
 
 /**
- * IssueDetailsStaff
- * - Worker: can update & submit proof for their tasks (buttons removed once task is approved / completed)
- * - Coordinator: can update & submit proof for own tasks (buttons removed once task is approved), can view workers and approve/reject worker proofs
- * - Supervisor: can view coordinators & approve/reject proofs, assign tasks to coordinators, resolve issue
- *
- * Uses Firebase Storage for proof images and sends URLs to server.
- *
- * NOTE: This component assumes your backend sets task.status = "Completed" when a proof is approved.
- * If you use a different flag (e.g. proofApproved), change checks accordingly.
- */
+ IssueDetailsStaff
+ - Worker: can update & submit proof for their tasks (buttons removed once task is approved / completed)
+ - Coordinator: can update & submit proof for own tasks (buttons removed once task is approved), can view workers and approve/reject worker proofs
+ - Supervisor: can view coordinators & approve/reject proofs, assign tasks to coordinators, resolve issue
+**/
 
 export default function IssueDetailsStaff() {
   const { slug } = useParams();
@@ -262,15 +257,22 @@ export default function IssueDetailsStaff() {
     }
   };
 
+  const [isAssigning, setIsAssigning] = useState(false)
   // Assign task to a specific assignee (modal per-person)
   const assignTaskToAssignee = async () => {
+    if (isAssigning) return; // Prevent duplicate submits
+
     if (!assignModalAssignee) return alert("No assignee selected");
-    if (!assignModalData.title || !assignModalData.deadline) return alert("Title and deadline required");
+    if (!assignModalData.title || !assignModalData.deadline)
+      return alert("Title and deadline required");
 
     const today = new Date().toISOString().split("T")[0];
-    if (assignModalData.deadline < today) return alert("Deadline cannot be in the past");
+    if (assignModalData.deadline < today)
+      return alert("Deadline cannot be in the past");
 
     try {
+      setIsAssigning(true);
+
       const body = {
         issueId: issue._id,
         assignedTo: assignModalAssignee.id,
@@ -296,8 +298,11 @@ export default function IssueDetailsStaff() {
     } catch (err) {
       console.error(err);
       alert("Error assigning task");
+    } finally {
+      setIsAssigning(false);
     }
   };
+
 
   // Supervisor resolve
   const resolveIssue = async () => {
@@ -518,9 +523,21 @@ export default function IssueDetailsStaff() {
                       <p className="text-xs text-gray-500">{w.user.email}</p>
                     </div>
                     <div>
-                      <button className="px-3 py-1 bg-blue-500 text-white rounded-md" onClick={() => { setAssignModalAssignee({ id: w.user.id, role: "Worker", name: w.user.name }); setAssignModalData({ title: "", description: "", deadline: "" }); setAssignModalOpen(true); }}>
+                      <button
+                        className={`px-3 py-1 rounded-md text-white ${
+                          isAssigning || assignModalOpen ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500"
+                        }`}
+                        onClick={() => {
+                          if (isAssigning || assignModalOpen) return; // prevent multiple clicks
+                          setAssignModalAssignee({ id: w.user.id, role: "Worker", name: w.user.name });
+                          setAssignModalData({ title: "", description: "", deadline: "" });
+                          setAssignModalOpen(true);
+                        }}
+                        disabled={isAssigning || assignModalOpen}
+                      >
                         Assign Task
                       </button>
+
                     </div>
                   </div>
 

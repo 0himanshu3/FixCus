@@ -2,6 +2,11 @@ import Issue from "../models/issue.model.js";
 import { Task } from "../models/task.model.js";
 import { User } from "../models/user.model.js";
 import { Municipality } from "../models/muncipality.model.js";
+import { 
+  sendTaskEscalationNotificationToStaff,
+  sendTaskAssignmentNotification 
+} from "./notification.controller.js";
+
 export const createIssue = async (req, res) => {
   try {
     const { title, content, category, issueLocation, issuePublishDate, images, videos, issueDistrict, issueState, issueCountry } = req.body;
@@ -10,7 +15,7 @@ export const createIssue = async (req, res) => {
       return res.status(400).json({ success: false, message: "Missing required fields." });
     }
 
-    // ✅ reportedBy comes directly from authenticated user
+    // reportedBy comes directly from authenticated user
     const reportedBy = req.user._id;
 
     const issue = new Issue({
@@ -603,6 +608,12 @@ export const assignTask = async (req, res) => {
     // Update user's tasksAlloted
     await User.findByIdAndUpdate(assignedTo, { $push: { tasksAlloted: { taskId: task._id } } });
 
+    // Send notification to the assigned user
+    const issue = await Issue.findById(issueId);
+    if (issue) {
+      await sendTaskAssignmentNotification(task._id, assignedTo, issue);
+    }
+
     res.status(201).json({ message: "Task assigned successfully", task });
   } catch (err) {
     console.error(err);
@@ -753,7 +764,7 @@ export async function escalateOverdueTasksService({ dryRun = false } = {}) {
   for (const task of overdueTasks) {
     results.processed++;
     try {
-      // load issue and its staffsAssigned (to find supervisor)
+      // load issue
       const issue = await Issue.findById(task.issueId).lean();
       if (!issue) {
         results.errors.push({ taskId: task._id, msg: "Issue not found" });
@@ -797,13 +808,18 @@ export async function escalateOverdueTasksService({ dryRun = false } = {}) {
 
         if (dryRun) {
           results.createdTasks.push({ newTaskData, dryRun: true });
-        } else {
-          const newTask = await Task.create(newTaskData);
-          // mark original task as escalated
-          task.hasEscalated = true;
-          await task.save();
-          results.createdTasks.push({ newTaskId: newTask._id, originalTask: task._id });
-        }
+         } else {
+           const newTask = await Task.create(newTaskData);
+           await sendTaskEscalationNotificationToStaff(coordinatorId, issue);
+           
+           // Send task assignment notification to coordinator
+           await sendTaskAssignmentNotification(newTask._id, coordinatorId, issue);
+
+           // mark original task as escalated
+           task.hasEscalated = true;
+           await task.save();
+           results.createdTasks.push({ newTaskId: newTask._id, originalTask: task._id });
+         }
 
       } else if (task.roleOfAssignee === "Coordinator") {
         // escalate to supervisor
@@ -825,12 +841,17 @@ export async function escalateOverdueTasksService({ dryRun = false } = {}) {
 
         if (dryRun) {
           results.createdTasks.push({ newTaskData, dryRun: true });
-        } else {
-          const newTask = await Task.create(newTaskData);
-          task.hasEscalated = true;
-          await task.save();
-          results.createdTasks.push({ newTaskId: newTask._id, originalTask: task._id });
-        }
+         } else {
+           const newTask = await Task.create(newTaskData);
+           await sendTaskEscalationNotificationToStaff(supervisorId, issue);    //send noti to supervisor  
+           
+           // Send task assignment notification to supervisor
+           await sendTaskAssignmentNotification(newTask._id, supervisorId, issue);
+
+           task.hasEscalated = true;
+           await task.save();
+           results.createdTasks.push({ newTaskId: newTask._id, originalTask: task._id });
+         }
       } else {
         // roleOfAssignee === Supervisor: do not escalate
         // mark as skipped silently
