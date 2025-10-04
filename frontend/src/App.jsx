@@ -82,36 +82,59 @@ const App = () => {
   // Socket.io setup for real-time notifications
   useEffect(() => {
     if (isAuthenticated && user?._id) {
-      const newSocket = io("http://localhost:3000");
-      setSocket(newSocket);
+      // Create socket with error handling
+      const newSocket = io("http://localhost:3000", {
+        timeout: 5000,
+        forceNew: true,
+        autoConnect: true
+      });
 
-      // Join user's room
-      newSocket.emit("join", user._id);
+      newSocket.on('connect', () => {
+        console.log("Socket.IO connected successfully");
+        setSocket(newSocket);
 
-      // Listen for new notifications
-      newSocket.on("new-notification", () => {
+        // Join user's room
+        newSocket.emit("join", user._id);
+
+        // Listen for new notifications
+        newSocket.on("new-notification", () => {
+          fetchNotifications();
+        });
+
+        // Listen for notification updates (read/delete)
+        newSocket.on("notification-updated", () => {
+          fetchNotifications();
+        });
+
+        // Initial fetch
         fetchNotifications();
       });
 
-      // Listen for notification updates (read/delete)
-      newSocket.on("notification-updated", () => {
+      newSocket.on('connect_error', (error) => {
+        console.log("Socket.IO connection failed - server may not be running:", error.message);
+        setSocket(null);
+        // Still fetch notifications without real-time updates
         fetchNotifications();
       });
 
-      // Initial fetch
-      fetchNotifications();
+      newSocket.on('disconnect', () => {
+        console.log("Socket.IO disconnected");
+        setSocket(null);
+      });
 
       return () => {
-        newSocket.off("new-notification");
-        newSocket.off("notification-updated");
-        newSocket.disconnect();
+        if (newSocket) {
+          newSocket.off("new-notification");
+          newSocket.off("notification-updated");
+          newSocket.disconnect();
+        }
       };
     }
   }, [isAuthenticated, user?._id]);
 
   return (
-    <Router>
-      <Routes>
+      <Router>
+          <Routes>
         {/* Routes with Header & Footer */}
         <Route element={<MainLayout notifications={notifications} />}>
           <Route path="/" element={<Home />} />
@@ -132,15 +155,15 @@ const App = () => {
         </Route>
 
         {/* Public Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/password/forgot" element={<ForgotPassword />} />
-        <Route path="/otp-verification/:email" element={<OTP />} />
-        <Route path="/password/reset/:token" element={<ResetPassword />} />
-      </Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/password/forgot" element={<ForgotPassword />} />
+              <Route path="/otp-verification/:email" element={<OTP />} />
+              <Route path="/password/reset/:token" element={<ResetPassword />} />
+          </Routes>
 
       <ToastContainer theme="dark" />
-    </Router>
+      </Router>
   );
 };
 

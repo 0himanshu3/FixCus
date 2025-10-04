@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useSelector } from "react-redux"; // ✅ to get logged in user
+import { useSelector } from "react-redux"; 
+import IssuesHeatmap from "./IssuesHeatmap";
 
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
 const issueCategories = [
@@ -106,20 +107,75 @@ function IssuesMunicipality() {
     setIsFilterOpen(false);
   };
 
+  const [isHeatmapOpen, setIsHeatmapOpen] = useState(false);
+  const [allIssuesForHeatmap, setAllIssuesForHeatmap] = useState([]);
+
+  // Fetch all issues for heatmap (no district filtering)
+  const fetchAllIssuesForHeatmap = async () => {
+    try {
+      const res = await fetch(
+        "http://localhost:3000/api/v1/issues/all",
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        setAllIssuesForHeatmap(data.issues || []);
+      } else {
+        console.error("Error fetching all issues for heatmap:", res.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching all issues for heatmap:", error);
+    }
+  };
+
+  const handleHeatmapOpen = () => {
+    setIsHeatmapOpen(true);
+    fetchAllIssuesForHeatmap();
+  };
+
   return (
     <div className="relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900">All Issues</h1>
-          <div>
+          <div className="flex gap-2">
             <button
               onClick={() => setIsFilterOpen(true)}
               className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-6 rounded-lg shadow transition-colors duration-200"
             >
               Filter
             </button>
+
+            <button
+              onClick={handleHeatmapOpen}
+              className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-lg shadow transition-colors duration-200"
+            >
+              View Heatmap
+            </button>
           </div>
         </div>
+
+        {isHeatmapOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            onClick={() => setIsHeatmapOpen(false)}
+          >
+            <div 
+              className="bg-white w-[90%] md:w-2/3 h-[80%] rounded shadow-lg relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Heatmap component */}
+              <div className="w-full h-full">
+                <IssuesHeatmap issues={allIssuesForHeatmap} />
+              </div>
+            </div>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">

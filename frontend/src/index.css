@@ -141,6 +141,42 @@
   box-shadow: none;
 }
 
+/* AdvancedMarker visibility fixes */
+advanced-marker {
+  z-index: 1000 !important;
+}
+
+advanced-marker .marker-container {
+  z-index: 1001 !important;
+  position: relative !important;
+}
+
+advanced-marker div {
+  z-index: 1002 !important;
+  position: relative !important;
+}
+
+/* Ensure markers are visible */
+[data-map-frame] advanced-marker {
+  z-index: 1000 !important;
+}
+
+/* Google Maps marker styles */
+.gmp-advanced-marker {
+  z-index: 1000 !important;
+}
+
+.gmp-advanced-marker .marker-container {
+  z-index: 1001 !important;
+}
+
+/* Force marker visibility */
+advanced-marker > div {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+
 button:focus-visible {
   outline: 0px solid #94a3b8;
   outline-offset: 0px;
@@ -154,4 +190,77 @@ a:focus-visible {
 div[role="menuitem"]:focus-visible {
   outline: 0px solid #94a3b8;
   outline-offset: 0px;
+}
+
+
+/* 1) Allow map overlays to escape clipping from ancestors */
+html, body, #root {
+  overflow: visible !important; /* don’t clip internal absolute overlays */
+}
+
+/* 2) The modal that wraps your map must not clip children */
+.fixed.inset-0 { /* your modal mask; adapt selector if different */
+  overflow: visible !important;
+}
+
+/* 3) The panel that actually contains the Map must allow overflow */
+.bg-white.w-\[90\%\].md\:w-2\/3.h-\[80\%\].rounded.shadow-lg.relative {
+  overflow: visible !important;
+}
+
+/* 4) Google Maps overlay panes and advanced markers should render on top and be visible */
+.gm-style, .gm-style > div {
+  overflow: visible !important;
+}
+gmp-advanced-marker, .yNHHyP-marker-view {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+/* 5) Do not force background color/contrast on everything inside dark/high-contrast modes */
+.high-contrast gmp-advanced-marker *, 
+.dark-mode gmp-advanced-marker *, 
+.high-contrast .gm-style * , 
+.dark-mode .gm-style * {
+  background-color: transparent !important;
+  color: inherit !important;
+}
+
+/* 6) Keep your custom marker content clearly visible */
+.marker-container {
+  opacity: 1 !important;
+  visibility: visible !important;
+  z-index: 2147483647 !important; /* top of the stack */
+}
+
+/* Let Google overlay panes render outside ancestors */
+html, body, #root {
+  overflow: visible !important;
+}
+
+/* Your modal mask and the inner white panel should not clip overlays */
+.fixed.inset-0 { /* the dimmed backdrop */
+  overflow: visible !important;
+}
+
+.fixed.inset-0 > .bg-white { /* the white dialog; adjust if your class differs */
+  overflow: visible !important;
+}
+
+/* Generic fallback: any element containing the map */
+.map-host, .gm-style, .gm-style > div {
+  overflow: visible !important;
+}
+
+/* Ensure advanced marker host is visible and interactive */
+gmp-advanced-marker, .yNHHyP-marker-view {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+
+.map-host {
+  position: relative !important;
+  overflow: visible !important;
 }
