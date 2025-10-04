@@ -427,6 +427,7 @@ export const getMonthlyAnalysis = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
+  }
 export const takeUpIssue = async (req, res) => {
   try {
     const { issueId, deadline } = req.body;
