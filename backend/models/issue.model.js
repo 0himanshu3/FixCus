@@ -27,7 +27,7 @@ const AssignedStaffSchema = new mongoose.Schema(
   {
     role: {
       type: String,
-      enum: ["Supervisor", "Worker", "Coordinator"], // customize as needed
+      enum: ["Supervisor", "Worker", "Coordinator"],
       required: true,
     },
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
@@ -51,20 +51,22 @@ const IssueSchema = new mongoose.Schema(
     issueCountry: { type: String },
     issuePublishDate: { type: Date, required: true },
 
-    // Now stores array of objects (role + user)
     staffsAssigned: [AssignedStaffSchema],
 
     reportedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     status: { type: String, enum: ["Open", "In Progress", "Resolved"], default: "Open" },
 
-    // New fields
     upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     downvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     comments: [CommentSchema],
 
-    // Municipality fields
     issueTakenUpBy: { type: mongoose.Schema.Types.ObjectId, ref: "Municipality" },
     deadline: { type: Date },
+
+    // ✅ Newly added fields
+    resolvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    resolvedAt: { type: Date },
+    resolutionReport: { type: mongoose.Schema.Types.ObjectId, ref: "ResolutionReport" },
   },
   { timestamps: true }
 );

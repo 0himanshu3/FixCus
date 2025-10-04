@@ -3,443 +3,496 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+} from "firebase/storage";
 import { app } from "../firebase";
 
 /**
- IssueDetailsStaff
- - Worker: can update & submit proof for their tasks (buttons removed once task is approved / completed)
- - Coordinator: can update & submit proof for own tasks (buttons removed once task is approved), can view workers and approve/reject worker proofs
- - Supervisor: can view coordinators & approve/reject proofs, assign tasks to coordinators, resolve issue
+ IssueDetailsStaff
+ - Worker: can update & submit proof for their tasks (buttons removed once task is approved / completed)
+ - Coordinator: can update & submit proof for own tasks (buttons removed once task is approved), can view workers and approve/reject worker proofs
+ - Supervisor: can view coordinators & approve/reject proofs, assign tasks to coordinators, resolve issue
 **/
 
 export default function IssueDetailsStaff() {
-    const { slug } = useParams();
-    const { user } = useSelector((state) => state.auth);
+  const { slug } = useParams();
+  const { user } = useSelector((state) => state.auth);
 
-    const [issue, setIssue] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+  const [issue, setIssue] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-    const [assignedRole, setAssignedRole] = useState(null);
-    const [userTasks, setUserTasks] = useState([]);
-    const [issueTasks, setIssueTasks] = useState([]);
+  const [assignedRole, setAssignedRole] = useState(null);
+  const [userTasks, setUserTasks] = useState([]);
+  const [issueTasks, setIssueTasks] = useState([]);
 
-    const [showImageSlider, setShowImageSlider] = useState(false);
-    const [currentImageIdx, setCurrentImageIdx] = useState(0);
+  const [showImageSlider, setShowImageSlider] = useState(false);
+  const [currentImageIdx, setCurrentImageIdx] = useState(0); // Update modal
 
-    // Update modal
-    const [updateModalOpen, setUpdateModalOpen] = useState(false);
-    const [updateModalTask, setUpdateModalTask] = useState(null);
-    const [updateText, setUpdateText] = useState("");
+  const [updateModalOpen, setUpdateModalOpen] = useState(false);
+  const [updateModalTask, setUpdateModalTask] = useState(null);
+  const [updateText, setUpdateText] = useState(""); // Proof modal
 
-    // Proof modal
-    const [proofModalOpen, setProofModalOpen] = useState(false);
-    const [proofModalTask, setProofModalTask] = useState(null);
-    const [proofText, setProofText] = useState("");
-    const [proofFiles, setProofFiles] = useState([]);
-    const [proofUploadProgress, setProofUploadProgress] = useState([]);
+  const [proofModalOpen, setProofModalOpen] = useState(false);
+  const [proofModalTask, setProofModalTask] = useState(null);
+  const [proofText, setProofText] = useState("");
+  const [proofFiles, setProofFiles] = useState([]);
+  const [proofUploadProgress, setProofUploadProgress] = useState([]); // Assign modal
 
-    // Assign modal
-    const [assignModalOpen, setAssignModalOpen] = useState(false);
-    const [assignModalAssignee, setAssignModalAssignee] = useState(null);
-    const [assignModalData, setAssignModalData] = useState({ title: "", description: "", deadline: "" });
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [assignModalAssignee, setAssignModalAssignee] = useState(null);
+  const [assignModalData, setAssignModalData] = useState({
+    title: "",
+    description: "",
+    deadline: "",
+  });
 
-    const [issueSummary, setIssueSummary] = useState("");
+  const [issueSummary, setIssueSummary] = useState(""); // Supervisor resolve modal states
 
-    // Supervisor resolve modal states
-    const [resolveModalOpen, setResolveModalOpen] = useState(false);
-    const [resolveSummary, setResolveSummary] = useState("");
-    const [resolveFiles, setResolveFiles] = useState([]);
-    const [resolveUploadProgress, setResolveUploadProgress] = useState([]);
-    // ratings: { userId: { rating: number, comment: string, role: string, name: string } }
-    const [resolveRatings, setResolveRatings] = useState({});
-    const [isResolving, setIsResolving] = useState(false);
+  const [resolveModalOpen, setResolveModalOpen] = useState(false);
+  const [resolveSummary, setResolveSummary] = useState("");
+  const [resolveFiles, setResolveFiles] = useState([]);
+  const [resolveUploadProgress, setResolveUploadProgress] = useState([]); // ratings: { userId: { rating: number, comment: string, role: string, name: string } }
+  const [resolveRatings, setResolveRatings] = useState({});
+  const [isResolving, setIsResolving] = useState(false); // Helper: treat a date string as end-of-day and check if it's in the past
 
-    // Helper: treat a date string as end-of-day and check if it's in the past
-    const hasDeadlinePassed = (deadline) => {
-        if (!deadline) return false;
-        try {
-            const dl = new Date(deadline);
-            // If deadline is a date-only string (yyyy-mm-dd) set it to end of that day
-            dl.setHours(23, 59, 59, 999);
-            return dl < new Date();
-        } catch (e) {
-            return false;
-        }
-    };
+  const hasDeadlinePassed = (deadline) => {
+    if (!deadline) return false;
+    try {
+      const dl = new Date(deadline); // If deadline is a date-only string (yyyy-mm-dd) set it to end of that day
+      dl.setHours(23, 59, 59, 999);
+      return dl < new Date();
+    } catch (e) {
+      return false;
+    }
+  }; // Firebase upload helper (now accepts an optional progress setter)
 
-    // Firebase upload helper (now accepts an optional progress setter)
-    const uploadFilesToFirebase = async (files, setProgress = setProofUploadProgress) => {
-        if (!files || files.length === 0) return [];
+  const uploadFilesToFirebase = async (
+    files,
+    setProgress = setProofUploadProgress
+  ) => {
+    if (!files || files.length === 0) return [];
 
-        const storage = getStorage(app);
-        const urls = [];
-        const progressArr = Array(files.length).fill(0);
-        setProgress(progressArr);
+    const storage = getStorage(app);
+    const urls = [];
+    const progressArr = Array(files.length).fill(0);
+    setProgress(progressArr);
 
-        await Promise.all(
-            files.map((file, idx) => {
-                const fileRef = ref(storage, `${Date.now()}-${file.name}`);
-                const uploadTask = uploadBytesResumable(fileRef, file);
+    await Promise.all(
+      files.map((file, idx) => {
+        const fileRef = ref(storage, `${Date.now()}-${file.name}`);
+        const uploadTask = uploadBytesResumable(fileRef, file);
 
-                return new Promise((resolve, reject) => {
-                    uploadTask.on(
-                        "state_changed",
-                        (snapshot) => {
-                            const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                            progressArr[idx] = pct;
-                            setProgress([...progressArr]);
-                        },
-                        (err) => reject(err),
-                        async () => {
-                            try {
-                                const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-                                urls.push(downloadUrl);
-                                resolve();
-                            } catch (e) {
-                                reject(e);
-                            }
-                        }
-                    );
-                });
-            })
-        );
-
-        setTimeout(() => setProgress([]), 600);
-        return urls;
-    };
-
-    // Fetch issue and derive user role & tasks (expects staffsAssigned[].user and staffsAssigned[].tasks to be included in issue response)
-    const fetchIssue = async () => {
-        if (!slug || !user) return;
-        setIsLoading(true);
-        try {
-            const res = await fetch(`/api/v1/issues/${slug}`, { credentials: "include" });
-            if (!res.ok) throw new Error("Failed to fetch issue");
-            const data = await res.json();
-            const issueData = data.issue;
-            setIssue(issueData);
-
-            // find assigned staff entry for current user
-            const assignedStaff = (issueData.staffsAssigned || []).find((s) => {
-                const u = s.user || {};
-                return (
-                    (u._id && String(u._id) === String(user._id)) ||
-                    (u.id && String(u.id) === String(user._id)) ||
-                    (u.email && u.email === user.email)
+        return new Promise((resolve, reject) => {
+          uploadTask.on(
+            "state_changed",
+            (snapshot) => {
+              const pct = Math.round(
+                (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+              );
+              progressArr[idx] = pct;
+              setProgress([...progressArr]);
+            },
+            (err) => reject(err),
+            async () => {
+              try {
+                const downloadUrl = await getDownloadURL(
+                  uploadTask.snapshot.ref
                 );
-            });
-
-            if (assignedStaff) {
-                setAssignedRole(assignedStaff.role);
-                setUserTasks(Array.isArray(assignedStaff.tasks) ? assignedStaff.tasks : []);
-            } else {
-                setAssignedRole(null);
-                setUserTasks([]);
+                urls.push(downloadUrl);
+                resolve();
+              } catch (e) {
+                reject(e);
+              }
             }
-
-            // flatten tasks from all staff entries for coordinator/supervisor views
-            const flat = [];
-            (issueData.staffsAssigned || []).forEach((s) => {
-                if (Array.isArray(s.tasks)) s.tasks.forEach((t) => flat.push(t));
-            });
-            setIssueTasks(flat);
-        } catch (err) {
-            console.error("fetchIssue error:", err);
-            setIssue(null);
-            setAssignedRole(null);
-            setUserTasks([]);
-            setIssueTasks([]);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchIssue();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [slug, user]);
-
-    const refreshAfterAction = async () => {
-        await fetchIssue();
-    };
-
-    // Submit update (worker/coordinator)
-    const submitTaskUpdate = async () => {
-        if (!updateModalTask || !updateText.trim()) {
-            alert("Please enter update text.");
-            return;
-        }
-
-        // Guard: if task already approved/completed do nothing (UI shouldn't allow this path, but guard anyway)
-        if (updateModalTask.status === "Completed") {
-            alert("Task is already completed.");
-            setUpdateModalOpen(false);
-            return;
-        }
-
-        // Guard: prevent updates if deadline has passed
-        if (hasDeadlinePassed(updateModalTask.deadline) && updateModalTask.status !== "Completed") {
-            alert("Cannot submit update — task deadline has passed and is marked overdue.");
-            setUpdateModalOpen(false);
-            return;
-        }
-
-        try {
-            const res = await fetch(`/api/v1/issues/update/${updateModalTask._id}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ updateText }),
-            });
-            if (!res.ok) throw new Error("Failed to submit update");
-            setUpdateModalOpen(false);
-            setUpdateText("");
-            await refreshAfterAction();
-        } catch (err) {
-            console.error(err);
-            alert("Error submitting update");
-        }
-    };
-
-    // Submit proof (worker/coordinator)
-    const submitTaskProof = async () => {
-        if (!proofModalTask) return alert("No task selected");
-        if (!proofText.trim()) return alert("Please enter proof description");
-        if (!proofFiles || proofFiles.length === 0) return alert("Attach at least one image");
-
-        // Guard if already completed
-        if (proofModalTask.status === "Completed") {
-            alert("Task already completed.");
-            setProofModalOpen(false);
-            return;
-        }
-
-        // Guard: prevent proof submission if deadline passed
-        if (hasDeadlinePassed(proofModalTask.deadline) && proofModalTask.status !== "Completed") {
-            alert("Cannot submit proof — task deadline has passed and is marked overdue.");
-            setProofModalOpen(false);
-            return;
-        }
-
-        try {
-            const urls = await uploadFilesToFirebase(proofFiles, setProofUploadProgress);
-
-            const res = await fetch(`/api/v1/issues/submitProof/${proofModalTask._id}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({
-                    proofText,
-                    proofImages: urls,
-                }),
-            });
-            if (!res.ok) {
-                const txt = await res.text();
-                throw new Error("Submit proof failed: " + txt);
-            }
-            setProofModalOpen(false);
-            setProofText("");
-            setProofFiles([]);
-            setProofUploadProgress([]);
-            await refreshAfterAction();
-        } catch (err) {
-            console.error("submitTaskProof error:", err);
-            alert("Error submitting proof");
-        }
-    };
-
-    // Approve or reject proof (coordinator/supervisor)
-    const approveOrRejectProof = async (taskId, approve) => {
-        try {
-            const res = await fetch(`/api/v1/issues/approveReject/${taskId}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ approve }),
-            });
-            if (!res.ok) throw new Error("Failed to set approval");
-            await refreshAfterAction();
-        } catch (err) {
-            console.error(err);
-            alert("Error approving/rejecting proof");
-        }
-    };
-
-    const [isAssigning, setIsAssigning] = useState(false);
-    // Assign task to a specific assignee (modal per-person)
-    const assignTaskToAssignee = async () => {
-        if (isAssigning) return; // Prevent duplicate submits
-
-        if (!assignModalAssignee) return alert("No assignee selected");
-        if (!assignModalData.title || !assignModalData.deadline)
-            return alert("Title and deadline required");
-
-        const today = new Date().toISOString().split("T")[0];
-        if (assignModalData.deadline < today)
-            return alert("Deadline cannot be in the past");
-
-        try {
-            setIsAssigning(true);
-
-            const body = {
-                issueId: issue._id,
-                assignedTo: assignModalAssignee.id,
-                roleOfAssignee: assignModalAssignee.role,
-                title: assignModalData.title,
-                description: assignModalData.description,
-                deadline: assignModalData.deadline,
-            };
-            const res = await fetch(`/api/v1/issues/assign`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify(body),
-            });
-            if (!res.ok) {
-                const txt = await res.text();
-                throw new Error("Assign failed: " + txt);
-            }
-            setAssignModalOpen(false);
-            setAssignModalAssignee(null);
-            setAssignModalData({ title: "", description: "", deadline: "" });
-            await refreshAfterAction();
-        } catch (err) {
-            console.error(err);
-            alert("Error assigning task");
-        } finally {
-            setIsAssigning(false);
-        }
-    };
-
-
-    // Supervisor resolve (legacy simple resolve preserved but not used for supervisor UI anymore)
-    const resolveIssue = async () => {
-        if (!issueSummary.trim()) return alert("Please add a summary");
-        try {
-            const res = await fetch(`/api/v1/issues/resolve/${issue._id}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ summary: issueSummary }),
-            });
-            if (!res.ok) throw new Error("Resolve failed");
-            alert("Issue resolved");
-            setIssueSummary("");
-            await refreshAfterAction();
-        } catch (err) {
-            console.error(err);
-            alert("Error resolving issue");
-        }
-    };
-
-    // New: open supervisor resolution modal and initialise ratings
-    const openResolveModal = () => {
-        const ratingsInit = {};
-
-        // build list skipping the current user (supervisor)
-        const staffList = (issue?.staffsAssigned || []).filter((s) => {
-            if (!s.user) return false;
-            const u = s.user || {};
-            const isCurrent =
-                (u._id && String(u._id) === String(user._id)) ||
-                (u.id && String(u.id) === String(user._id)) ||
-                (u.email && u.email === user.email);
-            return !isCurrent;
+          );
         });
+      })
+    );
 
-        staffList.forEach((s) => {
-            const uid = s.user._id || s.user.id || s.user?.email || `${Math.random()}`;
-            ratingsInit[uid] = {
-                rating: 5,
-                comment: "",
-                role: s.role,
-                name: s.user.name || s.user.email || "Unnamed",
-                userId: uid,
-            };
-        });
+    setTimeout(() => setProgress([]), 600);
+    return urls;
+  }; // Fetch issue and derive user role & tasks (expects staffsAssigned[].user and staffsAssigned[].tasks to be included in issue response)
 
-        setResolveRatings(ratingsInit);
-        setResolveSummary("");
-        setResolveFiles([]);
-        setResolveModalOpen(true);
-    };
+  const fetchIssue = async () => {
+    if (!slug || !user) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch(`/api/v1/issues/${slug}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch issue");
+      const data = await res.json();
+      const issueData = data.issue;
+      setIssue(issueData); // find assigned staff entry for current user
 
-
-    const submitResolution = async () => {
-        if (!resolveSummary.trim()) return alert("Please add a summary of the resolution.");
-        if (!issue) return alert("Issue not loaded");
-
-        try {
-            setIsResolving(true);
-            const urls = await uploadFilesToFirebase(resolveFiles, setResolveUploadProgress);
-
-            const ratingsArr = Object.values(resolveRatings).map((r) => ({ userId: r.userId, rating: r.rating, comment: r.comment, role: r.role, name: r.name }));
-
-            const res = await fetch(`/api/v1/issues/resolve/${issue._id}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include",
-                body: JSON.stringify({ summary: resolveSummary, resolutionImages: urls, ratings: ratingsArr }),
-            });
-            if (!res.ok) {
-                const txt = await res.text();
-                throw new Error("Resolve failed: " + txt);
-            }
-
-            alert("Issue resolved and report submitted.");
-            setResolveModalOpen(false);
-            setResolveSummary("");
-            setResolveFiles([]);
-            setResolveUploadProgress([]);
-            setResolveRatings({});
-            await refreshAfterAction();
-        } catch (err) {
-            console.error("submitResolution error:", err);
-            alert("Error submitting resolution");
-        } finally {
-            setIsResolving(false);
-        }
-    };
-    // prevent background scroll when resolve modal is open
-    useEffect(() => {
-        const originalOverflow = window.getComputedStyle(document.body).overflow;
-        if (resolveModalOpen) {
-            document.body.style.overflow = "hidden";
-        }
-        return () => {
-            // restore on close / unmount
-            document.body.style.overflow = originalOverflow;
-        };
-    }, [resolveModalOpen]);
-
-    const workersAssigned = (issue?.staffsAssigned || []).filter((s) => s.role === "Worker" && s.user);
-    const coordinatorsAssigned = (issue?.staffsAssigned || []).filter((s) => s.role === "Coordinator" && s.user);
-
-    if (isLoading) {
+      const assignedStaff = (issueData.staffsAssigned || []).find((s) => {
+        const u = s.user || {};
         return (
-            <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
-            </div>
+          (u._id && String(u._id) === String(user._id)) ||
+          (u.id && String(u.id) === String(user._id)) ||
+          (u.email && u.email === user.email)
         );
+      });
+
+      if (assignedStaff) {
+        setAssignedRole(assignedStaff.role);
+        setUserTasks(
+          Array.isArray(assignedStaff.tasks) ? assignedStaff.tasks : []
+        );
+      } else {
+        setAssignedRole(null);
+        setUserTasks([]);
+      } // flatten tasks from all staff entries for coordinator/supervisor views
+
+      const flat = [];
+      (issueData.staffsAssigned || []).forEach((s) => {
+        if (Array.isArray(s.tasks)) s.tasks.forEach((t) => flat.push(t));
+      });
+      setIssueTasks(flat);
+    } catch (err) {
+      console.error("fetchIssue error:", err);
+      setIssue(null);
+      setAssignedRole(null);
+      setUserTasks([]);
+      setIssueTasks([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchIssue(); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug, user]);
+
+  const refreshAfterAction = async () => {
+    await fetchIssue();
+  }; // Submit update (worker/coordinator)
+
+  const submitTaskUpdate = async () => {
+    if (!updateModalTask || !updateText.trim()) {
+      alert("Please enter update text.");
+      return;
+    } // Guard: if task already approved/completed do nothing (UI shouldn't allow this path, but guard anyway)
+
+    if (updateModalTask.status === "Completed") {
+      alert("Task is already completed.");
+      setUpdateModalOpen(false);
+      return;
+    } // Guard: prevent updates if deadline has passed
+
+    if (
+      hasDeadlinePassed(updateModalTask.deadline) &&
+      updateModalTask.status !== "Completed"
+    ) {
+      alert(
+        "Cannot submit update — task deadline has passed and is marked overdue."
+      );
+      setUpdateModalOpen(false);
+      return;
     }
 
-    if (!issue) {
-        return (
-            <div className="text-center py-12">
-                <p className="text-gray-500">Issue not found.</p>
-            </div>
-        );
+    try {
+      const res = await fetch(`/api/v1/issues/update/${updateModalTask._id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ updateText }),
+      });
+      if (!res.ok) throw new Error("Failed to submit update");
+      setUpdateModalOpen(false);
+      setUpdateText("");
+      await refreshAfterAction();
+    } catch (err) {
+      console.error(err);
+      alert("Error submitting update");
+    }
+  }; // Submit proof (worker/coordinator)
+
+  const submitTaskProof = async () => {
+    if (!proofModalTask) return alert("No task selected");
+    if (!proofText.trim()) return alert("Please enter proof description");
+    if (!proofFiles || proofFiles.length === 0)
+      return alert("Attach at least one image"); // Guard if already completed
+
+    if (proofModalTask.status === "Completed") {
+      alert("Task already completed.");
+      setProofModalOpen(false);
+      return;
+    } // Guard: prevent proof submission if deadline passed
+
+    if (
+      hasDeadlinePassed(proofModalTask.deadline) &&
+      proofModalTask.status !== "Completed"
+    ) {
+      alert(
+        "Cannot submit proof — task deadline has passed and is marked overdue."
+      );
+      setProofModalOpen(false);
+      return;
     }
 
+    try {
+      const urls = await uploadFilesToFirebase(
+        proofFiles,
+        setProofUploadProgress
+      );
+
+      const res = await fetch(
+        `/api/v1/issues/submitProof/${proofModalTask._id}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            proofText,
+            proofImages: urls,
+          }),
+        }
+      );
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error("Submit proof failed: " + txt);
+      }
+      setProofModalOpen(false);
+      setProofText("");
+      setProofFiles([]);
+      setProofUploadProgress([]);
+      await refreshAfterAction();
+    } catch (err) {
+      console.error("submitTaskProof error:", err);
+      alert("Error submitting proof");
+    }
+  }; // Approve or reject proof (coordinator/supervisor)
+
+  const approveOrRejectProof = async (taskId, approve) => {
+    try {
+      const res = await fetch(`/api/v1/issues/approveReject/${taskId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ approve }),
+      });
+      if (!res.ok) throw new Error("Failed to set approval");
+      await refreshAfterAction();
+    } catch (err) {
+      console.error(err);
+      alert("Error approving/rejecting proof");
+    }
+  };
+
+  const [isAssigning, setIsAssigning] = useState(false); // Assign task to a specific assignee (modal per-person)
+  const assignTaskToAssignee = async () => {
+    if (isAssigning) return; // Prevent duplicate submits
+
+    if (!assignModalAssignee) return alert("No assignee selected");
+    if (!assignModalData.title || !assignModalData.deadline)
+      return alert("Title and deadline required");
+
+    const today = new Date().toISOString().split("T")[0];
+    if (assignModalData.deadline < today)
+      return alert("Deadline cannot be in the past");
+
+    try {
+      setIsAssigning(true);
+
+      const body = {
+        issueId: issue._id,
+        assignedTo: assignModalAssignee.id,
+        roleOfAssignee: assignModalAssignee.role,
+        title: assignModalData.title,
+        description: assignModalData.description,
+        deadline: assignModalData.deadline,
+      };
+      const res = await fetch(`/api/v1/issues/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error("Assign failed: " + txt);
+      }
+      setAssignModalOpen(false);
+      setAssignModalAssignee(null);
+      setAssignModalData({ title: "", description: "", deadline: "" });
+      await refreshAfterAction();
+    } catch (err) {
+      console.error(err);
+      alert("Error assigning task");
+    } finally {
+      setIsAssigning(false);
+    }
+  }; // Supervisor resolve (legacy simple resolve preserved but not used for supervisor UI anymore)
+
+  const resolveIssue = async () => {
+    if (!issueSummary.trim()) return alert("Please add a summary");
+    try {
+      const res = await fetch(`/api/v1/issues/resolve/${issue._id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ summary: issueSummary }),
+      });
+      if (!res.ok) throw new Error("Resolve failed");
+      alert("Issue resolved");
+      setIssueSummary("");
+      await refreshAfterAction();
+    } catch (err) {
+      console.error(err);
+      alert("Error resolving issue");
+    }
+  }; // New: open supervisor resolution modal and initialise ratings
+
+  const openResolveModal = () => {
+    const ratingsInit = {}; // build list skipping the current user (supervisor)
+
+    const staffList = (issue?.staffsAssigned || []).filter((s) => {
+      if (!s.user) return false;
+      const u = s.user || {};
+      const isCurrent =
+        (u._id && String(u._id) === String(user._id)) ||
+        (u.id && String(u.id) === String(user._id)) ||
+        (u.email && u.email === user.email);
+      return !isCurrent;
+    });
+
+    staffList.forEach((s) => {
+      const uid =
+        s.user._id || s.user.id || s.user?.email || `${Math.random()}`;
+      ratingsInit[uid] = {
+        rating: 5,
+        comment: "",
+        role: s.role,
+        name: s.user.name || s.user.email || "Unnamed",
+        userId: uid,
+      };
+    });
+
+    setResolveRatings(ratingsInit);
+    setResolveSummary("");
+    setResolveFiles([]);
+    setResolveModalOpen(true);
+  };
+
+  const submitResolution = async () => {
+    if (!resolveSummary.trim())
+      return alert("Please add a summary of the resolution.");
+    if (!issue) return alert("Issue not loaded");
+
+    try {
+      setIsResolving(true);
+      const urls = await uploadFilesToFirebase(
+        resolveFiles,
+        setResolveUploadProgress
+      ); // Build staffPerformance array (backend expects this field name, not "ratings")
+
+      const staffPerformance = (issue?.staffsAssigned || [])
+        .filter((s) => {
+          // Skip supervisor (current user)
+          if (!s.user) return false;
+          const u = s.user;
+          const isCurrent =
+            (u._id && String(u._id) === String(user._id)) ||
+            (u.id && String(u.id) === String(user._id)) ||
+            (u.email && u.email === user.email);
+          return !isCurrent;
+        })
+        .map((s) => {
+          const uid = s.user._id || s.user.id || s.user.email;
+          const r = resolveRatings[uid];
+          return {
+            name: s.user.name || s.user.email || "Unnamed",
+            email: s.user.email || "",
+            role: s.role || "",
+            rating: r?.rating || 0,
+            comment: r?.comment || "",
+            userId: uid,
+          };
+        });
+
+      const res = await fetch(`/api/v1/issues/resolve/${issue._id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          summary: resolveSummary,
+          resolutionImages: urls,
+          staffPerformance, // key name matches backend
+        }),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error("Resolve failed: " + txt);
+      }
+
+      alert("Issue resolved and resolution report submitted.");
+      setResolveModalOpen(false);
+      setResolveSummary("");
+      setResolveFiles([]);
+      setResolveUploadProgress([]);
+      setResolveRatings({});
+      await refreshAfterAction();
+    } catch (err) {
+      console.error("submitResolution error:", err);
+      alert("Error submitting resolution");
+    } finally {
+      setIsResolving(false);
+    }
+  }; // prevent background scroll when resolve modal is open
+
+  useEffect(() => {
+    const originalOverflow = window.getComputedStyle(document.body).overflow;
+    if (resolveModalOpen) {
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      // restore on close / unmount
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [resolveModalOpen]);
+
+  const workersAssigned = (issue?.staffsAssigned || []).filter(
+    (s) => s.role === "Worker" && s.user
+  );
+  const coordinatorsAssigned = (issue?.staffsAssigned || []).filter(
+    (s) => s.role === "Coordinator" && s.user
+  );
+
+  if (isLoading) {
     return (
+      <div className="flex justify-center items-center h-64">
+                       {" "}
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
+                   {" "}
+      </div>
+    );
+  }
+
+  if (!issue) {
+    return (
+      <div className="text-center py-12">
+                        <p className="text-gray-500">Issue not found.</p>       
+           {" "}
+      </div>
+    );
+  }
+
+  const isResolved = issue.status === "Resolved";
+
+  return (
   <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 px-4 py-8">
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
       <div className="bg-gradient-to-r from-pink-400 to-pink-300 rounded-2xl p-6 shadow-2xl border-4 border-purple-600">
-        <h1 className="text-4xl font-black overflow-hidden text-purple-900 tracking-tight">{issue.title}</h1>
+        <h1 className="text-4xl font-black text-purple-900 tracking-tight overflow-hidden">{issue.title}</h1>
         
-        <div className="flex flex-wrap gap-3 mt-4">
+        <div className="flex flex-wrap gap-3 items-center mt-4">
           {issue.category && (
             <span className="bg-purple-700 text-pink-100 px-4 py-2 rounded-full font-bold text-sm border-2 border-pink-300 shadow-md">
               🎪 {issue.category}
@@ -451,13 +504,19 @@ export default function IssueDetailsStaff() {
           <span className="bg-purple-600 text-pink-100 px-4 py-2 rounded-full font-bold text-sm border-2 border-pink-300 shadow-md">
             📋 Status: {issue.status}
           </span>
+          {/* Resolved Badge */}
+          {isResolved && (
+            <span className="bg-green-100 text-green-800 font-black px-4 py-2 rounded-full border-2 border-green-400 shadow-md">
+              ✅ This issue is resolved. Actions are disabled.
+            </span>
+          )}
         </div>
       </div>
 
       {/* Info Card */}
       <div className="bg-pink-200 rounded-xl p-5 shadow-lg border-4 border-purple-500">
         <p className="text-purple-900 font-semibold text-lg">
-          <strong className="text-purple-700">📍 Location:</strong> {issue.issueDistrict + ', ' + issue.issueState + ', ' + issue.issueCountry}
+          <strong className="text-purple-700">📍 Location:</strong> {issue.issueLocation}
         </p>
         <p className="text-purple-900 font-semibold text-lg mt-2">
           <strong className="text-purple-700">📅 Published:</strong> {new Date(issue.issuePublishDate).toLocaleDateString()}
@@ -474,7 +533,7 @@ export default function IssueDetailsStaff() {
       {/* Images Section */}
       {issue.images?.length > 0 && (
         <div className="bg-gradient-to-br from-pink-300 to-pink-200 rounded-xl p-5 shadow-xl border-4 border-purple-600">
-          <h2 className="text-2xl font-black text-purple-900 mb-4">🎨 Images</h2>
+          <h2 className="text-2xl font-black text-purple-900 mb-4 overflow-hidden">🎨 Images</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {issue.images.slice(0, 6).map((img, idx) => (
               <img
@@ -482,7 +541,10 @@ export default function IssueDetailsStaff() {
                 src={img}
                 alt={`Issue ${idx}`}
                 className="w-full h-36 object-cover rounded-lg cursor-pointer hover:scale-110 transition-transform border-4 border-purple-400 shadow-md"
-                onClick={() => { setCurrentImageIdx(idx); setShowImageSlider(true); }}
+                onClick={() => {
+                  setCurrentImageIdx(idx);
+                  setShowImageSlider(true);
+                }}
               />
             ))}
           </div>
@@ -512,13 +574,19 @@ export default function IssueDetailsStaff() {
               />
               <button
                 className="absolute left-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
-                onClick={() => setCurrentImageIdx((p) => (p - 1 + issue.images.length) % issue.images.length)}
+                onClick={() =>
+                  setCurrentImageIdx(
+                    (p) => (p - 1 + issue.images.length) % issue.images.length
+                  )
+                }
               >
                 &#8592;
               </button>
               <button
                 className="absolute right-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
-                onClick={() => setCurrentImageIdx((p) => (p + 1) % issue.images.length)}
+                onClick={() =>
+                  setCurrentImageIdx((p) => (p + 1) % issue.images.length)
+                }
               >
                 &#8594;
               </button>
@@ -530,7 +598,7 @@ export default function IssueDetailsStaff() {
       {/* Videos Section */}
       {issue.videos?.length > 0 && (
         <div className="bg-gradient-to-br from-pink-300 to-pink-200 rounded-xl p-5 shadow-xl border-4 border-purple-600">
-          <h2 className="text-2xl font-black text-purple-900 mb-4">🎬 Videos</h2>
+          <h2 className="text-2xl font-black text-purple-900 mb-4 overflow-hidden">🎬 Videos</h2>
           <div className="space-y-4">
             {issue.videos.map((vid, idx) => (
               <video key={idx} src={vid} controls className="w-full h-64 rounded-lg border-4 border-purple-400 shadow-md" />
@@ -551,7 +619,7 @@ export default function IssueDetailsStaff() {
         </div>
 
         <div className="bg-pink-200 rounded-xl p-5 shadow-xl border-4 border-purple-600">
-          <h2 className="text-2xl font-black overflow-hidden text-purple-900 mb-4">💬 Comments</h2>
+          <h2 className="text-2xl font-black text-purple-900 mb-4 overflow-hidden">💬 Comments</h2>
           <div className="space-y-3">
             {issue.comments?.length > 0 ? (
               issue.comments.map((c) => (
@@ -574,7 +642,7 @@ export default function IssueDetailsStaff() {
       {/* Worker / Coordinator: Your Assigned Tasks */}
       {(assignedRole === "Worker" || assignedRole === "Coordinator") && (
         <div className="bg-gradient-to-r from-pink-300 to-pink-200 rounded-xl p-6 shadow-xl border-4 border-purple-600">
-          <h2 className="text-3xl font-black text-purple-900 mb-4">🎯 Your Assigned Tasks</h2>
+          <h2 className="text-3xl font-black text-purple-900 mb-4 overflow-hidden">🎯 Your Assigned Tasks</h2>
 
           {userTasks.length === 0 ? (
             <p className="text-purple-700 font-semibold">No tasks assigned to you for this issue.</p>
@@ -588,7 +656,7 @@ export default function IssueDetailsStaff() {
                 <div key={task._id} className="bg-white rounded-lg p-4 mb-4 shadow-md border-2 border-pink-400">
                   <div className="flex justify-between">
                     <div>
-                      <h3 className="font-black text-xl text-purple-900">{task.title}</h3>
+                      <h3 className="font-black text-xl text-purple-900 overflow-hidden">{task.title}</h3>
                       <p className="text-sm text-purple-700">{task.description}</p>
                       <p className="text-xs text-purple-600 mt-1">
                         📅 Deadline: {task.deadline ? new Date(task.deadline).toLocaleDateString() : "N/A"}
@@ -612,13 +680,22 @@ export default function IssueDetailsStaff() {
                         <div className="flex gap-2">
                           <button
                             className="px-4 py-2 bg-purple-600 text-pink-100 rounded-full font-bold hover:bg-purple-700 shadow-md border-2 border-pink-300 transform hover:scale-105 transition-all"
-                            onClick={() => { setUpdateModalTask(task); setUpdateText(""); setUpdateModalOpen(true); }}
+                            onClick={() => {
+                              setUpdateModalTask(task);
+                              setUpdateText("");
+                              setUpdateModalOpen(true);
+                            }}
                           >
                             📝 Give Task Update
                           </button>
                           <button
                             className="px-4 py-2 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 shadow-md border-2 border-purple-300 transform hover:scale-105 transition-all"
-                            onClick={() => { setProofModalTask(task); setProofText(""); setProofFiles([]); setProofModalOpen(true); }}
+                            onClick={() => {
+                              setProofModalTask(task);
+                              setProofText("");
+                              setProofFiles([]);
+                              setProofModalOpen(true);
+                            }}
                           >
                             ✅ Submit Task Completion Proof
                           </button>
@@ -656,7 +733,7 @@ export default function IssueDetailsStaff() {
                   {/* Updates */}
                   {task.taskUpdates?.length > 0 && (
                     <div className="mt-3">
-                      <h4 className="font-black text-purple-900">📋 Updates</h4>
+                      <h4 className="font-black text-purple-900 overflow-hidden">📋 Updates</h4>
                       <ul className="list-disc ml-5 space-y-1">
                         {(task.taskUpdates || []).map((u, idx) => (
                           <li key={idx} className="text-sm text-purple-800">
@@ -679,7 +756,7 @@ export default function IssueDetailsStaff() {
       {/* Coordinator: Workers & Tasks */}
       {assignedRole === "Coordinator" && (
         <div className="bg-gradient-to-r from-pink-300 to-pink-200 rounded-xl p-6 shadow-xl border-4 border-purple-600">
-          <h2 className="text-3xl font-black text-purple-900 mb-4">👷 Workers Assigned to This Issue</h2>
+          <h2 className="text-3xl font-black text-purple-900 mb-4 overflow-hidden">👷 Workers Assigned to This Issue</h2>
 
           {workersAssigned.length === 0 ? (
             <p className="text-purple-700 font-semibold">No workers assigned.</p>
@@ -690,22 +767,30 @@ export default function IssueDetailsStaff() {
                 <div key={w.user._id} className="bg-white rounded-lg p-4 mb-4 shadow-md border-2 border-pink-400">
                   <div className="flex justify-between items-center">
                     <div>
-                      <h3 className="font-black text-xl text-purple-900">{w.user.name}</h3>
+                      <h3 className="font-black text-xl text-purple-900 overflow-hidden">{w.user.name}</h3>
                       <p className="text-xs text-purple-600">{w.user.email}</p>
                     </div>
                     <button
                       className={`px-4 py-2 rounded-full text-white font-bold shadow-md border-2 transform hover:scale-105 transition-all ${
-                        isAssigning || assignModalOpen
+                        isAssigning || assignModalOpen || isResolved
                           ? "bg-gray-400 cursor-not-allowed border-gray-500"
                           : "bg-purple-600 hover:bg-purple-700 border-pink-300"
                       }`}
                       onClick={() => {
-                        if (isAssigning || assignModalOpen) return;
-                        setAssignModalAssignee({ id: w.user.id, role: "Worker", name: w.user.name });
-                        setAssignModalData({ title: "", description: "", deadline: "" });
+                        if (isAssigning || assignModalOpen || isResolved) return;
+                        setAssignModalAssignee({
+                          id: w.user.id,
+                          role: "Worker",
+                          name: w.user.name,
+                        });
+                        setAssignModalData({
+                          title: "",
+                          description: "",
+                          deadline: "",
+                        });
                         setAssignModalOpen(true);
                       }}
-                      disabled={isAssigning || assignModalOpen}
+                      disabled={isAssigning || assignModalOpen || isResolved}
                     >
                       🎯 Assign Task
                     </button>
@@ -774,7 +859,7 @@ export default function IssueDetailsStaff() {
 
                             {task.taskUpdates?.length > 0 && (
                               <div className="mt-2">
-                                <h4 className="font-bold text-purple-900">📋 Updates</h4>
+                                <h4 className="font-bold text-purple-900 overflow-hidden">📋 Updates</h4>
                                 <ul className="list-disc ml-5">
                                   {task.taskUpdates.map((u, idx) => (
                                     <li key={idx} className="text-sm text-purple-800">
@@ -802,7 +887,7 @@ export default function IssueDetailsStaff() {
       {/* Supervisor: Coordinators & Tasks */}
       {assignedRole === "Supervisor" && (
         <div className="bg-gradient-to-r from-pink-300 to-pink-200 rounded-xl p-6 shadow-xl border-4 border-purple-600">
-          <h2 className="text-3xl font-black text-purple-900 mb-4">🎭 Coordinators Assigned to This Issue</h2>
+          <h2 className="text-3xl font-black text-purple-900 mb-4 overflow-hidden">🎭 Coordinators Assigned to This Issue</h2>
 
           {coordinatorsAssigned.length === 0 ? (
             <p className="text-purple-700 font-semibold">No coordinators assigned.</p>
@@ -813,16 +898,30 @@ export default function IssueDetailsStaff() {
                 <div key={c.user._id} className="bg-white rounded-lg p-4 mb-4 shadow-md border-2 border-pink-400">
                   <div className="flex justify-between items-center">
                     <div>
-                      <h3 className="font-black text-xl text-purple-900">{c.user.name}</h3>
+                      <h3 className="font-black text-xl text-purple-900 overflow-hidden">{c.user.name}</h3>
                       <p className="text-xs text-purple-600">{c.user.email}</p>
                     </div>
                     <button
-                      className="px-4 py-2 bg-purple-600 text-pink-100 rounded-full font-bold hover:bg-purple-700 shadow-md border-2 border-pink-300 transform hover:scale-105 transition-all"
+                      className={`px-4 py-2 text-white rounded-full font-bold shadow-md border-2 transform hover:scale-105 transition-all ${
+                        isResolved
+                          ? "bg-gray-400 cursor-not-allowed border-gray-500"
+                          : "bg-purple-600 hover:bg-purple-700 border-pink-300"
+                      }`}
                       onClick={() => {
-                        setAssignModalAssignee({ id: c.user.id, role: "Coordinator", name: c.user.name });
-                        setAssignModalData({ title: "", description: "", deadline: "" });
+                        if (isResolved) return;
+                        setAssignModalAssignee({
+                          id: c.user.id,
+                          role: "Coordinator",
+                          name: c.user.name,
+                        });
+                        setAssignModalData({
+                          title: "",
+                          description: "",
+                          deadline: "",
+                        });
                         setAssignModalOpen(true);
                       }}
+                      disabled={isResolved}
                     >
                       🎯 Assign Task
                     </button>
@@ -891,7 +990,7 @@ export default function IssueDetailsStaff() {
 
                             {task.taskUpdates?.length > 0 && (
                               <div className="mt-2">
-                                <h4 className="font-bold text-purple-900">📋 Updates</h4>
+                                <h4 className="font-bold text-purple-900 overflow-hidden">📋 Updates</h4>
                                 <ul className="list-disc ml-5">
                                   {task.taskUpdates.map((u, idx) => (
                                     <li key={idx} className="text-sm text-purple-800">
@@ -916,13 +1015,18 @@ export default function IssueDetailsStaff() {
 
           {/* Resolve Issue Section */}
           <div className="mt-6 bg-white rounded-xl p-5 shadow-lg border-4 border-purple-500">
-            <h3 className="font-black text-2xl overflow hidden text-purple-900 mb-3">🎊 Resolve Issue</h3>
-            <p className="text-sm text-purple-700 mb-4">
+            <h3 className="font-black text-2xl text-purple-900 mb-3 overflow-hidden">🎊 Resolve Issue</h3>
+            <p className="text-sm text-purple-700 mb-4 font-semibold">
               Previously you could enter a quick summary — now use the new button below to submit a full resolution report with images and ratings for staff.
             </p>
             <button
-              className="w-full px-6 py-3 bg-green-600 text-white rounded-full font-black text-lg hover:bg-green-700 shadow-lg border-4 border-purple-500 transform hover:scale-105 transition-all"
+              className={`w-full px-6 py-3 text-white rounded-full font-black text-lg shadow-lg border-4 transform hover:scale-105 transition-all ${
+                isResolved
+                  ? "bg-gray-400 cursor-not-allowed border-gray-500"
+                  : "bg-green-600 hover:bg-green-700 border-purple-500"
+              }`}
               onClick={openResolveModal}
+              disabled={isResolved}
             >
               ✅ Submit Issue Resolution Report and Resolve Issue
             </button>
@@ -948,7 +1052,7 @@ export default function IssueDetailsStaff() {
               >
                 &times;
               </button>
-              <h3 className="text-2xl font-black text-purple-900 mb-3">📝 Add Update — {updateModalTask.title}</h3>
+              <h3 className="text-2xl font-black text-purple-900 mb-3 overflow-hidden">📝 Add Update — {updateModalTask.title}</h3>
               <textarea
                 rows={4}
                 value={updateText}
@@ -991,7 +1095,7 @@ export default function IssueDetailsStaff() {
               >
                 &times;
               </button>
-              <h3 className="text-2xl font-black text-purple-900 mb-3">📸 Submit Proof — {proofModalTask.title}</h3>
+              <h3 className="text-2xl font-black text-purple-900 mb-3 overflow-hidden">📸 Submit Proof — {proofModalTask.title}</h3>
               <textarea
                 rows={3}
                 value={proofText}
@@ -1052,27 +1156,42 @@ export default function IssueDetailsStaff() {
               >
                 &times;
               </button>
-              <h3 className="text-2xl font-black text-purple-900 mb-3">
+              <h3 className="text-2xl font-black text-purple-900 mb-3 overflow-hidden">
                 🎯 Assign Task to {assignModalAssignee.name} ({assignModalAssignee.role})
               </h3>
               <input
                 type="text"
                 placeholder="Title"
                 value={assignModalData.title}
-                onChange={(e) => setAssignModalData({ ...assignModalData, title: e.target.value })}
+                onChange={(e) =>
+                  setAssignModalData({
+                    ...assignModalData,
+                    title: e.target.value,
+                  })
+                }
                 className="w-full border-4 border-purple-500 p-3 rounded-lg mb-3 text-purple-900 font-semibold focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
               />
               <textarea
                 placeholder="Description"
                 value={assignModalData.description}
-                onChange={(e) => setAssignModalData({ ...assignModalData, description: e.target.value })}
+                onChange={(e) =>
+                  setAssignModalData({
+                    ...assignModalData,
+                    description: e.target.value,
+                  })
+                }
                 className="w-full border-4 border-purple-500 p-3 rounded-lg mb-3 text-purple-900 font-semibold focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
               />
               <input
                 type="date"
                 min={new Date().toISOString().split("T")[0]}
                 value={assignModalData.deadline}
-                onChange={(e) => setAssignModalData({ ...assignModalData, deadline: e.target.value })}
+                onChange={(e) =>
+                  setAssignModalData({
+                    ...assignModalData,
+                    deadline: e.target.value,
+                  })
+                }
                 className="w-full border-4 border-purple-500 p-3 rounded-lg mb-4 text-purple-900 font-semibold focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
               />
               <div className="flex gap-2 justify-end">
@@ -1122,7 +1241,7 @@ export default function IssueDetailsStaff() {
                   &times;
                 </button>
 
-                <h3 className="text-2xl font-black text-purple-900 mb-4">
+                <h3 className="text-2xl font-black text-purple-900 mb-4 overflow-hidden">
                   🎊 Submit Issue Resolution Report & Resolve Issue
                 </h3>
 
@@ -1155,14 +1274,14 @@ export default function IssueDetailsStaff() {
                 )}
 
                 <div className="mt-4">
-                  <h4 className="font-black text-xl text-purple-900 mb-3">⭐ Rate staff performance</h4>
+                  <h4 className="font-black text-xl text-purple-900 mb-3 overflow-hidden">⭐ Rate staff performance</h4>
                   <p className="text-xs text-purple-700 mb-3 font-semibold">
                     Provide a rating (1-5) and optional comment for each worker/coordinator involved.
                   </p>
 
                   <div className="space-y-3">
-                    {(
-                      (issue?.staffsAssigned || []).filter((s) => {
+                    {(issue?.staffsAssigned || [])
+                      .filter((s) => {
                         if (!s.user) return false;
                         const u = s.user || {};
                         return !(
@@ -1171,71 +1290,76 @@ export default function IssueDetailsStaff() {
                           (u.email && u.email === user.email)
                         );
                       })
-                    ).map((s) => {
-                      const uid = s.user._id || s.user.id || s.user?.email || String(s.user?.name) || String(Math.random());
-                      const r = resolveRatings[uid] || {
-                        rating: 5,
-                        comment: "",
-                        role: s.role,
-                        name: s.user.name || s.user.email,
-                        userId: uid,
-                      };
+                      .map((s) => {
+                        const uid =
+                          s.user._id ||
+                          s.user.id ||
+                          s.user?.email ||
+                          String(s.user?.name) ||
+                          String(Math.random());
+                        const r = resolveRatings[uid] || {
+                          rating: 5,
+                          comment: "",
+                          role: s.role,
+                          name: s.user.name || s.user.email,
+                          userId: uid,
+                        };
 
-                      if (!resolveRatings[uid]) {
-                        Promise.resolve().then(() => {
-                          setResolveRatings((prev) => {
-                            if (prev && prev[uid]) return prev;
-                            return { ...prev, [uid]: r };
+                        if (!resolveRatings[uid]) {
+                          Promise.resolve().then(() => {
+                            setResolveRatings((prev) => {
+                              if (prev && prev[uid]) return prev;
+                              return { ...prev, [uid]: r };
+                            });
                           });
-                        });
-                      }
+                        }
 
-                      return (
-                        <div key={uid} className="p-4 bg-white rounded-lg shadow-md border-2 border-pink-400">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p className="font-black text-purple-900">
-                                {r.name} <span className="text-xs text-purple-600">({s.role})</span>
-                              </p>
-                              <p className="text-xs text-purple-600">{s.user.email}</p>
+                        return (
+                          <div key={uid} className="p-4 bg-white rounded-lg shadow-md border-2 border-pink-400">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="font-black text-purple-900">
+                                  {r.name} <span className="text-xs text-purple-600">({s.role})</span>
+                                </p>
+                                <p className="text-xs text-purple-600">{s.user.email}</p>
+                              </div>
+
+                              <div className="flex items-center gap-3">
+                                <label className="text-sm font-bold text-purple-900">Rating</label>
+                                <select
+                                  value={r.rating}
+                                  onChange={(e) =>
+                                    setResolveRatings((prev) => ({
+                                      ...prev,
+                                      [uid]: { ...r, rating: Number(e.target.value) },
+                                    }))
+                                  }
+                                  className="border-2 border-purple-500 p-2 rounded-lg text-purple-900 font-bold focus:border-pink-500 focus:ring-2 focus:ring-pink-300"
+                                >
+                                  <option value={1}>1</option>
+                                  <option value={2}>2</option>
+                                  <option value={3}>3</option>
+                                  <option value={4}>4</option>
+                                  <option value={5}>5</option>
+                                </select>
+                              </div>
                             </div>
 
-                            <div className="flex items-center gap-3">
-                              <label className="text-sm font-bold text-purple-900">Rating</label>
-                              <select
-                                value={r.rating}
-                                onChange={(e) =>
-                                  setResolveRatings((prev) => ({
-                                    ...prev,
-                                    [uid]: { ...r, rating: Number(e.target.value) },
-                                  }))
-                                }
-                                className="border-2 border-purple-500 p-2 rounded-lg text-purple-900 font-bold focus:border-pink-500 focus:ring-2 focus:ring-pink-300"
-                              >
-                                <option value={1}>1</option>
-                                <option value={2}>2</option>
-                                <option value={3}>3</option>
-                                <option value={4}>4</option>
-                                <option value={5}>5</option>
-                              </select>
-                            </div>
+                            <textarea
+                              rows={2}
+                              placeholder="Optional comment"
+                              value={r.comment}
+                              onChange={(e) =>
+                                setResolveRatings((prev) => ({
+                                  ...prev,
+                                  [uid]: { ...r, comment: e.target.value },
+                                }))
+                              }
+                              className="w-full border-2 border-purple-500 p-2 rounded-lg mt-3 text-purple-900 font-semibold focus:border-pink-500 focus:ring-2 focus:ring-pink-300"
+                            />
                           </div>
-
-                          <textarea
-                            rows={2}
-                            placeholder="Optional comment"
-                            value={r.comment}
-                            onChange={(e) =>
-                              setResolveRatings((prev) => ({
-                                ...prev,
-                                [uid]: { ...r, comment: e.target.value },
-                              }))
-                            }
-                            className="w-full border-2 border-purple-500 p-2 rounded-lg mt-3 text-purple-900 font-semibold focus:border-pink-500 focus:ring-2 focus:ring-pink-300"
-                          />
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                   </div>
                 </div>
 
