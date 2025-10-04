@@ -1019,3 +1019,58 @@ export const submitFeedback = async (req, res, next) => {
         res.status(500).json({ success: false, message: "Internal server error while submitting feedback." });
     }
 };
+
+
+export const getFeedbackForIssue = async (req, res) => {
+    const { issueId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(issueId)) {
+        return res.status(400).json({ success: false, message: "Invalid Issue ID." });
+    }
+
+    try {
+        const feedbacks = await Feedback.find({ issue: issueId }).populate(
+            "submittedBy",
+            "name email" // Select which fields from the User model to include
+        );
+
+        if (!feedbacks || feedbacks.length === 0) {
+            return res.status(404).json({ success: false, message: "No feedback found for this issue." });
+        }
+
+        res.status(200).json({
+            success: true,
+            feedbacks,
+        });
+    } catch (error) {
+        console.error("Error fetching feedback:", error);
+        res.status(500).json({ success: false, message: "Internal server error while fetching feedback." });
+    }
+};
+
+export const getReportForIssue = async (req, res) => {
+    const { issueId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(issueId)) {
+        return res.status(400).json({ success: false, message: "Invalid Issue ID." });
+    }
+
+    try {
+        const report = await ResolutionReport.findOne({ issue: issueId }).populate(
+            "supervisor",
+            "name email" // Select fields from the User model for the supervisor
+        );
+
+        if (!report) {
+            return res.status(404).json({ success: false, message: "No resolution report found for this issue." });
+        }
+
+        res.status(200).json({
+            success: true,
+            report,
+        });
+    } catch (error) {
+        console.error("Error fetching report:", error);
+        res.status(500).json({ success: false, message: "Internal server error while fetching the report." });
+    }
+};
