@@ -59,8 +59,8 @@ function IssuesMunicipality() {
 
       const validIssues = (data.issues || []).filter(
         (issue) => issue.issueDistrict &&
-      issue.issueDistrict.trim() !== "" &&
-      issue.issueDistrict === adminDistrict
+          issue.issueDistrict.trim() !== "" &&
+          issue.issueDistrict === adminDistrict
       );
 
       setIssues(validIssues);

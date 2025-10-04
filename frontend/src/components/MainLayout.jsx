@@ -6,7 +6,7 @@ import Footer from './Footer'
 const MainLayout = ({notifications}) => {
   return (
     <>
-      <Header />
+      <Header notifications={notifications}/>
       <div className="min-h-screen ">
         <Outlet />
     

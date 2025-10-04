@@ -385,6 +385,48 @@ export const getIssueDetails = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server Error' });
   }
 };
+
+export const getMonthlyAnalysis = async (req, res) => {
+  const { userId } = req.query;
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+
+  try {
+    const assignedIssues = await Issue.find({ createdBy: userId });
+    const completedIssues = assignedIssues.filter(issue => issue.status === 'completed');
+
+    const totalAssigned = assignedIssues.length;
+    const totalCompleted = completedIssues.length;
+
+    const avgCompletionTimeHours = completedIssues.length > 0
+      ? completedIssues.reduce((sum, issue) => {
+          const created = new Date(issue.createdAt);
+          const resolved = new Date(issue.completedAt);
+          return sum + (resolved - created) / (1000 * 60 * 60);
+        }, 0) / completedIssues.length
+      : 0;
+
+    const staffCount = await User.countDocuments({ role: 'staff', assignedTo: userId });
+
+    const mostUpvoted = await Issue.findOne({ createdBy: userId }).sort({ upvotes: -1 });
+    const mostDownvoted = await Issue.findOne({ createdBy: userId }).sort({ downvotes: -1 });
+
+    const votesData = await Issue.find({ createdBy: userId })
+      .select('title upvotes downvotes')
+      .sort({ upvotes: -1 })
+      .limit(5);
+
+    res.json({
+      assignedIssues: totalAssigned,
+      completedIssues: totalCompleted,
+      avgCompletionTimeHours,
+      staffCount,
+      mostUpvoted,
+      mostDownvoted,
+      votesData
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
 export const takeUpIssue = async (req, res) => {
   try {
     const { issueId, deadline } = req.body;

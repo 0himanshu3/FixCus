@@ -8,7 +8,7 @@ router.post("/create", isAuthenticated, createIssue);
 router.get("/completed-issues",isAuthenticated, getCompletedIssues);
 router.get("/issue-details/:id",isAuthenticated,getIssueDetails)
 router.get("/all",isAuthenticated, getIssues);
-
+router.get("/monthly-analysis",getMonthlyAnalysis)
 router.post("/upvote", isAuthenticated, upvoteIssue);
 router.post("/downvote", isAuthenticated, downvoteIssue);
 router.post("/comment", isAuthenticated, addComment);
