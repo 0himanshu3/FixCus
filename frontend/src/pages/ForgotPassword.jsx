@@ -4,24 +4,25 @@ import { forgotPassword, resetAuthSlice } from '../redux/slices/authSlice';
 import { Navigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { motion } from 'framer-motion';
+
 function ForgotPassword() {
     const [email, setEmail] = React.useState('');
     const dispatch = useDispatch();
 
-    const {
-        loading, error, message, user, isAuthenticated
-    } = useSelector(state => state.auth);
+    const { loading, error, message, user, isAuthenticated } = useSelector(state => state.auth);
 
     const handleForgotPassword = (e) => {
         e.preventDefault();
         dispatch(forgotPassword(email));
     }
+
     useEffect(() => {
         if (message) {
             toast.success(message);
             setTimeout(() => {
                 dispatch(resetAuthSlice());
-            }, 100);  // Small delay to allow the toast to appear
+            }, 100);
         }
         if (error) {
             toast.error(error);
@@ -33,62 +34,97 @@ function ForgotPassword() {
         return <Navigate to={"/"} />
     }
 
+    const centerVariants = {
+        initial: { opacity: 0, scale: 0.9 },
+        animate: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: "easeOut" } },
+    };
+
     return (
-        <>
-            <div className="flex flex-col justify-center md:flex-row h-screen">
-                {/* LEFT SECTION */}
-                <div className="hidden w-full md:w-1/2 bg-black text-white md:flex flex-col items-center justify-center p-8 rounded-tr-[80px] rounded-br-[88px]">
-                    <div className="text-center h-[450px]">
-                        <div className="flex justify-center mb-12">
-                            <img src='https://www.logomaker.com/api/main/imageop/zjHl2lgeccIQlz7qJEHyxj...tyq...e+1RCjRu...wjkZfzJLpl4...yHVC3aci4P85Px5x9FMJ30tYLZV...12R+UocchRtg9jqLO49WWXxrzFkRVetRQi54L3uQQKrY9l84yaU085VN5wybf3XnTXLUfNc7G5+U4qZ+Fctw2CuMCnZtry4kZP0XdNvOC4ckhJejQ...ZQ2GjCHM1WOOi8DYPVR24Y224PYPRYtddLVMNoUmVyVVfQjrVPCppbGYlDSEJ6rBoYJJEnJW018uh3ttiBD...hlu3gIj1++xtsqYFXLxIlzVbyZd+K9I5EuKWK3G7OerCk1+Zlj2HbIWvu5yQ3t62hAfkGVPaY+PARH+CIk0Vw7YeLOJgV7KX+Pbw8Chb1DgBAj2Lw5c69yMidjYs+Hh1RcXpnNeHA6jmFlzJoI85zvyfVITXhvgIr3QoNhT6s3I06Hi2Jk91U7BYyVeuFpMWs92RvdchUcjslTHRR0NP9kbOEeJLiEBeMFCquplkIdVjAl2nuvmLlTufRXg20WiVPjEnXaGr1sYiU3j7dR02+g0WiRKNfZzjVotINA8+7...uFkZa4uWnkGZiexZM6TEcB8m2fuvfv+WubZl1Q1EUeBghnmXeZ8yVgM7anJF0LWwAkzukg4kkp+XqfQ...j6B3g9muo6MWz0jm37dki+IQvIXsZvRg...sYX0yt2vgM6t...dC4Q8Xfpkf7KvLWayqIw8koqMgTUfX1IBhhJGgtGVxx2RTOuVx5+9T5JTAr0SzwxinlILEATrc...pkG9n8HiItON2vSc9vG...IT7bIr9IokL0YwHXmphl...amfwzBYMxYoCAWdGT4ZS0R...XWRC6z6xRMLExdRFrKwo4NCLyUsQzTjz8dVPeCfUSccgvxgulUz3EQeArTPM+B79WRyDXIyg...zPzgOxw5GHF+gG9JpnG6vPQ9iEkyYyEeFBG2ARJQUZvtY1...50k73nup3Vo7B0BzjKfxGnRW9ypUIlDXveWenigpNxcFfTfOG0IGHVsfmPpgnVcCP5PwRzNwS...HgmEDrod0gZhAi7C+515sG2Fzk...zSjHqCaI1fhcdc963bptVBdSkRKn8bj...TvUQvdMSg3kcPlmt8lTZGZg0EHPCO4LL8l8im7x...HqfEjSnt2gGwuHZ+lbnouJ1o2uOOHYs1EobYCD43FzZ3WU8B1KwGl0wTiASQj1yZGwMaBT1QC...YwBhZdxa44quMljRKLcnZI8dHx0k1xuQv8R...S9ZXpZ9N5uS6GUIi549zJIDq5CPtBnT0c+NjDPa86Tcl5+OHSS8SNGaFALiWrU7BFaf7vyDUV9wngobCdwd3...giKIim8tX2yQfvHlhpmp8FRC9gXhCshU+cL1P4TsrVgWGDQVKKaYFAqdQS5ytcCJ60s4X5jfgvG6w+BPqIl24tsixYIJ4...5XTlxC3PrieT3hi2vnpdx+s7C0flKQGUW0vQwbx99xt1OxL6RnKRqQJMccYLcYTm4vDsXdG9lQGr3pLyeZGi9VdfOmPSSZuj+x44JqowH1IsEx6dvCkM9qmLt1ZylYh3XW0aETJxRxTOu4u4Y3y1umFOpPfa9MvOk5TY3E5Pdqv8EJ5GUc4LtLaclCw+TASlWcCCZUp7tRTFqAHnMNkvOSV9MxTHP+X0JXNWW9tFW1vwTp...Q9RMNOvWHr21LiyYBMuNjmu7xmkmroyuXyMuCkr5cursWRbfI+5MlizSDwUU63RADIW5cfMbLu3SwkMsVkBg5jMLBDnZ6kQ9FOzrODEhnvx...twrV8UpaaFA9oLZ79QmZp3E8s2QZ...5kuefFXBqdryM...1La+SNTDVDLMrrUPoWmxhOdPrhwkqoP0zV2EKIHvdcYMN9Jd...C5Q87+JZ9BMWremyrVlQHOMkXK6t9rXH4wDUWFsQkaN3gVVy1wLUxNaMtvIN5wa4n0MgoL3TILRKSxjiF6pGROwC6QsefWz...LmMrCEy9W2gDp0iKXxX2hzFbdOeAZOHjR4BlkO6qIy7o8reUV8J3u...ubF2++g+ZNjyIfiGCVytkVG9pyLY7Zk89kMgEEjdptTyZVT7pnq6rIUXTqwB+9AGOxqlIQv5eWmOpUni5OdSODqnCQXIFyblX9bB+2my7sBTVroQwwbp57XT1CPCOsc3kzzrajY+DogvXNLMF368KNDrLlhBGpGlo45DaTmAo+WSyCfLc4srCB9z+BDHEr4gdzYhrYcxURtXLrQOL6isiblpgArJviEUBsJj0Uh9eTVevpKHLZ0zjhMCohxtaQ3p...85DT58iO7QaRAcE+Go4kScRsoy1aAvLw1SUsLVfAhFO' alt="logo" className="mb-12 h-44 w-auto" />
-                        </div>
-                    </div>
-                </div>
-                {/* RIGHT SECTION */}
-                <div className="w-full md:w-1/2 flex items-center justify-center bg-white p-8 relative">
+        <div className="flex flex-col justify-center md:flex-row h-screen relative overflow-hidden">
+            {/* Animated circus background pattern */}
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-100 to-yellow-100 opacity-50"></div>
+            <div className="absolute inset-0" style={{
+                backgroundImage: `
+                    radial-gradient(circle at 20% 50%, rgba(255, 182, 193, 0.3) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(186, 85, 211, 0.3) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 20%, rgba(255, 215, 0, 0.3) 0%, transparent 50%)
+                `
+            }}></div>
+
+            {/* Main Content - Centered Card */}
+            <motion.div
+                className="w-full flex items-center justify-center p-8 relative z-10"
+                initial="initial"
+                animate="animate"
+                variants={centerVariants}
+            >
+                <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 border-4 border-purple-200 relative">
+                    {/* Back Button */}
                     <Link
-                        to={"/login"}
-                        className="border-2 border-black rounded-3xl font-bold w-52 py-2 px-4 fixed top-10 right-10 hover:bg-black hover:text-white transition duration-300 text-center"
-
+                        to="/login"
+                        className="absolute -top-4 -left-4 bg-gradient-to-r from-gray-700 to-gray-900 text-white font-bold px-6 py-2 rounded-full shadow-lg hover:scale-105 transition-all duration-300 transform"
                     >
-                        Back
+                        ← Back
                     </Link>
-                    <div className="max-w-sm w-full">
-                        <div className="flex justify-center mb-12">
-                            <div className="rounded-full flex items-center justify-center">
-                                <img src='https://samarthanam.org/wp-content/uploads/2023/10/samarthanam-logo.jpg' alt="logo" className="h-24 w-auto" />
-                            </div>
+
+                    {/* Header with emoji */}
+                    <div className="text-center mb-6 mt-4">
+                        <div className="inline-block bg-gradient-to-r from-orange-400 to-red-500 text-white text-4xl p-4 rounded-full mb-4 shadow-lg">
+                            🔑
                         </div>
-                        <h1 className="text-4xl font-medium text-center mb-5 overflow-hidden">
-                            Forgot Password
-                        </h1>
-                        <p className="text-gray-800 text-center mb-12">
-                            Please enter your email
+                        <h3 className="text-4xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+                            Forgot Password?
+                        </h3>
+                        <p className="text-gray-600 font-medium">No worries! We'll send you reset instructions</p>
+                    </div>
+
+                    <form onSubmit={handleForgotPassword} className="space-y-4">
+                        {/* Email Input */}
+                        <div>
+                            <input
+                                type="email"
+                                value={email}
+                                required
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="📧 Enter your email"
+                                className="w-full px-4 py-3 border-3 border-purple-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-200 focus:border-purple-500 transition-all placeholder-gray-400"
+                            />
+                        </div>
+
+                        {/* Info text */}
+                        <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-3">
+                            <p className="text-xs text-purple-700 text-center">
+                                💡 We'll send a password reset link to your email address
+                            </p>
+                        </div>
+
+                        {/* Submit Button */}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-black text-lg py-4 rounded-full shadow-xl hover:shadow-2xl hover:scale-105 transition-all duration-300 transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                        >
+                            {loading ? '⏳ Sending...' : '📨 SEND RESET LINK'}
+                        </button>
+                    </form>
+
+                    {/* Footer link */}
+                    <div className="text-center mt-6">
+                        <p className="text-sm text-gray-600">
+                            Remember your password?{' '}
+                            <Link to="/login" className="text-purple-600 font-bold hover:underline">
+                                Sign In 🚀
+                            </Link>
                         </p>
-                        <form onSubmit={handleForgotPassword}>
-                            <div className="mb-4">
-                                <input
-                                    type="email"
-                                    value={email}
-                                    required
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="Email"
-                                    className="w-full px-4 py-3 border border-black rounded-md focus:outline-none"
-                                />
-                            </div>
-                            <button
-                                type="submit"
-                                className="border-2 mt-5 border-black w-full font-semibold bg-black text-white py-2 rounded-lg hover:bg-white hover:text-black transition"
-                                disabled={loading ? true : false}
-                            >
-                                RESET PASSWORD
-                            </button>
-                        </form>
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
-        </>
+            {/* Decorative floating elements */}
+            <div className="absolute top-10 left-10 w-24 h-24 bg-yellow-300 rounded-full opacity-20 animate-pulse hidden md:block"></div>
+            <div className="absolute bottom-20 right-16 w-32 h-32 bg-pink-300 rounded-full opacity-20 animate-bounce hidden md:block" style={{ animationDuration: '3s' }}></div>
+            <div className="absolute top-1/3 right-20 w-16 h-16 bg-purple-300 rounded-full opacity-30 hidden md:block"></div>
+        </div>
     )
 }
 
