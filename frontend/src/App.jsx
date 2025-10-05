@@ -29,6 +29,7 @@ import MonthlyAnalysis from "./pages/MonthlyAnalysis";
 import Notification from "./pages/Notification";
 import 'leaflet/dist/leaflet.css';
 
+import IssuesHeatmapPage from "./pages/IssuesHeatmapPage";
 const App = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
@@ -149,6 +150,7 @@ const App = () => {
           <Route path="/monthly-analysis" element={<MonthlyAnalysis />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/requests" element={<ApplicationRequest />} />
+          <Route path="/issues-heatmap" element={<IssuesHeatmapPage />} />
           <Route
             path="/notification"
             element={<Notification notifications={notifications} fetchNotifications={fetchNotifications} userId={user?._id} socket={socket} />}

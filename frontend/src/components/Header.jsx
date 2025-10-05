@@ -164,7 +164,7 @@ const Header = ({ notifications }) => {
             </button> */}
             <button
               onClick={handleLogout}
-              className="bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-red-600 border-2 border-pink-300 transform hover:scale-105 transition duration-200"
+              className="bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-red-600 border-2 border-pink-300 cursor-pointer transform transition duration-200"
             >
               🚪 Logout
             </button>
@@ -172,7 +172,7 @@ const Header = ({ notifications }) => {
         ) : (
           <Link
             to="/login"
-            className="hidden md:flex bg-pink-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-pink-600 border-2 border-yellow-300 transform hover:scale-105 transition duration-200"
+            className="hidden md:flex bg-pink-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-pink-600 border-2 border-yellow-300 transform cursor-pointer transition duration-200"
           >
             🎪 Sign In
           </Link>

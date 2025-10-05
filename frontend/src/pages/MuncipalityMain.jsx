@@ -71,7 +71,6 @@ export default function MunicipalityMain() {
   const filteredIssues = issues
     .filter(i => priorityFilter === 'all' ? true : i.priority === priorityFilter)
     .filter(i => {
-      console.log(priorityFilter);
       if (!query) return true
       
       const q = query.toLowerCase()
@@ -231,13 +230,13 @@ return (
               className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-bold hover:from-purple-700 hover:to-purple-800 shadow-lg transition"
               onClick={() => navigate('/issues')}
             >
-              📋 Issues
+              📋 All Issues
             </button>
             <button
               className="flex-1 px-4 py-2.5 bg-gradient-to-r from-pink-500 to-pink-600 text-white rounded-lg font-bold hover:from-pink-600 hover:to-pink-700 shadow-lg transition"
               onClick={() => navigate('/monthly-analysis')}
             >
-              📊 Analysis
+              📊 Monthly Analysis
             </button>
           </div>
         )}

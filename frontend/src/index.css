@@ -10,6 +10,10 @@
 }
 
 
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+}
 
 /* === Temporary Leaflet debug / override — paste at end of index.css === */
 
