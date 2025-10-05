@@ -1,290 +1,284 @@
-// IssuesHeatmap.jsx
-import React, { useEffect, useMemo, useRef } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet.heat';
-import 'leaflet/dist/leaflet.css';
+import React, { useEffect, useMemo, useState, useRef } from "react";
+import {
+  APIProvider,
+  Map,
+  AdvancedMarker,
+  Pin,
+  InfoWindow,
+} from "@vis.gl/react-google-maps";
 
-const HeatmapLayer = ({ points, styleConfig }) => {
-  const map = useMap();
-  const layerRef = useRef(null);
+const IssuesHeatmap = ({ show = false, onClose = () => {} }) => {
+  const [issues, setIssues] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [hoveredMarker, setHoveredMarker] = useState(null);
+  const [mapReady, setMapReady] = useState(false);
+
+  const mapRef = useRef(null);
+  const hoverTimeout = useRef(null);
 
   useEffect(() => {
-    if (!map) return;
-
-    if (layerRef.current) {
-      try { map.removeLayer(layerRef.current); } catch (e) { /* ignore */ }
-      layerRef.current = null;
-    }
-
-    if (points && points.length > 0) {
-      const heatLayer = L.heatLayer(points, {
-        radius: styleConfig.radius,
-        blur: styleConfig.blur,
-        maxZoom: styleConfig.maxZoom,
-        max: styleConfig.max,
-        minOpacity: styleConfig.minOpacity,
-        gradient: styleConfig.gradient,
-      }).addTo(map);
-
-      layerRef.current = heatLayer;
-    }
-
-    return () => {
-      if (layerRef.current) {
-        try { map.removeLayer(layerRef.current); } catch (e) { /* ignore */ }
-        layerRef.current = null;
+    const fetchIssues = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/v1/issues/all", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("Failed to fetch issues");
+        const data = await res.json();
+        setIssues(Array.isArray(data.issues) ? data.issues : []);
+      } catch (e) {
+        console.error(e);
+        setIssues([]);
+      } finally {
+        setLoading(false);
       }
     };
-  }, [points, map, styleConfig]);
+    fetchIssues();
+  }, []);
 
+  const markers = useMemo(
+    () =>
+      issues
+        .map((issue) => {
+          try {
+            if (
+              !issue.issueLocation ||
+              typeof issue.issueLocation !== "string" ||
+              !issue.issueLocation.includes(",")
+            )
+              return null;
+            const [lat, lng] = issue.issueLocation
+              .split(",")
+              .map((v) => parseFloat(v.trim()));
+            if (
+              Number.isFinite(lat) &&
+              Number.isFinite(lng) &&
+              lat >= -90 &&
+              lat <= 90 &&
+              lng >= -180 &&
+              lng <= 180
+            ) {
+              return {
+                lat,
+                lng,
+                title: issue.title || "Issue",
+                priority: issue.priority || "Low",
+                status: issue.status || "Open",
+                id: issue._id,
+              };
+            }
+          } catch (_) {}
+          return null;
+        })
+        .filter(Boolean),
+    [issues]
+  );
+
+  const defaultCenter = useMemo(() => {
+    if (markers.length > 0)
+      return { lat: markers[0].lat, lng: markers[0].lng };
+    return { lat: 20.5937, lng: 78.9629 };
+  }, [markers]);
+
+  const getPriorityColor = (priority) => {
+    switch (priority?.toLowerCase()) {
+      case "critical":
+        return "#dc2626";
+      case "high":
+        return "#f97316";
+      case "medium":
+        return "#eab308";
+      case "low":
+        return "#22c55e";
+      case "very low":
+        return "#6b7280";
+      default:
+        return "#3b82f6";
+    }
+  };
+
+  // --- FIX 1: stable hover without flicker
+  const handleMouseEnter = (marker) => {
+    clearTimeout(hoverTimeout.current);
+    setHoveredMarker(marker);
+  };
+
+  const handleMouseLeave = () => {
+    clearTimeout(hoverTimeout.current);
+    hoverTimeout.current = setTimeout(() => {
+      setHoveredMarker(null);
+    }, 200);
+  };
+
+  // --- FIX 2: heatmap that waits for map to load
   useEffect(() => {
-    if (!map) return;
-    setTimeout(() => {
-      try { map.invalidateSize(); } catch (e) { /* ignore */ }
-    }, 0);
-  }, [map]);
+    if (!mapReady || markers.length === 0) return;
+    let heatmapLayer;
 
-  return null;
-};
+    const initHeatmap = async () => {
+      const map = mapRef.current?.getMap?.();
+      if (!map) return;
 
-const IssuesHeatmap = ({ issues }) => {
-  // style config — tweak these numbers to taste
-  const styleConfig = useMemo(() => ({
-    radius: 40,
-    blur: 30,
-    maxZoom: 18,
-    max: 3.0,
-    minOpacity: 0.25,
-    gradient: {
-      0.0: 'navy',
-      0.2: 'blue',
-      0.4: 'cyan',
-      0.6: 'lime',
-      0.8: 'yellow',
-      1.0: 'red'
-    }
-  }), []);
+      // dynamically import the visualization library
+      const { HeatmapLayer } = await google.maps.importLibrary("visualization");
 
-  // Build heat points. We'll boost weights so single points show stronger.
-  const heatPoints = useMemo(() => {
-    if (!issues) return [];
+      const data = markers.map(
+        (m) => new google.maps.LatLng(m.lat, m.lng)
+      );
 
-    const scale = 2.0;
+      heatmapLayer = new HeatmapLayer({
+        data,
+        dissipating: true,
+        radius: 25,
+        opacity: 0.6,
+      });
 
-    return issues
-      .map(issue => {
-        try {
-          if (!issue.issueLocation || typeof issue.issueLocation !== 'string' || !issue.issueLocation.includes(',')) return null;
-          const [lat, lng] = issue.issueLocation.split(',').map(c => parseFloat(c.trim()));
-          if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
-            const weight = (issue.severity && !isNaN(issue.severity)) ? Math.min(styleConfig.max, issue.severity * scale) : 1.0 * scale;
-            return [lat, lng, weight];
-          }
-        } catch (err) {
-          console.error('Parsing coords error for issue', issue._id, err);
-        }
-        return null;
-      })
-      .filter(Boolean);
-  }, [issues, styleConfig.max]);
+      heatmapLayer.setMap(map);
+    };
 
-  // IMPORTANT: compute bounds with useMemo BEFORE any early return so hooks order stays stable
-  const bounds = useMemo(() => {
-    if (!heatPoints || heatPoints.length === 0) return null;
-    const latlngs = heatPoints.map(p => [p[0], p[1]]);
-    try {
-      return L.latLngBounds(latlngs);
-    } catch {
-      return null;
-    }
-  }, [heatPoints]);
+    initHeatmap();
 
-  // Early return if no points (hooks above have already run)
-  if (!heatPoints || heatPoints.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-80 bg-gray-100 border-gray-300 rounded-lg">
-        <p className="text-gray-600">No issues with valid coordinates to display on the heatmap.</p>
-      </div>
-    );
-  }
+    return () => {
+      if (heatmapLayer) heatmapLayer.setMap(null);
+    };
+  }, [mapReady, markers]);
+
+  if (!show) return null;
 
   return (
-    <div className="map-host" style={{ width: "100%", height: "80vh", borderRadius: 8, overflow: 'hidden' }}>
-      <MapContainer
-        center={[23.2599, 77.4126]}
-        zoom={5}
-        style={{ height: '100%', width: '100%' }}
-        minZoom={3}
-        maxZoom={18}
-        whenCreated={(map) => {
-          setTimeout(() => {
-            try {
-              map.invalidateSize();
-              if (bounds && bounds.isValid()) {
-                map.fitBounds(bounds.pad(0.2), { maxZoom: 12, animate: true });
-              }
-            } catch (e) { /* ignore */ }
-          }, 0);
-        }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; OpenStreetMap contributors'
-        />
-        <HeatmapLayer points={heatPoints} styleConfig={styleConfig} />
-      </MapContainer>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="relative bg-white rounded-lg shadow-2xl w-[92%] md:w-[85%] lg:w-[80%] h-[85vh] border-4 border-purple-600 overflow-hidden">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 z-20 px-3 py-1 rounded-full bg-purple-700 text-white text-sm font-semibold hover:bg-purple-800 shadow"
+        >
+          Close
+        </button>
+
+        <APIProvider
+          apiKey={import.meta.env.VITE_GOOGLE_PLACES_API_KEY}
+          libraries={["visualization"]}
+        >
+          <Map
+            ref={mapRef}
+            defaultZoom={markers.length > 1 ? 5 : 12}
+            defaultCenter={defaultCenter}
+            mapId={import.meta.env.VITE_GOOGLE_MAP_ID}
+            style={{ width: "100%", height: "100%" }}
+            onLoad={() => setMapReady(true)}
+          >
+            {markers.map((m) => (
+              <AdvancedMarker
+                key={m.id}
+                position={{ lat: m.lat, lng: m.lng }}
+                onMouseEnter={() => {
+                  clearTimeout(window._hoverTimeout);
+                  window._hoverTimeout = setTimeout(() => setHoveredMarker(m), 500);
+                }}
+                onMouseLeave={() => {
+                  clearTimeout(window._hoverTimeout);
+                  window._hoverTimeout = setTimeout(() => setHoveredMarker(null), 500);
+                }}
+              >
+                <Pin
+                  background={getPriorityColor(m.priority)}
+                  borderColor="#ffffff"
+                  glyphColor="#ffffff"
+                />
+              </AdvancedMarker>
+            ))}
+
+            {hoveredMarker && (
+              <InfoWindow
+                position={{
+                  lat: hoveredMarker.lat,
+                  lng: hoveredMarker.lng,
+                }}
+              >
+                <div style={{ minWidth: 80 }}>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      color: "#111827",
+                      marginBottom: 2,
+                    }}
+                  >
+                    {hoveredMarker.title}
+                  </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                    }}
+                  >
+                    <span style={{ fontSize: 12, color: "#4B5563" }}>
+                      Status:
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        padding: "2px 8px",
+                        borderRadius: 9999,
+                        backgroundColor:
+                          hoveredMarker.status === "Resolved"
+                            ? "#DCFCE7"
+                            : hoveredMarker.status === "In Progress"
+                            ? "#DBEAFE"
+                            : "#F3F4F6",
+                        color:
+                          hoveredMarker.status === "Resolved"
+                            ? "#166534"
+                            : hoveredMarker.status === "In Progress"
+                            ? "#1D4ED8"
+                            : "#374151",
+                      }}
+                    >
+                      {hoveredMarker.status}
+                    </span>
+                  </div>
+                </div>
+              </InfoWindow>
+            )}
+          </Map>
+        </APIProvider>
+
+        {/* Legend */}
+        <div className="absolute top-3 right-24 bg-white/90 backdrop-blur rounded-lg shadow p-3 z-20">
+          <div className="text-sm font-semibold text-gray-800 mb-2">
+            Priority Legend
+          </div>
+          <div className="flex flex-col gap-1 text-sm">
+            {[
+              { color: "#dc2626", label: "Critical" },
+              { color: "#f97316", label: "High" },
+              { color: "#eab308", label: "Medium" },
+              { color: "#22c55e", label: "Low" },
+              { color: "#6b7280", label: "Very Low" },
+            ].map((p) => (
+              <div
+                key={p.label}
+                className="flex items-center gap-2"
+              >
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    background: p.color,
+                    display: "inline-block",
+                    borderRadius: 2,
+                  }}
+                ></span>
+                {p.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
 export default IssuesHeatmap;
-
-
-
-// import React, { useEffect, useRef, useState } from "react";
-// import ReactDOM from "react-dom";
-
-// const useLoadGoogleMapsAPI = () => {
-//   const [loaded, setLoaded] = useState(false);
-
-//   useEffect(() => {
-//     if (window.google && window.google.maps) {
-//       setLoaded(true);
-//       return;
-//     }
-//     const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-//     if (existingScript) {
-//       existingScript.addEventListener("load", () => setLoaded(true));
-//       return;
-//     }
-//     const script = document.createElement("script");
-//     script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_PLACES_API_KEY}`;
-//     script.async = true;
-//     script.defer = true;
-//     script.onload = () => setLoaded(true);
-//     document.head.appendChild(script);
-//   }, []);
-
-//   return loaded;
-// };
-
-// const OverlayView = ({ position, pane = "overlayMouseTarget", map, children, zIndex = 100 }) => {
-//   const containerRef = useRef(document.createElement("div"));
-//   const overlayRef = useRef(null);
-
-//   useEffect(() => {
-//     if (!map || !window.google || !window.google.maps) return;
-
-//     class Overlay extends window.google.maps.OverlayView {
-//       constructor(container, pane, position) {
-//         super();
-//         this.container = container;
-//         this.pane = pane;
-//         this.position = position;
-//       }
-
-//       onAdd() {
-//         const panes = this.getPanes();
-//         if (panes && panes[this.pane]) {
-//           panes[this.pane].appendChild(this.container);
-//         }
-//       }
-
-//       draw() {
-//         const projection = this.getProjection();
-//         if (!projection) return;
-
-//         const point = projection.fromLatLngToDivPixel(
-//           new window.google.maps.LatLng(this.position.lat, this.position.lng)
-//         );
-//         if (!point) return;
-
-//         this.container.style.transform = `translate(${point.x}px, ${point.y}px) translate(-50%, -50%)`;
-//         this.container.style.position = "absolute";
-//       }
-
-//       onRemove() {
-//         if (this.container.parentNode) {
-//           this.container.parentNode.removeChild(this.container);
-//         }
-//       }
-
-//       setPosition(position) {
-//         this.position = position;
-//         this.draw();
-//       }
-//     }
-
-//     if (overlayRef.current) {
-//       overlayRef.current.setMap(null);
-//       overlayRef.current = null;
-//     }
-
-//     overlayRef.current = new Overlay(containerRef.current, pane, position);
-//     overlayRef.current.setMap(map);
-
-//     return () => {
-//       if (overlayRef.current) {
-//         overlayRef.current.setMap(null);
-//         overlayRef.current = null;
-//       }
-//     };
-//   }, [map, position, pane]);
-
-//   useEffect(() => {
-//     containerRef.current.style.zIndex = zIndex.toString();
-//   }, [zIndex]);
-
-//   return ReactDOM.createPortal(children, containerRef.current);
-// };
-
-// const IssuesHeatmap = ({ location }) => {
-//   const mapRef = useRef(null);
-//   const apiLoaded = useLoadGoogleMapsAPI();
-
-//   useEffect(() => {
-//     if (!apiLoaded) return;
-//     if (mapRef.current) return;
-
-//     if (!location || !location.lat || !location.lng) return;
-
-//     const mapInstance = new window.google.maps.Map(document.getElementById("map"), {
-//       center: location,
-//       zoom: 12,
-//       mapId: import.meta.env.VITE_GOOGLE_MAP_ID,
-//     });
-
-//     mapRef.current = mapInstance;
-//   }, [apiLoaded, location]);
-
-//   if (!location) return <div>Please provide location</div>;
-
-//   return (
-//     <>
-//       <div id="map" style={{ width: "100%", height: "100%" }} />
-//       {apiLoaded && mapRef.current && (
-//         <OverlayView position={location} map={mapRef.current} pane="overlayMouseTarget" zIndex={100}>
-//           <div
-//             style={{
-//               backgroundColor: "red",
-//               borderRadius: "50%",
-//               width: 30,
-//               height: 30,
-//               boxShadow: "0 0 5px rgba(0,0,0,0.5)",
-//               color: "white",
-//               display: "flex",
-//               justifyContent: "center",
-//               alignItems: "center",
-//               fontWeight: "bold",
-//             }}
-//           >
-//             M
-//           </div>
-//         </OverlayView>
-//       )}
-//     </>
-//   );
-// };
-
-// export default IssuesHeatmap;

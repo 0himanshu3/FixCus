@@ -21,6 +21,7 @@ function IssuesMunicipality() {
   const [issues, setIssues] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isHeatmapOpen, setIsHeatmapOpen] = useState(false);
 
   const user = useSelector((state) => state.auth.user);
   const adminDistrict = user?.district || null;
@@ -122,14 +123,7 @@ const fetchAllIssuesForHeatmap = async () => {
       console.error("Error fetching all issues for heatmap:", error);
     }
   };
-  const handleHeatmapOpen = () => {
-    // Navigate to heatmap page with the first issue's location or default
-    const firstIssue = issues[0];
-    const loc = firstIssue
-      ? { lat: firstIssue.lat, lng: firstIssue.lng }
-      : { lat: 28.9843847907343, lng: 77.70621702075009 };
-    navigate("/issues-heatmap", { state: { location: loc } });
-  };
+  const handleHeatmapOpen = () => setIsHeatmapOpen(true);
 
   return (
   <div className="relative min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800">
@@ -154,12 +148,12 @@ const fetchAllIssuesForHeatmap = async () => {
             </button>
           </div>
 
-          <button
+          {/* <button
             onClick={() => window.location.assign("demo.html")}
             className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-lg shadow transition-colors duration-200"
           >
             Demo
-          </button>
+          </button> */}
         </div>
        
 
@@ -263,6 +257,9 @@ const fetchAllIssuesForHeatmap = async () => {
         </div>
       )}
     </div>
+
+    {/* Heatmap Modal */}
+    <IssuesHeatmap show={isHeatmapOpen} onClose={() => setIsHeatmapOpen(false)} />
 
     {/* Filter Modal */}
     {isFilterOpen && (
