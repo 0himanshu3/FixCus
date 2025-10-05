@@ -1563,6 +1563,7 @@ export const getTopIssues = async (req, res) => {
         _id: issue._id,
         title: issue.title,
         category: issue.category,
+        slug:issue.slug,
         priority: issue.priority,
         status: issue.status,
         issueLocation: issue.issueLocation,
