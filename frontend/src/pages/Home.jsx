@@ -5,12 +5,17 @@ import axios from 'axios'
 import { logout } from '../redux/slices/authSlice'
 import { FaArrowUp, FaArrowDown, FaClock, FaTasks } from 'react-icons/fa'
 
+// --- Utility Components ---
 const LoadingBox = ({ text = 'Loading...' }) => (
   <div className="py-8 flex items-center justify-center text-gray-600">{text}</div>
 )
 
 const ErrorBox = ({ message }) => (
   <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded">{message}</div>
+)
+
+const EmptyState = ({ text = 'No data available.' }) => (
+  <div className="py-6 text-center text-gray-500">{text}</div>
 )
 
 const SummaryCard = ({ title, value, icon }) => (
@@ -32,13 +37,15 @@ const IssueRow = ({ issue, onView }) => (
       </div>
     </div>
     <div className="flex flex-col items-end gap-2">
-      <div className="text-xs text-gray-500">{issue.upvotes?.length ?? issue.upvotes ?? 0} ↑</div>
-      <div className="text-xs text-gray-500">{issue.downvotes?.length ?? issue.downvotes ?? 0} ↓</div>
+     
+      <div className="text-xs text-gray-500">{issue?.upvotesCount ?? 0} ↑</div>
+      <div className="text-xs text-gray-500">{issue.downvotesCount ?? 0} ↓</div>
       <button onClick={() => onView(issue)} className="mt-2 px-3 py-1 bg-blue-600 text-white rounded text-sm">View</button>
     </div>
   </div>
 )
 
+// --- Main Home Component ---
 export default function Home() {
   const state = useSelector((s) => s.auth)
   const user = state.user
@@ -53,7 +60,7 @@ export default function Home() {
   const [supervisorIssues, setSupervisorIssues] = useState([])
   const [coordinatorIssues, setCoordinatorIssues] = useState([])
   const [workerIssues, setWorkerIssues] = useState([])
-  const [avgTimes, setAvgTimes] = useState({ supervisor: 0, coordinator: 0, worker: 0 })
+  const [resolvedPercent, setResolvedPercent] = useState({ supervisor: 0, coordinator: 0, worker: 0 })
   const [refreshFlag, setRefreshFlag] = useState(0)
 
   useEffect(() => {
@@ -61,14 +68,26 @@ export default function Home() {
     setError(null)
     setLoading(true)
 
+    // --- Load data for normal user ---
     const loadForUser = async () => {
       try {
         const [upRes, downRes] = await Promise.all([
           axios.get('http://localhost:3000/api/v1/issues/top', { params: { sortBy: 'upvotes', limit: 5 }, withCredentials: true }),
           axios.get('http://localhost:3000/api/v1/issues/top', { params: { sortBy: 'downvotes', limit: 5 }, withCredentials: true })
         ])
-        setTopUpvoted(upRes.data.issues || upRes.data || [])
-        setTopDownvoted(downRes.data.issues || downRes.data || [])
+
+        const upvoted = upRes.data.topUpvoted || upRes.data.issues || []
+        let downvoted = downRes.data.topDownvoted || downRes.data.issues || []
+
+        // Remove duplicates: keep only in upvoted if total issues < 10
+        const totalIssues = upvoted.length + downvoted.length
+        if (totalIssues < 10) {
+          const upvotedIds = new Set(upvoted.map(i => i._id))
+          downvoted = downvoted.filter(i => !upvotedIds.has(i._id))
+        }
+
+        setTopUpvoted(upvoted)
+        setTopDownvoted(downvoted)
       } catch (err) {
         console.error(err)
         setError('Failed to load top issues for your district.')
@@ -77,15 +96,15 @@ export default function Home() {
       }
     }
 
+    // --- Load data for municipality staff ---
     const loadForStaff = async () => {
       try {
         const res = await axios.get('http://localhost:3000/api/v1/issues/staff-summary', { withCredentials: true })
         const data = res.data || {}
-        console.log(data);
         setSupervisorIssues(data.supervisor || [])
         setCoordinatorIssues(data.coordinator || [])
         setWorkerIssues(data.worker || [])
-        setAvgTimes(data.resolvedPercent || { supervisor: 0, coordinator: 0, worker: 0 })
+        setResolvedPercent(data.resolvedPercent || { supervisor: 0, coordinator: 0, worker: 0 })
       } catch (err) {
         console.error(err)
         setError('Failed to load staff issues/metrics.')
@@ -101,8 +120,8 @@ export default function Home() {
   }, [user, refreshFlag])
 
   const handleLogout = () => dispatch(logout())
-  const toIssue = (issue) => { if(issue?._id) nav(`/issue/${issue.slug}`)
- }
+ 
+  const toIssue = (issue) => { if(issue?._id) nav(`/issue/${issue.slug }`) }
 
   if (!state.isAuthenticated) return <Navigate to="/login" />
 
@@ -122,26 +141,35 @@ export default function Home() {
         {error && <ErrorBox message={error} />}
         {loading ? <LoadingBox /> : user.role === 'User' ? (
           <div className="space-y-6">
+            {/* --- Summary Cards --- */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <SummaryCard title="District" value={user.district || '—'} icon={<FaTasks />} />
               <SummaryCard title="Top upvoted" value={topUpvoted.length} icon={<FaArrowUp />} />
               <SummaryCard title="Top downvoted" value={topDownvoted.length} icon={<FaArrowDown />} />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            {/* --- Top Issues --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
               <div className="bg-white rounded-xl shadow p-4">
                 <h3 className="text-lg font-semibold mb-3 flex items-center gap-2"><FaArrowUp className="text-green-500" /> Top Upvoted Issues</h3>
-                {topUpvoted.length === 0 ? <p className="text-gray-500">No data available.</p> : <div className="divide-y">{topUpvoted.map(issue => <IssueRow key={issue._id} issue={issue} onView={toIssue} />)}</div>}
+                {topUpvoted.length === 0 ? <EmptyState text="No top upvoted issues available." /> : (
+                  <div className="divide-y">{topUpvoted.map(issue => <IssueRow key={issue._id} issue={issue} onView={toIssue} />)}</div>
+                )}
               </div>
+
               <div className="bg-white rounded-xl shadow p-4">
                 <h3 className="text-lg font-semibold mb-3 flex items-center gap-2"><FaArrowDown className="text-red-500" /> Top Downvoted Issues</h3>
-                {topDownvoted.length === 0 ? <p className="text-gray-500">No data available.</p> : <div className="divide-y">{topDownvoted.map(issue => <IssueRow key={issue._id} issue={issue} onView={toIssue} />)}</div>}
+                {topDownvoted.length === 0 ? <EmptyState text="No top downvoted issues available." /> : (
+                  <div className="divide-y">{topDownvoted.map(issue => <IssueRow key={issue._id} issue={issue} onView={toIssue} />)}</div>
+                )}
               </div>
             </div>
           </div>
         ) : (
           <div className="space-y-6">
+            {/* --- Staff Summary Cards --- */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {['supervisor', 'coordinator', 'worker'].map((role, idx) => (
+              {['supervisor', 'coordinator', 'worker'].map(role => (
                 <div key={role} className="bg-white rounded-xl shadow p-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -150,7 +178,7 @@ export default function Home() {
                         {role === 'supervisor' ? supervisorIssues.length : role === 'coordinator' ? coordinatorIssues.length : workerIssues.length}
                       </div>
                       <div className="text-xs text-gray-400">
-                        Avg completion: {avgTimes[role] ? `${Math.round(avgTimes[role])} %` : 'N/A'}
+                        Resolved: {resolvedPercent[role] ? `${resolvedPercent[role]} %` : 'N/A'}
                       </div>
                     </div>
                     <div className="text-2xl text-gray-300">{role === 'supervisor' ? <FaArrowUp /> : role === 'coordinator' ? <FaClock /> : <FaTasks />}</div>
@@ -158,13 +186,17 @@ export default function Home() {
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            {/* --- Staff Issues List --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-4">
               {['supervisor', 'coordinator', 'worker'].map(role => {
                 const list = role === 'supervisor' ? supervisorIssues : role === 'coordinator' ? coordinatorIssues : workerIssues
                 return (
                   <div key={role} className="bg-white rounded-xl shadow p-4">
                     <h4 className="text-lg font-semibold mb-3">{role.charAt(0).toUpperCase() + role.slice(1)} Issues</h4>
-                    {list.length === 0 ? <p className="text-gray-500">No issues</p> : <div className="divide-y">{list.map(i => <IssueRow key={i._id} issue={i} onView={toIssue} />)}</div>}
+                    {list.length === 0 ? <EmptyState text={`No ${role} issues.`} /> : (
+                      <div className="divide-y">{list.map(i => <IssueRow key={i._id} issue={i} onView={toIssue} />)}</div>
+                    )}
                   </div>
                 )
               })}

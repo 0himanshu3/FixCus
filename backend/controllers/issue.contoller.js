@@ -1534,21 +1534,10 @@ export const completeTaskBySupervisor = async (req, res) => {
 export const getTopIssues = async (req, res) => {
   try {
     const user = req.user;
-  
-    const { sortBy = 'upvotes', limit = 5, status = 'In Progress' } = req.query;
-   
-    // Determine sort field
-    let sortField;
-    if (sortBy === 'downvotes') {
-      sortField = { downvotesCount: -1 };
-    } else if (sortBy === 'deadline') {
-      sortField = { deadline: 1 }; // earliest deadlines first
-    } else {
-      sortField = { upvotesCount: -1 };
-    }
+    const { limit = 5, status = 'In Progress' } = req.query;
 
-    // Aggregate to count upvotes and downvotes
-    const issues = await Issue.aggregate([
+    // 1. Get all issues in user's district
+    const allIssues = await Issue.aggregate([
       { $match: { issueDistrict: user.district, status } },
       {
         $addFields: {
@@ -1556,30 +1545,44 @@ export const getTopIssues = async (req, res) => {
           downvotesCount: { $size: { $ifNull: ['$downvotes', []] } },
         },
       },
-      { $sort: sortField },
-      { $limit: Number(limit) },
-      {
-        $project: {
-          title: 1,
-          category: 1,
-          priority: 1,
-          status: 1,
-          issueLocation: 1,
-          issueDistrict: 1,
-          issueState: 1,
-          issueCountry: 1,
-          issuePublishDate: 1,
-          deadline: 1,
-          upvotesCount: 1,
-          downvotesCount: 1,
-          commentsCount: { $size: { $ifNull: ['$comments', []] } },
-          staffsAssigned: 1,
-          issueTakenUpBy: 1,
-        },
-      },
     ]);
- 
-    res.status(200).json({ success: true, issues });
+
+    // 2. Separate top upvoted and top downvoted
+    let topUpvoted = [...allIssues].sort((a, b) => b.upvotesCount - a.upvotesCount).slice(0, limit);
+    let topDownvoted = [...allIssues].sort((a, b) => b.downvotesCount - a.downvotesCount).slice(0, limit);
+
+    // 3. Remove duplicates if total issues < 10
+    if (allIssues.length < 10) {
+      const upvotedIds = new Set(topUpvoted.map(i => i._id.toString()));
+      topDownvoted = topDownvoted.filter(issue => !upvotedIds.has(issue._id.toString()));
+    }
+
+    // 4. Project only required fields
+    const projectFields = (issues) =>
+      issues.map((issue) => ({
+        _id: issue._id,
+        title: issue.title,
+        category: issue.category,
+        priority: issue.priority,
+        status: issue.status,
+        issueLocation: issue.issueLocation,
+        issueDistrict: issue.issueDistrict,
+        issueState: issue.issueState,
+        issueCountry: issue.issueCountry,
+        issuePublishDate: issue.issuePublishDate,
+        deadline: issue.deadline,
+        upvotesCount: issue.upvotesCount,
+        downvotesCount: issue.downvotesCount,
+        commentsCount: issue.comments ? issue.comments.length : 0,
+        staffsAssigned: issue.staffsAssigned,
+        issueTakenUpBy: issue.issueTakenUpBy,
+      }));
+
+    res.status(200).json({
+      success: true,
+      topUpvoted: projectFields(topUpvoted),
+      topDownvoted: projectFields(topDownvoted),
+    });
   } catch (err) {
     console.error('getTopIssues error:', err);
     res.status(500).json({ success: false, message: 'Failed to fetch top issues' });
