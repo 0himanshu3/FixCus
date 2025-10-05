@@ -27,6 +27,8 @@ import IssuesMunicipality from "./components/IssuesMunicipality"; // If you have
 import CreateIssue from "./pages/CreateIssue";
 import MonthlyAnalysis from "./pages/MonthlyAnalysis";
 import Notification from "./pages/Notification";
+import MunicipalityView from "./pages/MunicipalityView";
+import MunicipalityDetails from "./pages/MunicipalityDetails";
 import 'leaflet/dist/leaflet.css';
 
 import IssuesHeatmapPage from "./pages/IssuesHeatmapPage";
@@ -165,9 +167,11 @@ const App = () => {
           <Route path="/create" element={<CreateIssue />} />
           <Route path="/municipality" element={<MuncipalityMain />} />
           <Route path="/monthly-analysis" element={<MonthlyAnalysis />} />
+          <Route path="/municipality-view" element={<MunicipalityView />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/requests" element={<ApplicationRequest />} />
           <Route path="/issues-heatmap" element={<IssuesHeatmapPage />} />
+          <Route path="/municipality/:slug" element={<MunicipalityDetails />} />
           <Route
             path="/notification"
             element={<Notification notifications={notifications} fetchNotifications={fetchNotifications} userId={user?._id} socket={socket} />}

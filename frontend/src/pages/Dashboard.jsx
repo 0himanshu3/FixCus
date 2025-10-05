@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { useSelector, useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { Navigate, useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { logout } from '../redux/slices/authSlice'
 import { FaArrowUp, FaArrowDown, FaTasks } from 'react-icons/fa'
 
 // --- Utility Components ---
@@ -47,7 +46,6 @@ const IssueRow = ({ issue, onView }) => (
 export default function Dashboard() {
   const state = useSelector((s) => s.auth)
   const user = state.user
-  const dispatch = useDispatch()
   const nav = useNavigate()
 
   const [loading, setLoading] = useState(true)
@@ -98,7 +96,8 @@ export default function Dashboard() {
   }, [user, refreshFlag])
 
   const toIssue = (issue) => { 
-    if(issue?._id) nav(`/issue/${issue.slug}`) }
+    if(issue?._id) nav(`/issue/${issue.slug}`) 
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -109,6 +108,7 @@ export default function Dashboard() {
             <p className="text-sm text-gray-500 mt-1">{`Top issues in ${user?.district || 'your area'}`}</p>
           </div>
           <div className="flex items-center gap-3">
+            <button onClick={() => nav('/municipality-view')} className="px-4 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700">View Municipalities</button>
             <button onClick={() => setRefreshFlag(f => f + 1)} className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-sm">Refresh</button>
           </div>
         </div>

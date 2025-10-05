@@ -1827,3 +1827,26 @@ export const getStaffDashboard = async (req, res) => {
     });
   }
 };
+
+export const getMunicipalityIssues = async (req, res) => {
+  try {
+    const { slug } = req.params
+    // Convert slug back to email
+    const email = `${slug}@gmail.com`  // Assuming all emails end with @gmail.com
+
+
+    const municipality = await Municipality.findOne({ email })
+
+    if (!municipality) {
+      return res.status(404).json({ success: false, message: 'Municipality not found' })
+    }
+
+    // Find issues where issueTakenUpBy == municipality._id
+    const issues = await Issue.find({ issueTakenUpBy: new mongoose.Types.ObjectId(municipality._id) })
+      .sort({ createdAt: -1 }) // Optional: recent first
+    res.status(200).json({ success: true, issues })
+  } catch (err) {
+    console.error('getMunicipalityIssues error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch municipality issues' })
+  }
+}
