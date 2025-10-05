@@ -609,7 +609,7 @@ export default function IssueDetailsStaff() {
                 {/* Info Card */}
                 <div className="bg-pink-200 rounded-xl p-5 shadow-lg border-4 border-purple-500">
                     <p className="text-purple-900 font-semibold text-lg">
-                        <strong className="text-purple-700">📍 Location:</strong> {issue.issueLocation}
+                        <strong className="text-purple-700">📍 Location:</strong> {issue.issueDistrict + ', ' + issue.issueState + ', ' + issue.issueCountry}
                     </p>
                     <p className="text-purple-900 font-semibold text-lg mt-2">
                         <strong className="text-purple-700">📅 Published:</strong> {new Date(issue.issuePublishDate).toLocaleDateString()}

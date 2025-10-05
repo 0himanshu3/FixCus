@@ -83,7 +83,7 @@ export default function MunicipalityMain() {
   const assigned = total - available
   return (
     <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl shadow-lg p-6 border-2 border-purple-200">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
           <div className="bg-purple-600 p-3 rounded-lg text-white"><FaUsers size={20}/></div>
           <div>
@@ -112,7 +112,7 @@ export default function MunicipalityMain() {
         </div>
       </div>
 
-      <div className="space-y-2 max-h-44 overflow-auto" style={{ scrollbarWidth: 'thin' }}>
+      <div className="space-y-2 max-h-60 overflow-auto" style={{ scrollbarWidth: 'thin' }}>
         {loadingStaff ? (
           <div className="text-sm text-purple-600 font-medium">Loading staff...</div>
         ) : staff.length === 0 ? (
@@ -294,9 +294,9 @@ return (
           <div className="space-y-4">
             <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
               <h4 className="font-bold text-gray-900 mb-2">📝 Description</h4>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedIssue.message || selectedIssue.description || '—'}</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedIssue.message || selectedIssue.content || '—'}</p>
             </div>
-
+ 
             <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
               <h4 className="font-bold text-gray-900 mb-2">📎 Supporting Documents</h4>
               {selectedIssue.supportingDocuments && selectedIssue.supportingDocuments.length > 0 ? (
