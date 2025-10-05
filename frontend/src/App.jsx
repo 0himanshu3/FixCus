@@ -27,6 +27,7 @@ import IssuesMunicipality from "./components/IssuesMunicipality"; // If you have
 import CreateIssue from "./pages/CreateIssue";
 import MonthlyAnalysis from "./pages/MonthlyAnalysis";
 import Notification from "./pages/Notification";
+import 'leaflet/dist/leaflet.css';
 
 const App = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);

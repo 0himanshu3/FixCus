@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import 'leaflet/dist/leaflet.css';
 /* apparently this font is better for people with visual impairment (braille website) */
 @font-face {
   font-family: 'Atkinson Hyperlegible';
@@ -8,260 +9,44 @@
   font-style: normal;
 }
 
-* {
-  font-family: 'Atkinson Hyperlegible', Arial, sans-serif !important;
-  font-optical-sizing: auto;
-  font-style: normal;
-  overflow-x: hidden;
-  box-sizing: border-box;
-}
 
 
-/* High Contrast Mode */
-.high-contrast {
-  background-color: black !important;
-  color: yellow !important;
-}
+/* === Temporary Leaflet debug / override — paste at end of index.css === */
 
-.high-contrast * {
-  background-color: black !important;
-  color: yellow !important;
-}
-
-.high-contrast a, 
-.high-contrast h1, 
-.high-contrast h2, 
-.high-contrast h3, 
-.high-contrast p, 
-.high-contrast span {
-  color: yellow !important;
-}
-
-.high-contrast button {
-  background-color: yellow !important;
-  color: black !important;
-  border: 2px solid yellow !important;
-}
-
-/* Grayscale Mode */
-.grayscale {
-  filter: grayscale(100%);
-}
-
-/* Dark Mode */
-.dark-mode {
-  background-color: #121212 !important;
-  color: white !important;
-}
-
-.dark-mode * {
-  background-color: #121212 !important;
-  color: white !important;
-}
-
-.dark-mode a,
-.dark-mode h1,
-.dark-mode h2,
-.dark-mode h3,
-.dark-mode p,
-.dark-mode span {
-  color: white !important;
-}
-
-.dark-mode button {
-  background-color: #333 !important;
-  color: white !important;
-  border: 1px solid #555 !important;
-}
-
-.dark-mode input, 
-.dark-mode textarea {
-  background-color: #222 !important;
-  color: white !important;
-  border: 1px solid #555 !important;
-}
-
-/* Dark Mode */
-.dark-mode {
-  background-color: #121212 !important;
-  color: white !important;
-}
-
-.dark-mode * {
-  background-color: #121212 !important;
-  color: white !important;
-}
-
-/* Proper Borders for Buttons */
-.dark-mode button {
-  background-color: #333 !important;
-  color: white !important;
-  border: 2px solid white !important;  /* White border for visibility */
-  padding: 8px 16px;
-  border-radius: 6px;
-  transition: all 0.3s ease-in-out;
-}
-
-/* Hover Effect for Buttons */
-.dark-mode button:hover {
-  background-color: #555 !important;
-  border-color: #ffcc00 !important;  /* Yellow border on hover */
-  color: #ffcc00 !important;
-}
-
-/* Inputs and Text Areas */
-.dark-mode input, 
-.dark-mode textarea {
-  background-color: #222 !important;
-  color: white !important;
-  border: 2px solid #bbb !important;
-  padding: 8px;
-  border-radius: 4px;
-}
-
-.dark-mode input:focus, 
-.dark-mode textarea:focus {
-  border-color: #ffcc00 !important;  /* Highlight border on focus */
-  outline: none;
-}
-
-/* Links */
-.dark-mode a {
-  color: #ffcc00 !important;
-  text-decoration: underline;
-}
-
-.dark-mode a:hover {
-  color: #ff9900 !important;
-}
-
-*:focus-visible {
-  outline: 0px solid #94a3b8; /* slate-400 */
-  outline-offset: 0px;
-  box-shadow: none;
-}
-
-/* AdvancedMarker visibility fixes */
-advanced-marker {
-  z-index: 1000 !important;
-}
-
-advanced-marker .marker-container {
-  z-index: 1001 !important;
+/* Ensure the Leaflet container has explicit layout */
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important; /* MapContainer already sets inline style to 100% height */
   position: relative !important;
-}
-
-advanced-marker div {
-  z-index: 1002 !important;
-  position: relative !important;
-}
-
-/* Ensure markers are visible */
-[data-map-frame] advanced-marker {
-  z-index: 1000 !important;
-}
-
-/* Google Maps marker styles */
-.gmp-advanced-marker {
-  z-index: 1000 !important;
-}
-
-.gmp-advanced-marker .marker-container {
-  z-index: 1001 !important;
-}
-
-/* Force marker visibility */
-advanced-marker > div {
-  opacity: 1 !important;
-  visibility: visible !important;
+  z-index: 0 !important;
   display: block !important;
-}
-
-button:focus-visible {
-  outline: 0px solid #94a3b8;
-  outline-offset: 0px;
-}
-
-a:focus-visible {
-  outline: 0px solid #94a3b8;
-  outline-offset: 0px;
-}
-
-div[role="menuitem"]:focus-visible {
-  outline: 0px solid #94a3b8;
-  outline-offset: 0px;
-}
-
-
-/* 1) Allow map overlays to escape clipping from ancestors */
-html, body, #root {
-  overflow: visible !important; /* don’t clip internal absolute overlays */
-}
-
-/* 2) The modal that wraps your map must not clip children */
-.fixed.inset-0 { /* your modal mask; adapt selector if different */
-  overflow: visible !important;
-}
-
-/* 3) The panel that actually contains the Map must allow overflow */
-.bg-white.w-\[90\%\].md\:w-2\/3.h-\[80\%\].rounded.shadow-lg.relative {
-  overflow: visible !important;
-}
-
-/* 4) Google Maps overlay panes and advanced markers should render on top and be visible */
-.gm-style, .gm-style > div {
-  overflow: visible !important;
-}
-gmp-advanced-marker, .yNHHyP-marker-view {
-  opacity: 1 !important;
   visibility: visible !important;
-  pointer-events: auto !important;
+  background: transparent !important;
 }
 
-/* 5) Do not force background color/contrast on everything inside dark/high-contrast modes */
-.high-contrast gmp-advanced-marker *, 
-.dark-mode gmp-advanced-marker *, 
-.high-contrast .gm-style * , 
-.dark-mode .gm-style * {
-  background-color: transparent !important;
-  color: inherit !important;
-}
-
-/* 6) Keep your custom marker content clearly visible */
-.marker-container {
-  opacity: 1 !important;
-  visibility: visible !important;
-  z-index: 2147483647 !important; /* top of the stack */
-}
-
-/* Let Google overlay panes render outside ancestors */
-html, body, #root {
-  overflow: visible !important;
-}
-
-/* Your modal mask and the inner white panel should not clip overlays */
-.fixed.inset-0 { /* the dimmed backdrop */
-  overflow: visible !important;
-}
-
-.fixed.inset-0 > .bg-white { /* the white dialog; adjust if your class differs */
-  overflow: visible !important;
-}
-
-/* Generic fallback: any element containing the map */
-.map-host, .gm-style, .gm-style > div {
-  overflow: visible !important;
-}
-
-/* Ensure advanced marker host is visible and interactive */
-gmp-advanced-marker, .yNHHyP-marker-view {
-  opacity: 1 !important;
-  visibility: visible !important;
-  pointer-events: auto !important;
-}
-
+/* If your MapContainer is given an explicit height via .map-host, make sure .map-host keeps it */
 .map-host {
+  width: 100% !important;
+  height: 80vh !important; /* same as your component */
+  min-height: 250px !important; /* defensive fallback */
   position: relative !important;
   overflow: visible !important;
+  background: transparent !important;
 }
 
+/* Make sure parent atoms don't collapse the map — give a visible border for debugging */
+.map-host-debug-outline {
+  outline: 2px dashed rgba(255, 0, 0, 0.6) !important;
+}
+
+/* Ensure map panes are visible and on top for debugging */
+.leaflet-pane, .leaflet-map-pane, .leaflet-tile-pane, .leaflet-overlay-pane {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Controls should be visible */
+.leaflet-control {
+  display: block !important;
+  visibility: visible !important;
+}
