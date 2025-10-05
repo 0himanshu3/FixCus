@@ -1339,3 +1339,109 @@ export const completeTaskBySupervisor = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error", error: err.message });
   }
 };
+
+export const getTopIssues = async (req, res) => {
+  try {
+    const user = req.user;
+  
+    const { sortBy = 'upvotes', limit = 5, status = 'In Progress' } = req.query;
+   
+    // Determine sort field
+    let sortField;
+    if (sortBy === 'downvotes') {
+      sortField = { downvotesCount: -1 };
+    } else if (sortBy === 'deadline') {
+      sortField = { deadline: 1 }; // earliest deadlines first
+    } else {
+      sortField = { upvotesCount: -1 };
+    }
+
+    // Aggregate to count upvotes and downvotes
+    const issues = await Issue.aggregate([
+      { $match: { issueDistrict: user.district, status } },
+      {
+        $addFields: {
+          upvotesCount: { $size: { $ifNull: ['$upvotes', []] } },
+          downvotesCount: { $size: { $ifNull: ['$downvotes', []] } },
+        },
+      },
+      { $sort: sortField },
+      { $limit: Number(limit) },
+      {
+        $project: {
+          title: 1,
+          category: 1,
+          priority: 1,
+          status: 1,
+          issueLocation: 1,
+          issueDistrict: 1,
+          issueState: 1,
+          issueCountry: 1,
+          issuePublishDate: 1,
+          deadline: 1,
+          upvotesCount: 1,
+          downvotesCount: 1,
+          commentsCount: { $size: { $ifNull: ['$comments', []] } },
+          staffsAssigned: 1,
+          issueTakenUpBy: 1,
+        },
+      },
+    ]);
+ 
+    res.status(200).json({ success: true, issues });
+  } catch (err) {
+    console.error('getTopIssues error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch top issues' });
+  }
+};
+
+export const getSummary = async (req, res) => {
+  try {
+    const user = req.user;
+    // 1. Get all issues in the user's district
+    const allIssues = await Issue.find({ issueDistrict: user.district });
+
+    // 2. Buckets for roles
+    const supervisor = [];
+    const coordinator = [];
+    const worker = [];
+
+    // 3. Traverse each issue
+    for (const issue of allIssues) {
+      if (!Array.isArray(issue.staffsAssigned)) continue;
+
+      for (const staff of issue.staffsAssigned) {
+        if (staff.user.equals(user._id)) {
+          if (staff.role === 'Supervisor') supervisor.push(issue);
+          if (staff.role === 'Coordinator') coordinator.push(issue);
+          if (staff.role === 'Worker') worker.push(issue);
+        }
+      }
+    }
+
+    // 4. Helper to calculate resolved percentage
+    const getResolvedPercentage = (issues) => {
+      if (issues.length === 0) return 0;
+      const resolvedCount = issues.filter(issue => issue.status === 'Resolved').length;
+      return Math.round((resolvedCount / issues.length) * 100);
+    };
+
+    const resolvedPercent = {
+      supervisor: getResolvedPercentage(supervisor),
+      coordinator: getResolvedPercentage(coordinator),
+      worker: getResolvedPercentage(worker),
+    };
+
+    // 5. Response
+    res.status(200).json({
+      success: true,
+      supervisor,
+      coordinator,
+      worker,
+      resolvedPercent,
+    });
+  } catch (err) {
+    console.error('getSummary error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch staff summary' });
+  }
+};
