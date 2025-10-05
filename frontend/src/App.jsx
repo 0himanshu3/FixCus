@@ -30,6 +30,8 @@ import Notification from "./pages/Notification";
 import 'leaflet/dist/leaflet.css';
 
 import IssuesHeatmapPage from "./pages/IssuesHeatmapPage";
+import DashboardStaff from "./pages/DashboardStaff";
+import Dashboard from "./pages/Dashboard";
 const App = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
@@ -52,6 +54,20 @@ const App = () => {
         return <Issues />; // fallback
     }
   };
+
+  const getDashboardComponent = () => {
+    switch (user?.role) {
+      case "User":
+        return <Dashboard />;
+      case "Municipality Admin":
+        return <AdminDashboard />;
+      case "Municipality Staff":
+        return <DashboardStaff />;
+      default:
+        return <Dashboard />; // fallback
+    }
+  };
+
 
   const getIssueDetailsComponent = () => {
     switch (user?.role) {
@@ -145,6 +161,7 @@ const App = () => {
           <Route path="/donate" element={<Donate />} />
           <Route path="/issues" element={getIssuesComponent()} />
           <Route path="/issue/:slug" element={getIssueDetailsComponent()} />
+          <Route path="/dashboard" element={getDashboardComponent()} />
           <Route path="/create" element={<CreateIssue />} />
           <Route path="/municipality" element={<MuncipalityMain />} />
           <Route path="/monthly-analysis" element={<MonthlyAnalysis />} />

@@ -57,12 +57,12 @@ server.listen(process.env.PORT || 3000, () => {
     console.log(`Socket.IO server is ready`);
 });
 
-(async () => {
-  try {
-    console.log("Manual escalation started");
-    const result = await escalateOverdueTasksService();
-    console.log("Manual escalation finished, summary:", result);
-  } catch (err) {
-    console.error("Manual escalation error:", err);
-  }
-})();
+// (async () => {
+//   try {
+//     console.log("Manual escalation started");
+//     const result = await escalateOverdueTasksService();
+//     console.log("Manual escalation finished, summary:", result);
+//   } catch (err) {
+//     console.error("Manual escalation error:", err);
+//   }
+// })();

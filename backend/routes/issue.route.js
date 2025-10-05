@@ -1,5 +1,5 @@
 import express from "express";
-import { addComment, createIssue, deleteComment, downvoteIssue, getTopIssues,getSummary,getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback, getFeedbackForIssue, getReportForIssue, analyzeFeedback, reassignTaskToCoordinator, completeTaskBySupervisor, getIssueTimeline } from "../controllers/issue.contoller.js";
+import { addComment, createIssue, deleteComment, downvoteIssue, getTopIssues,getSummary,getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback, getFeedbackForIssue, getReportForIssue, analyzeFeedback, reassignTaskToCoordinator, completeTaskBySupervisor, getIssueTimeline, getStaffDashboard } from "../controllers/issue.contoller.js";
 import { isAuthenticated, protectMunicipality } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -51,7 +51,7 @@ router.get('/report/:issueId', isAuthenticated, getReportForIssue);
 router.get('/top', isAuthenticated, getTopIssues);
 router.get('/staff-summary', isAuthenticated, getSummary);
 router.post("/analyze-feedback", isAuthenticated, analyzeFeedback);
-
+router.get('/staff/dashboard', isAuthenticated, getStaffDashboard);
 
 router.post(
   "/reassign/:taskId",
