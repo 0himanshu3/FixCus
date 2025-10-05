@@ -1563,6 +1563,7 @@ export const getTopIssues = async (req, res) => {
         _id: issue._id,
         title: issue.title,
         category: issue.category,
+        slug:issue.slug,
         priority: issue.priority,
         status: issue.status,
         issueLocation: issue.issueLocation,
@@ -1659,3 +1660,193 @@ export const getIssueTimeline = async (req, res) => {
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
+
+function normalizeToObjectId(rawId) {
+  if (!rawId) throw new Error('No id provided');
+
+  // Already an ObjectId instance
+  if (typeof rawId === 'object' && typeof rawId.toHexString === 'function') {
+    return rawId;
+  }
+
+  // If it's a stringified "new ObjectId('...')" — extract the hex inside
+  if (typeof rawId === 'string') {
+    const match = rawId.match(/new ObjectId\(['"]([0-9a-fA-F]{24})['"]\)/);
+    if (match && match[1]) {
+      return mongoose.Types.ObjectId(match[1]);
+    }
+
+    // If it's a raw hex string of length 24 — use it directly
+    if (/^[0-9a-fA-F]{24}$/.test(rawId)) {
+      return mongoose.Types.ObjectId(rawId);
+    }
+
+    // Maybe it's already a JSON string of an ObjectId like '{"$oid":"..."}'
+    try {
+      const parsed = JSON.parse(rawId);
+      if (parsed && parsed.$oid && /^[0-9a-fA-F]{24}$/.test(parsed.$oid)) {
+        return mongoose.Types.ObjectId(parsed.$oid);
+      }
+    } catch (e) {
+      // ignore parse errors
+    }
+  }
+
+  throw new Error(`Invalid staff id format: ${String(rawId).slice(0, 200)}`);
+}
+
+export const getStaffDashboard = async (req, res) => {
+  try {
+    const rawStaffId = req?.user?._id;
+    console.log('rawStaffId (as received):', rawStaffId);
+
+    let staffObjectId;
+    try {
+      staffObjectId = normalizeToObjectId(rawStaffId);
+    } catch (err) {
+      console.error('Invalid staffId (not a valid ObjectId):', rawStaffId);
+      return res.status(400).json({ success: false, message: 'Invalid staff id' });
+    }
+
+    // Use the normalized ObjectId for queries (separate calls, sequential)
+    const allAssignedIssues = await Issue.find({ 'staffsAssigned.user': staffObjectId })
+      .populate('reportedBy', 'name email')
+      .lean();
+
+    const allAssignedTasks = await Task.find({ assignedTo: staffObjectId })
+      .populate('issueId', 'title category')
+      .sort({ deadline: 1 })
+      .lean();
+
+    console.log('====================================');
+    console.log(`Staff ObjectId: ${staffObjectId.toHexString()}`);
+    console.log('Assigned issues count:', allAssignedIssues.length);
+    console.log('Assigned tasks count:', allAssignedTasks.length);
+    console.log('====================================');
+
+    // If nothing assigned
+    if ((!allAssignedIssues || allAssignedIssues.length === 0) && (!allAssignedTasks || allAssignedTasks.length === 0)) {
+      return res.status(200).json({
+        success: true,
+        message: 'No issues or tasks assigned to you yet.',
+        dashboardData: {
+          issueStats: { total: 0, completed: 0, pending: 0, overdue: 0, completionPercentage: 0 },
+          taskStats: { total: 0, completed: 0, pending: 0, overdue: 0, completionPercentage: 0 },
+          roles: { Coordinator: [], Supervisor: [], Worker: [] },
+          tasks: { completed: [], pending: [], overdue: [] }
+        }
+      });
+    }
+
+    // Build dashboardData
+    const dashboardData = {
+      issueStats: {
+        total: allAssignedIssues.length,
+        completed: 0,
+        pending: 0,
+        overdue: 0,
+      },
+      taskStats: {
+        total: allAssignedTasks.length,
+        completed: 0,
+        pending: 0,
+        overdue: 0,
+      },
+      roles: {
+        Coordinator: [],
+        Supervisor: [],
+        Worker: [],
+      },
+      tasks: {
+        completed: [],
+        pending: [],
+        overdue: [],
+      },
+    };
+
+    const now = new Date();
+
+    for (const issue of allAssignedIssues) {
+      const staffAssignment = (issue.staffsAssigned || []).find(
+        (staff) => String(staff.user) === String(staffObjectId)
+      );
+      if (staffAssignment && dashboardData.roles[staffAssignment.role]) {
+        dashboardData.roles[staffAssignment.role].push(issue);
+      }
+      if (issue.status === 'Resolved') {
+        dashboardData.issueStats.completed++;
+      } else {
+        if (issue.deadline && new Date(issue.deadline) < now) {
+          dashboardData.issueStats.overdue++;
+        } else {
+          dashboardData.issueStats.pending++;
+        }
+      }
+    }
+
+    for (const task of allAssignedTasks) {
+      if (task.status === 'Completed') {
+        dashboardData.taskStats.completed++;
+        dashboardData.tasks.completed.push(task);
+      } else {
+        if (task.deadline && new Date(task.deadline) < now) {
+          dashboardData.taskStats.overdue++;
+          dashboardData.tasks.overdue.push(task);
+        } else {
+          dashboardData.taskStats.pending++;
+          dashboardData.tasks.pending.push(task);
+        }
+      }
+    }
+
+    // Percentages
+    dashboardData.issueStats.completionPercentage =
+      dashboardData.issueStats.total > 0
+        ? Math.round((dashboardData.issueStats.completed / dashboardData.issueStats.total) * 100)
+        : 0;
+
+    dashboardData.taskStats.completionPercentage =
+      dashboardData.taskStats.total > 0
+        ? Math.round((dashboardData.taskStats.completed / dashboardData.taskStats.total) * 100)
+        : 0;
+
+    console.log('dashboardData summary:', {
+      issueTotals: dashboardData.issueStats,
+      taskTotals: dashboardData.taskStats,
+    });
+
+    return res.status(200).json({
+      success: true,
+      dashboardData,
+    });
+  } catch (error) {
+    console.error('Error in getStaffDashboard:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'An internal server error occurred. Please try again later.',
+    });
+  }
+};
+
+export const getMunicipalityIssues = async (req, res) => {
+  try {
+    const { slug } = req.params
+    // Convert slug back to email
+    const email = `${slug}@gmail.com`  // Assuming all emails end with @gmail.com
+
+
+    const municipality = await Municipality.findOne({ email })
+
+    if (!municipality) {
+      return res.status(404).json({ success: false, message: 'Municipality not found' })
+    }
+
+    // Find issues where issueTakenUpBy == municipality._id
+    const issues = await Issue.find({ issueTakenUpBy: new mongoose.Types.ObjectId(municipality._id) })
+      .sort({ createdAt: -1 }) // Optional: recent first
+    res.status(200).json({ success: true, issues })
+  } catch (err) {
+    console.error('getMunicipalityIssues error:', err)
+    res.status(500).json({ success: false, message: 'Failed to fetch municipality issues' })
+  }
+}

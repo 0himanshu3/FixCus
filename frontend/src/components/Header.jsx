@@ -30,7 +30,7 @@ const Header = ({ notifications }) => {
   ];
 
   const authLinks = [
-    { path: "/", label: "Dashboard" },
+    { path: "/dashboard", label: "Dashboard" },
     { path: "/issues", label: "Issues" },
   ];
   
@@ -39,7 +39,7 @@ const Header = ({ notifications }) => {
   ];
   
   const staffLinks = [
-    { path: "/", label: "Dashboard" },
+    { path: "/dashboard", label: "Dashboard" },
     { path: "/issues", label: "Manage Issues" },
   ];
   
