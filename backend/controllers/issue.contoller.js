@@ -404,6 +404,25 @@ export const getCompletedIssues = async (req, res) => {
         });
     }
 };
+export const getCompletedIssuesByDistrict = async (req, res) => {
+    try {
+        const user=req.user
+        const issues = await Issue.find({ 
+                status: 'Resolved', 
+                issueDistrict: user.district 
+                });
+        res.status(200).json({
+            success: true,
+            issues
+        });
+    } catch (err) {
+        console.error('Error fetching completed issues:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch completed issues'
+        });
+    }
+};
 
 export const getIssueDetails = async (req, res) => {
     try {
@@ -1214,7 +1233,7 @@ export const getFeedbackForIssue = async (req, res) => {
         if (!feedbacks || feedbacks.length === 0) {
             return res.status(404).json({ success: false, message: "No feedback found for this issue." });
         }
-
+        
         res.status(200).json({
             success: true,
             feedbacks,

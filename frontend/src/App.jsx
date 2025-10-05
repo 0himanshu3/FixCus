@@ -34,6 +34,7 @@ import 'leaflet/dist/leaflet.css';
 import IssuesHeatmapPage from "./pages/IssuesHeatmapPage";
 import DashboardStaff from "./pages/DashboardStaff";
 import Dashboard from "./pages/Dashboard";
+import FillApplicationPage from "./components/FillApplicationPage";
 const App = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
@@ -171,6 +172,7 @@ const App = () => {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/requests" element={<ApplicationRequest />} />
           <Route path="/issues-heatmap" element={<IssuesHeatmapPage />} />
+          <Route path="/fill-application-page" element={<FillApplicationPage />} />
           <Route path="/municipality/:slug" element={<MunicipalityDetails />} />
           <Route
             path="/notification"

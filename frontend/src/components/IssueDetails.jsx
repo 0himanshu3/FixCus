@@ -280,6 +280,14 @@ function IssueDetails() {
           </div>
         </div>
 
+        <div className="mt-4 p-5 bg-pink-200 border-4 border-purple-500 text-purple-900 rounded-lg shadow-md">
+        <h4 className="text-lg font-semibold mb-3">📝 Issue Description:</h4>
+        <p className="text-base whitespace-pre-line font-medium">
+          {issue.content || "No additional details provided."}
+        </p>
+      </div>
+
+
         <div className="bg-pink-200 rounded-xl p-5 shadow-lg border-4 border-purple-500">
           <p className="text-purple-900 font-semibold text-lg">
             <strong className="text-purple-700">📍 Location:</strong>{" "}
