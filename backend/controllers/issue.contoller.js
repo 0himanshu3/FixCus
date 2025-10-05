@@ -8,6 +8,7 @@ import {
     sendTaskAssignmentNotification
 } from "./notification.controller.js";
 import Feedback from "../models/feedback.model.js";
+import { createTimelineEvent, getTimelineEvents } from "../utils/timelineHelper.js";
 import mongoose from "mongoose";
 
 export const createIssue = async (req, res) => {
@@ -36,6 +37,20 @@ export const createIssue = async (req, res) => {
         });
 
         await issue.save();
+
+        // Create timeline event for issue creation
+        await createTimelineEvent({
+            issueId: issue._id,
+            eventType: 'issue_created',
+            title: 'Issue Created',
+            description: `Issue "${title}" was created and published`,
+            actorId: reportedBy,
+            metadata: {
+                category,
+                location: issueLocation,
+                priority: issue.priority
+            }
+        });
 
         res.status(201).json({
             success: true,
@@ -179,6 +194,18 @@ export const addComment = async (req, res) => {
 
         issue.comments.push({ user: userId, content });
         await issue.save();
+
+        // Create timeline event for comment
+        await createTimelineEvent({
+            issueId: issueId,
+            eventType: 'comment_added',
+            title: 'Comment Added',
+            description: `New comment added: ${content.substring(0, 50)}...`,
+            actorId: userId,
+            metadata: {
+                commentContent: content
+            }
+        });
 
         const populatedIssue = await issue.populate("comments.user", "name email");
         res.status(200).json({ success: true, comments: populatedIssue.comments });
@@ -510,6 +537,19 @@ export const takeUpIssue = async (req, res) => {
 
         await issue.save();
 
+        // Create timeline event for issue taken up
+        await createTimelineEvent({
+            issueId: issue._id,
+            eventType: 'issue_taken_up',
+            title: 'Issue Taken Up',
+            description: `Issue was taken up by municipality with deadline: ${selectedDeadline.toLocaleDateString()}`,
+            actorId: req.municipality._id,
+            metadata: {
+                deadline: selectedDeadline,
+                municipalityName: req.municipality.municipalityName
+            }
+        });
+
         res.status(200).json({ success: true, message: "Issue successfully taken up", issue });
     } catch (err) {
         console.error(err);
@@ -556,6 +596,21 @@ export const assignStaff = async (req, res) => {
         // Assign staff
         issue.staffsAssigned.push({ role, user: staff._id });
         await issue.save();
+
+        // Create timeline event for staff assignment
+        await createTimelineEvent({
+            issueId: issue._id,
+            eventType: 'staff_assigned',
+            title: 'Staff Assigned',
+            description: `${staff.name} was assigned as ${role}`,
+            actorId: req.user._id,
+            assignedStaffId: staff._id,
+            assignedStaffRole: role,
+            metadata: {
+                staffName: staff.name,
+                staffEmail: staff.email
+            }
+        });
 
         res.status(200).json({
             success: true,
@@ -617,6 +672,22 @@ export const assignTask = async (req, res) => {
             await sendTaskAssignmentNotification(task._id, assignedTo, issue);
         }
 
+        // Create timeline event for task creation
+        await createTimelineEvent({
+            issueId: issueId,
+            eventType: 'task_created',
+            title: 'Task Created',
+            description: `Task "${title}" was created and assigned to ${roleOfAssignee}`,
+            actorId: req.user._id,
+            taskId: task._id,
+            metadata: {
+                taskTitle: title,
+                taskDescription: description,
+                deadline: deadline,
+                roleOfAssignee
+            }
+        });
+
         res.status(201).json({ message: "Task assigned successfully", task });
     } catch (err) {
         console.error(err);
@@ -669,6 +740,20 @@ export const updateTask = async (req, res) => {
         task.status = "In Review";
         await task.save();
 
+        // Create timeline event for task update
+        await createTimelineEvent({
+            issueId: task.issueId,
+            eventType: 'task_updated',
+            title: 'Task Updated',
+            description: `Task was updated: ${updateText}`,
+            actorId: req.user._id,
+            taskId: task._id,
+            metadata: {
+                updateText,
+                newStatus: "In Review"
+            }
+        });
+
         res.status(200).json({ message: "Task updated successfully" });
     } catch (err) {
         console.error(err);
@@ -690,6 +775,20 @@ export const submitTaskProof = async (req, res) => {
         task.taskProofSubmitted = true;
         task.status = "In Review";
         await task.save();
+
+        // Create timeline event for task proof submission
+        await createTimelineEvent({
+            issueId: task.issueId,
+            eventType: 'task_proof_submitted',
+            title: 'Task Proof Submitted',
+            description: `Task proof was submitted for review`,
+            actorId: req.user._id,
+            taskId: task._id,
+            metadata: {
+                proofText,
+                proofImagesCount: (proofImages || []).length
+            }
+        });
 
         res.status(200).json({ message: "Task proof submitted successfully" });
     } catch (err) {
@@ -715,6 +814,21 @@ export const approveRejectTaskProof = async (req, res) => {
         }
 
         await task.save();
+
+        // Create timeline event for task approval/rejection
+        await createTimelineEvent({
+            issueId: task.issueId,
+            eventType: approve ? 'task_approved' : 'task_rejected',
+            title: approve ? 'Task Approved' : 'Task Rejected',
+            description: `Task was ${approve ? 'approved' : 'rejected'} by ${req.user.role}`,
+            actorId: req.user._id,
+            taskId: task._id,
+            metadata: {
+                approved: approve,
+                reviewerRole: req.user.role
+            }
+        });
+
         res.status(200).json({ message: approve ? "Task approved" : "Task rejected" });
     } catch (err) {
         console.error(err);
@@ -812,6 +926,20 @@ export const resolveIssue = async (req, res) => {
         issue.resolutionReport = report._id;            // requires Issue schema to have this field (see note)
         await issue.save();
 
+        // Create timeline event for issue resolution
+        await createTimelineEvent({
+            issueId: issue._id,
+            eventType: 'issue_resolved',
+            title: 'Issue Resolved',
+            description: `Issue was marked as resolved with summary: ${summary.substring(0, 100)}...`,
+            actorId: req.user._id,
+            metadata: {
+                summary,
+                resolutionImagesCount: resolutionImages.length,
+                staffPerformanceCount: cleanedStaff.length
+            }
+        });
+
         // return populated report for convenience
         const populatedReport = await ResolutionReport.findById(report._id)
             .populate("supervisor", "name email")
@@ -903,6 +1031,23 @@ export async function escalateOverdueTasksService({ dryRun = false } = {}) {
                     // mark original task as escalated
                     task.hasEscalated = true;
                     await task.save();
+
+                    // Create timeline event for task escalation
+                    await createTimelineEvent({
+                        issueId: task.issueId,
+                        eventType: 'task_escalated',
+                        title: 'Task Escalated',
+                        description: `Task "${task.title}" was escalated from Worker to Coordinator due to deadline expiry`,
+                        actorId: supervisorId,
+                        taskId: newTask._id,
+                        metadata: {
+                            originalTaskId: task._id,
+                            escalatedFrom: 'Worker',
+                            escalatedTo: 'Coordinator',
+                            newDeadline: newDeadline
+                        }
+                    });
+
                     results.createdTasks.push({ newTaskId: newTask._id, originalTask: task._id });
                 }
 
@@ -935,6 +1080,23 @@ export async function escalateOverdueTasksService({ dryRun = false } = {}) {
 
                     task.hasEscalated = true;
                     await task.save();
+
+                    // Create timeline event for task escalation
+                    await createTimelineEvent({
+                        issueId: task.issueId,
+                        eventType: 'task_escalated',
+                        title: 'Task Escalated',
+                        description: `Task "${task.title}" was escalated from Coordinator to Supervisor due to deadline expiry`,
+                        actorId: supervisorId,
+                        taskId: newTask._id,
+                        metadata: {
+                            originalTaskId: task._id,
+                            escalatedFrom: 'Coordinator',
+                            escalatedTo: 'Supervisor',
+                            newDeadline: newDeadline
+                        }
+                    });
+
                     results.createdTasks.push({ newTaskId: newTask._id, originalTask: task._id });
                 }
             } else {
@@ -1006,6 +1168,20 @@ export const submitFeedback = async (req, res, next) => {
         });
 
         await newFeedback.save();
+
+        // Create timeline event for feedback submission
+        await createTimelineEvent({
+            issueId: issueId,
+            eventType: 'feedback_submitted',
+            title: 'Feedback Submitted',
+            description: `User submitted feedback with satisfaction rating: ${feedbackData.satisfactionRating}/5`,
+            actorId: userId,
+            metadata: {
+                satisfactionRating: feedbackData.satisfactionRating,
+                resolved: feedbackData.resolved,
+                resolutionTime: feedbackData.resolutionTime
+            }
+        });
 
         // 6. Send success response
         res.status(201).json({
@@ -1333,9 +1509,45 @@ export const completeTaskBySupervisor = async (req, res) => {
 
     await task.save();
 
+    // Create timeline event for supervisor task completion
+    await createTimelineEvent({
+        issueId: task.issueId,
+        eventType: 'task_approved',
+        title: 'Task Completed by Supervisor',
+        description: `Task was completed directly by supervisor`,
+        actorId: actorId,
+        taskId: task._id,
+        metadata: {
+            completionText,
+            proofImagesCount: proofImages.length,
+            completedBy: 'Supervisor'
+        }
+    });
+
     return res.status(200).json({ success: true, message: "Task completed by supervisor", task });
   } catch (err) {
     console.error("completeTaskBySupervisor error:", err);
     return res.status(500).json({ success: false, message: "Server error", error: err.message });
   }
+};
+
+// Get timeline events for an issue
+export const getIssueTimeline = async (req, res) => {
+    try {
+        const { issueId } = req.params;
+
+        if (!issueId) {
+            return res.status(400).json({ success: false, message: "Issue ID is required" });
+        }
+
+        const timelineEvents = await getTimelineEvents(issueId);
+
+        res.status(200).json({
+            success: true,
+            timelineEvents
+        });
+    } catch (error) {
+        console.error("Error fetching timeline events:", error);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
 };

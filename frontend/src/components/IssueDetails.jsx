@@ -9,6 +9,7 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 import { app } from "../firebase"; // Ensure you have this file configured
+import Timeline from "./Timeline";
 
 function IssueDetails() {
   const { slug } = useParams();
@@ -38,6 +39,7 @@ function IssueDetails() {
   });
   const [feedbackFiles, setFeedbackFiles] = useState([]);
   const [feedbackUploadProgress, setFeedbackUploadProgress] = useState([]);
+  const [isTimelineModalOpen, setIsTimelineModalOpen] = useState(false);
 
   const fetchIssue = async () => {
     setIsLoading(true);
@@ -65,13 +67,13 @@ function IssueDetails() {
   // Prevent background scroll when any modal is open
   useEffect(() => {
     const originalOverflow = window.getComputedStyle(document.body).overflow;
-    if (isFeedbackModalOpen || showImageSlider) {
+    if (isFeedbackModalOpen || showImageSlider || isTimelineModalOpen) {
       document.body.style.overflow = "hidden";
     }
     return () => {
       document.body.style.overflow = originalOverflow;
     };
-  }, [isFeedbackModalOpen, showImageSlider]);
+  }, [isFeedbackModalOpen, showImageSlider, isTimelineModalOpen]);
 
   const uploadFilesToFirebase = async (files, setProgress) => {
     if (!files || files.length === 0) return [];
@@ -383,6 +385,15 @@ function IssueDetails() {
           </button>
         </div>
 
+        {/* Timeline Button */}
+        <div className="text-center">
+          <button
+            onClick={() => setIsTimelineModalOpen(true)}
+            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-pink-100 font-black text-lg rounded-full shadow-lg hover:from-purple-700 hover:to-purple-800 border-4 border-pink-400 transform hover:scale-105 transition-all">
+            📅 View Issue Timeline
+          </button>
+        </div>
+
         <div className="bg-pink-200 rounded-xl p-5 shadow-xl border-4 border-purple-600">
           <h2 className="text-2xl font-black text-purple-900 mb-4 overflow-hidden">
             💬 Comments
@@ -651,6 +662,13 @@ function IssueDetails() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Timeline Modal */}
+        <Timeline 
+          issueId={issue._id} 
+          isOpen={isTimelineModalOpen} 
+          onClose={() => setIsTimelineModalOpen(false)} 
+        />
       </div>
     </div>
   );
