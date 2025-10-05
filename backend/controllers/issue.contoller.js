@@ -532,6 +532,7 @@ export const takeUpIssue = async (req, res) => {
 
         // Assign the municipality and set deadline
         issue.issueTakenUpBy = req.municipality._id;
+        issue.issueTakenUpTime = new Date();
         issue.deadline = selectedDeadline;
         issue.status = "In Progress";
 

@@ -85,7 +85,6 @@ export default function MunicipalityDetails() {
           { withCredentials: true }
         )
         const data = res.data ?? {}
-        console.log(data);
         const issuesList =
           data.issues ??
           data.issuesList ??
@@ -123,7 +122,8 @@ export default function MunicipalityDetails() {
         withCredentials: true,
       })
       const data = res.data ?? {}
-      const events = data.timeline ?? data.events ?? data ?? []
+  
+      const events = data.timelineEvents  ?? []
       setTimeline(Array.isArray(events) ? events : [])
     } catch (err) {
       console.error('Failed to fetch timeline', err)
@@ -150,11 +150,11 @@ export default function MunicipalityDetails() {
     const resolved = resolvedItems.length
     const pending = total - resolved
 
-    // avg resolution time (hours) for resolved issues with createdAt and updatedAt
+  
     const durations = resolvedItems
       .map((it) => {
-        if (!it.issuePublishDate || !it.resolvedAt) return null
-        const start = new Date(it.issuePublishDate).getTime()
+        if (!it.issueTakenUpTime || !it.resolvedAt) return null
+        const start = new Date(it.issueTakenUpTime).getTime()
         const end = new Date(it.resolvedAt).getTime()
         if (!start || !end || end <= start) return null
         return (end - start) / (1000 * 60 * 60) // hours
@@ -395,23 +395,27 @@ export default function MunicipalityDetails() {
 
                 {/* Timeline */}
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">Timeline</h3>
-                  {timelineLoading ? (
-                    <div className="text-sm text-purple-500">Loading timeline…</div>
-                  ) : timeline.length === 0 ? (
-                    <div className="text-sm text-gray-500">No timeline events.</div>
-                  ) : (
-                    <ul className="border-l-2 border-purple-100 pl-4 space-y-4">
-                      {timeline.map((ev, i) => (
-                        <li key={i} className="relative">
-                          <div className="absolute -left-5 top-0 w-3 h-3 rounded-full bg-purple-600 border-2 border-white"></div>
-                          <div className="text-xs text-gray-400">{formatDate(ev.date || ev.createdAt || ev.time)}</div>
-                          <div className="mt-1 text-sm text-gray-700">{ev.text || ev.message || ev.note || JSON.stringify(ev)}</div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                 <h3 className="text-sm font-medium text-gray-700 mb-3">Timeline</h3>
+                {timelineLoading ? (
+                  <div className="text-sm text-purple-500">Loading…</div>
+                ) : timeline.length === 0 ? (
+                  <div className="text-sm text-gray-500">No events yet.</div>
+                ) : (
+                  <ul className="border-l-2 border-purple-200 pl-4 space-y-4">
+                    {timeline.map((ev, i) => (
+                      <li key={i} className="relative">
+                        <div className="absolute -left-5 top-1 w-3 h-3 bg-purple-600 border-white border rounded-full"></div>
+                        <div className="text-xs text-gray-400">{formatDate(ev.createdAt )}</div>
+                        <div className="mt-0.5 font-semibold text-gray-800">{ev.title}</div>
+                        <div className="text-sm text-gray-700">{ev.description}</div>
+                        {ev.actorRole && (
+                          <div className="text-xs mt-1 text-purple-600">By: {ev.actorRole}</div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               </div>
             </div>
           </div>

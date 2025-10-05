@@ -61,6 +61,7 @@ const IssueSchema = new mongoose.Schema(
     comments: [CommentSchema],
 
     issueTakenUpBy: { type: mongoose.Schema.Types.ObjectId, ref: "Municipality" },
+    issueTakenUpTime:{type: Date},
     deadline: { type: Date },
 
     // ✅ Newly added fields
