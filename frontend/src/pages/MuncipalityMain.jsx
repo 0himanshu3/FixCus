@@ -71,7 +71,6 @@ export default function MunicipalityMain() {
   const filteredIssues = issues
     .filter(i => priorityFilter === 'all' ? true : i.priority === priorityFilter)
     .filter(i => {
-      console.log(priorityFilter);
       if (!query) return true
       
       const q = query.toLowerCase()
@@ -160,10 +159,10 @@ export default function MunicipalityMain() {
               </div>
               <select value={priorityFilter} onChange={e=>setPriorityFilter(e.target.value)} className="py-2 px-3 border rounded-lg">
                 <option value="all">All priorities</option>
-                <option value="high">High priority</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-                <option value="verylow">Very Low</option>
+                <option value="High">High priority</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+                <option value="Very Low">Very Low</option>
               </select>
             </div>
           </div>

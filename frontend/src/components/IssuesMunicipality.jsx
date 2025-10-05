@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useSelector } from "react-redux"; 
+import { useSelector } from "react-redux";
 import IssuesHeatmap from "./IssuesHeatmap";
 
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
@@ -23,7 +23,7 @@ function IssuesMunicipality() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const user = useSelector((state) => state.auth.user);
-  const adminDistrict = user?.district || null;  
+  const adminDistrict = user?.district || null;
 
   const [filters, setFilters] = useState({
     title: searchParams.get("title") || "",
@@ -34,56 +34,50 @@ function IssuesMunicipality() {
   });
 
   const fetchFilteredIssues = async (appliedFilters) => {
-  setIsLoading(true);
-  try {
-    const query = new URLSearchParams();
+    setIsLoading(true);
+    try {
+      const query = new URLSearchParams();
+      Object.entries(appliedFilters).forEach(([key, value]) => {
+        if (value) query.append(key, value);
+      });
 
-    Object.entries(appliedFilters).forEach(([key, value]) => {
-      if (value) query.append(key, value);
-    });
-
-    if (adminDistrict) {
-      query.append("district", adminDistrict);
-    }
-
-    const res = await fetch(
-      `http://localhost:3000/api/v1/issues/all?${query.toString()}`,
-      {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+      if (adminDistrict) {
+        query.append("district", adminDistrict);
       }
-    );
 
-    if (res.ok) {
-      const data = await res.json();
-
-      const validIssues = (data.issues || []).filter(
-        (issue) => issue.issueDistrict &&
-          issue.issueDistrict.trim() !== "" &&
-          issue.issueDistrict === adminDistrict
+      const res = await fetch(
+        `http://localhost:3000/api/v1/issues/all?${query.toString()}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
       );
 
-      setIssues(validIssues);
-    } else {
-      console.error("Error fetching issues:", res.statusText);
-    }
-  } catch (error) {
-    console.error("Error fetching issues:", error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      if (res.ok) {
+        const data = await res.json();
 
+        const validIssues = (data.issues || []).filter(
+          (issue) =>
+            issue.issueDistrict &&
+            issue.issueDistrict.trim() !== "" &&
+            issue.issueDistrict === adminDistrict
+        );
+
+        setIssues(validIssues);
+      } else {
+        console.error("Error fetching issues:", res.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching issues:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (adminDistrict) {
-      fetchFilteredIssues(filters);
-    }
-  }, [adminDistrict]); // wait until user is loaded
-
-
-  const handleViewIssue = (slug) => navigate(`/issue/${slug}`);
+    if (adminDistrict) fetchFilteredIssues(filters);
+  }, [adminDistrict]);
 
   const handleApplyFilters = () => {
     setSearchParams(
@@ -107,35 +101,13 @@ function IssuesMunicipality() {
     setIsFilterOpen(false);
   };
 
-  const [isHeatmapOpen, setIsHeatmapOpen] = useState(false);
-  const [allIssuesForHeatmap, setAllIssuesForHeatmap] = useState([]);
-
-  // Fetch all issues for heatmap (no district filtering)
-  const fetchAllIssuesForHeatmap = async () => {
-    try {
-      const res = await fetch(
-        "http://localhost:3000/api/v1/issues/all",
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
-
-      if (res.ok) {
-        const data = await res.json();
-        setAllIssuesForHeatmap(data.issues || []);
-      } else {
-        console.error("Error fetching all issues for heatmap:", res.statusText);
-      }
-    } catch (error) {
-      console.error("Error fetching all issues for heatmap:", error);
-    }
-  };
-
   const handleHeatmapOpen = () => {
-    setIsHeatmapOpen(true);
-    fetchAllIssuesForHeatmap();
+    // Navigate to heatmap page with the first issue's location or default
+    const firstIssue = issues[0];
+    const loc = firstIssue
+      ? { lat: firstIssue.lat, lng: firstIssue.lng }
+      : { lat: 28.9843847907343, lng: 77.70621702075009 };
+    navigate("/issues-heatmap", { state: { location: loc } });
   };
 
   return (
@@ -143,39 +115,32 @@ function IssuesMunicipality() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-gray-900">All Issues</h1>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setIsFilterOpen(true)}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-6 rounded-lg shadow transition-colors duration-200"
-            >
-              Filter
-            </button>
+         <div className="flex flex-col gap-2">
+  <div className="flex gap-2">
+    <button
+      onClick={() => setIsFilterOpen(true)}
+      className="bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-6 rounded-lg shadow transition-colors duration-200"
+    >
+      Filter
+    </button>
 
-            <button
-              onClick={handleHeatmapOpen}
-              className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-lg shadow transition-colors duration-200"
-            >
-              View Heatmap
-            </button>
-          </div>
+    <button
+      onClick={handleHeatmapOpen}
+      className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-6 rounded-lg shadow transition-colors duration-200"
+    >
+      View Heatmap
+    </button>
+  </div>
+
+  <button
+    onClick={() => window.location.assign("demo.html")}
+    className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-lg shadow transition-colors duration-200"
+  >
+    Demo
+  </button>
+</div>
+
         </div>
-
-        {isHeatmapOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-            onClick={() => setIsHeatmapOpen(false)}
-          >
-            <div 
-              className="bg-white w-[90%] md:w-2/3 h-[80%] rounded shadow-lg relative"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Heatmap component */}
-              <div className="w-full h-full">
-                <IssuesHeatmap issues={allIssuesForHeatmap} />
-              </div>
-            </div>
-          </div>
-        )}
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
@@ -247,15 +212,6 @@ function IssuesMunicipality() {
                     {new Date(event.issuePublishDate).toLocaleDateString()}
                   </p>
                 </div>
-
-                <div className="px-6 pb-6">
-                  <button
-                    onClick={() => handleViewIssue(event.slug)}
-                    className="w-full bg-gray-800 hover:bg-gray-900 text-white py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-                  >
-                    View Details
-                  </button>
-                </div>
               </motion.div>
             ))}
           </div>
@@ -271,7 +227,6 @@ function IssuesMunicipality() {
           />
           <div className="relative bg-white rounded-xl shadow-lg w-full max-w-md p-6 z-10">
             <h2 className="text-xl font-semibold mb-4">Filter Issues</h2>
-
             <div className="space-y-3">
               <input
                 type="text"
@@ -324,15 +279,6 @@ function IssuesMunicipality() {
                   </option>
                 ))}
               </select>
-              {/* <input
-                type="text"
-                placeholder="Location"
-                value={filters.location}
-                onChange={(e) =>
-                  setFilters({ ...filters, location: e.target.value })
-                }
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
-              /> */}
               <select
                 value={filters.recency}
                 onChange={(e) =>
