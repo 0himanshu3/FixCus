@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
-    "@react-google-maps/api": "^2.20.7",
     "@reduxjs/toolkit": "^2.9.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vis.gl/react-google-maps": "^1.5.5",
@@ -22,6 +21,7 @@
     "firebase": "^12.3.0",
     "flowbite-react": "^0.12.9",
     "framer-motion": "^12.23.22",
+    "google-map-react": "^2.2.5",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "jwt-decode": "^4.0.0",
