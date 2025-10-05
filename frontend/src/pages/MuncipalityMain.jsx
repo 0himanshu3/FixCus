@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { FaSearch, FaUsers, FaMapMarkerAlt, FaClipboardList } from 'react-icons/fa'
+import { FaSearch, FaUsers, FaMapMarkerAlt, FaClipboardList, FaTasks, FaCheckCircle, FaHourglassHalf, FaUserCheck, FaStar, FaRegStar, FaRobot, FaCommentDots, FaThumbsUp, FaBullhorn, FaLightbulb } from 'react-icons/fa'
 
 export default function MunicipalityMain() {
   const user = useSelector((s) => s.auth.user)
@@ -16,8 +16,19 @@ export default function MunicipalityMain() {
   const [query, setQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [selectedIssue, setSelectedIssue] = useState(null)
-  const [feedbackModal, setFeedbackModal] = useState(null)
+  
+  // State for Feedback Modal
+  const [feedbackModal, setFeedbackModal] = useState(null) // This will hold the issueId
   const [feedbackList, setFeedbackList] = useState([])
+  const [aiAnalysis, setAiAnalysis] = useState('')
+  const [loadingAIAnalysis, setLoadingAIAnalysis] = useState(false)
+
+  // State for Staff Details Modal
+  const [selectedStaff, setSelectedStaff] = useState(null)
+  const [selectedStaffDetails, setSelectedStaffDetails] = useState(null)
+  const [isStaffModalOpen, setIsStaffModalOpen] = useState(false)
+  const [loadingStaffDetails, setLoadingStaffDetails] = useState(false)
+
 
   // derived KPI
   const totalPending = issues.length
@@ -37,7 +48,7 @@ export default function MunicipalityMain() {
 
     if (!user.accountApproved) {
     navigate('/fill-application-page');
-    return; 
+    return;
   }
 
     fetchStaff()
@@ -66,7 +77,6 @@ export default function MunicipalityMain() {
       const res = await axios.get(`http://localhost:3000/api/v1/issues/completed-issuesbydistrict`, {
         withCredentials: true
       })
-      // prefer array on res.data.completedIssues or res.data.issues or res.data
       const arr = res.data.completedIssues ?? res.data.issues ?? res.data ?? []
       setResolvedIssues(Array.isArray(arr) ? arr : [])
     } catch (err) {
@@ -92,16 +102,65 @@ export default function MunicipalityMain() {
     }
   }
 
-  const fetchFeedback = async (issueId) => {
+  const openFeedbackModal = async (issueId) => {
     try {
       const res = await axios.get(`http://localhost:3000/api/v1/issues/feedback/${issueId}`, { withCredentials: true })
       setFeedbackList(res.data.feedbacks || [])
       setFeedbackModal(issueId)
     } catch (err) {
       console.error('Error fetching feedback:', err)
-      setFeedbackList([])
-      setFeedbackModal(issueId) // still open modal so user sees "no feedback"
+      setFeedbackList([]) // Still show the modal but indicate no feedback was found
+      setFeedbackModal(issueId)
     }
+  }
+
+  const generateAIAnalysis = async (issueId) => {
+    if (!issueId) return;
+    try {
+        setLoadingAIAnalysis(true);
+        setAiAnalysis(''); // Clear previous analysis
+        const res = await axios.post(`http://localhost:3000/api/v1/issues/analyze-feedback`, { issueId }, {
+            withCredentials: true,
+        });
+        setAiAnalysis(res.data.analysis);
+    } catch (err) {
+        console.error('Error generating AI analysis:', err);
+        const errorMsg = err.response?.data?.message || 'Failed to generate AI analysis. Please try again.';
+        setAiAnalysis(errorMsg);
+    } finally {
+        setLoadingAIAnalysis(false);
+    }
+  };
+
+  const closeFeedbackModal = () => {
+    setFeedbackModal(null);
+    setFeedbackList([]);
+    setAiAnalysis('');
+    setLoadingAIAnalysis(false);
+  };
+
+  const handleViewStaffDetails = async (staffMember) => {
+    if (!staffMember?._id) return
+    try {
+      setSelectedStaff(staffMember)
+      setLoadingStaffDetails(true)
+      setIsStaffModalOpen(true)
+      const res = await axios.get(`http://localhost:3000/api/v1/auth/staff-dashboard/${staffMember._id}`, {
+        withCredentials: true,
+      })
+      setSelectedStaffDetails(res.data.dashboardData)
+    } catch (err) {
+      console.error('Error fetching staff details:', err)
+      setSelectedStaffDetails(null)
+    } finally {
+      setLoadingStaffDetails(false)
+    }
+  }
+
+  const closeStaffModal = () => {
+    setIsStaffModalOpen(false)
+    setSelectedStaff(null)
+    setSelectedStaffDetails(null)
   }
 
   const handleSearchChange = (e) => setQuery(e.target.value)
@@ -116,7 +175,6 @@ export default function MunicipalityMain() {
 
   const StaffOverview = () => {
     const total = staff.length
-
     return (
       <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl shadow-lg p-6 border-2 border-purple-200">
         <div className="flex items-center justify-between mb-2">
@@ -132,7 +190,6 @@ export default function MunicipalityMain() {
             <div className="text-sm text-purple-600">Total staff</div>
           </div>
         </div>
-
         <div className="space-y-2 max-h-60 overflow-auto" style={{ scrollbarWidth: 'thin' }}>
           {loadingStaff ? (
             <div className="text-sm text-purple-600 font-medium">Loading staff...</div>
@@ -150,8 +207,16 @@ export default function MunicipalityMain() {
                     <div className="text-xs text-purple-600 font-medium">{s.role || 'Staff'}</div>
                   </div>
                 </div>
-                <div className={`text-xs font-semibold px-2 py-1 rounded-full ${s.available ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                  {s.available ? 'Available' : 'Offline'}
+                <div className="flex items-center gap-2">
+                    <div className={`text-xs font-semibold px-2 py-1 rounded-full ${s.available ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                        {s.available ? 'Available' : 'Offline'}
+                    </div>
+                    <button
+                        onClick={() => handleViewStaffDetails(s)}
+                        className="px-3 py-1 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition shadow-sm"
+                    >
+                        Details
+                    </button>
                 </div>
               </div>
             ))
@@ -242,105 +307,47 @@ export default function MunicipalityMain() {
             </div>
           </div>
 
-          {/* Resolved Issues Section */}
-         <div className="mb-6">
-  <div className="flex items-center justify-between mb-3">
-    <div>
-      <h3 className="text-2xl font-semibold text-gray-900">✅ Resolved Issues</h3>
-      <p className="text-sm text-purple-600">Recently completed issues — view feedback</p>
-    </div>
-    <div className="text-sm text-purple-600 font-medium">{resolvedIssues.length} resolved</div>
-  </div>
-
-  <div className="bg-white rounded-xl shadow-lg border-2 border-purple-200 overflow-hidden">
-    <div className="max-h-[260px] overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: 'thin' }}>
-      {loadingResolved ? (
-        <div className="text-purple-600 text-sm">Loading resolved issues...</div>
-      ) : resolvedIssues.length === 0 ? (
-        <div className="text-purple-600 text-sm">No resolved issues found.</div>
-      ) : (
-        resolvedIssues.map(ri => (
-          <div
-            key={ri._id}
-            className="flex items-center justify-between bg-purple-50 rounded-lg p-3 border border-purple-100"
-          >
-            <div className="flex-1 pr-3">
-              <div className="font-semibold text-gray-900 text-sm truncate">{ri.title}</div>
-              <div className="text-xs text-purple-600 mt-1">
-                Resolved: {new Date(ri.resolvedAt || ri.updatedAt || ri.createdAt).toLocaleDateString()}
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <div className="text-xs text-gray-600">
-                ↑ {count(ri.upvotes)} • ↓ {count(ri.downvotes)}
-              </div>
-              <button
-               onClick={() => fetchFeedback(ri._id)}
-                className="px-3 py-1 rounded bg-purple-700 text-white text-sm hover:bg-purple-800"
-              >
-                View Feedback
-              </button>
-            </div>
-          </div>
-        ))
-      )}
-    </div>
-  </div>
-
-  {/* Feedback Modal — no black overlay, page remains visible */}
-  {feedbackModal && (
-    <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-      {/* small subtle backdrop blur so background is still visible */}
-      <div className="absolute inset-0 backdrop-blur-sm pointer-events-none" />
-      <div className="relative pointer-events-auto bg-white w-full max-w-xl p-6 rounded-xl shadow-xl border-2 border-purple-400">
-        <h3 className="text-lg font-bold text-purple-900 mb-4">💬 Feedback</h3>
-        <button
-          onClick={() => { setFeedbackModal(null); setFeedbackList([]) }}
-          className="absolute top-3 right-4 text-purple-500 text-2xl font-bold"
-        >
-          &times;
-        </button>
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {feedbackList.length === 0 ? (
-            <p className="text-sm text-purple-600">No feedback submitted.</p>
-          ) : (
-            feedbackList.map((fb, idx) => (
-              <div key={idx} className="p-3 border border-purple-200 rounded bg-purple-50 text-sm">
-              <div className="font-medium text-gray-800">
-                Feedback
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {fb.submittedBy?.name ? `by ${fb.submittedBy.name}` : ''}
-              </div>
-              <div className="mt-1 text-xs text-gray-500">
-                Rating: {fb.satisfactionRating || 'N/A'} ⭐
-              </div>
-              <div className="mt-1 text-xs text-gray-500">
-                Resolution Quality: {fb.resolutionQuality || 'N/A'}
-              </div>
-              <div className="mt-1 text-xs text-gray-500">
-                Resolution Time: {fb.resolutionTime || 'N/A'}
-              </div>
-              <div className="mt-2 text-gray-700 whitespace-pre-wrap">
-                {fb.suggestions || fb.additionalComments || 'No additional comments'}
-              </div>
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+                <div>
+                <h3 className="text-2xl font-semibold text-gray-900">✅ Resolved Issues</h3>
+                <p className="text-sm text-purple-600">Recently completed issues — view feedback</p>
+                </div>
+                <div className="text-sm text-purple-600 font-medium">{resolvedIssues.length} resolved</div>
             </div>
 
-            ))
-          )}
+            <div className="bg-white rounded-xl shadow-lg border-2 border-purple-200 overflow-hidden">
+                <div className="max-h-[260px] overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: 'thin' }}>
+                {loadingResolved ? (
+                    <div className="text-purple-600 text-sm">Loading resolved issues...</div>
+                ) : resolvedIssues.length === 0 ? (
+                    <div className="text-purple-600 text-sm">No resolved issues found.</div>
+                ) : (
+                    resolvedIssues.map(ri => (
+                    <div key={ri._id} className="flex items-center justify-between bg-purple-50 rounded-lg p-3 border border-purple-100">
+                        <div className="flex-1 pr-3">
+                            <div className="font-semibold text-gray-900 text-sm truncate">{ri.title}</div>
+                            <div className="text-xs text-purple-600 mt-1">
+                                Resolved: {new Date(ri.resolvedAt || ri.updatedAt || ri.createdAt).toLocaleDateString()}
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="text-xs text-gray-600 font-medium bg-white px-2 py-1 rounded border border-purple-200">
+                                ↑ {count(ri.upvotes)} • ↓ {count(ri.downvotes)}
+                            </div>
+                            <button onClick={() => openFeedbackModal(ri._id)} className="px-3 py-1 rounded bg-purple-700 text-white text-sm font-bold hover:bg-purple-800 transition">
+                                View Feedback
+                            </button>
+                        </div>
+                    </div>
+                    ))
+                )}
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  )}
-</div>
-
-
         </div>
 
-        {/* Right — Buttons + Quick summary + Staff overview */}
-        <div className="space-y-6">
-
-          {/* Top-right buttons */}
+        <div className="space-y-6 lg:col-span-1">
           {user?.accountApproved && (
             <div className="flex gap-3">
               <button
@@ -358,7 +365,6 @@ export default function MunicipalityMain() {
             </div>
           )}
 
-          {/* Quick Summary Card */}
           <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl shadow-lg p-6 border-2 border-purple-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -389,17 +395,13 @@ export default function MunicipalityMain() {
               </div>
             </div>
           </div>
-
-          {/* Staff Overview Card */}
           <StaffOverview />
-
         </div>
       </div>
 
-      {/* Issue details modal — no black overlay, page remains visible */}
       {selectedIssue && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="absolute inset-0 backdrop-blur-sm pointer-events-none" />
+          <div className="absolute inset-0 backdrop-blur-sm pointer-events-auto" onClick={()=>setSelectedIssue(null)}/>
           <div className="relative pointer-events-auto bg-white rounded-xl w-full lg:w-3/5 max-h-[90vh] overflow-y-auto p-6 shadow-2xl border-2 border-purple-300">
             <div className="flex items-start justify-between mb-4">
               <div>
@@ -440,6 +442,205 @@ export default function MunicipalityMain() {
         </div>
       )}
 
+      {isStaffModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div className="absolute inset-0 backdrop-blur-sm pointer-events-auto" onClick={closeStaffModal} />
+          <div className="relative pointer-events-auto bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl border-2 border-purple-300">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">{selectedStaff?.name || 'Staff Details'}</h3>
+                <p className="text-sm text-purple-600 font-medium mt-1">{selectedStaff?.role || 'Performance Overview'}</p>
+              </div>
+              <button onClick={closeStaffModal} className="text-2xl text-purple-400 hover:text-purple-600 font-bold">✕</button>
+            </div>
+            
+            {loadingStaffDetails ? (
+                <div className="text-center p-10"><div className="text-purple-600 font-semibold">Loading details...</div></div>
+            ) : selectedStaffDetails ? (
+              <div className="space-y-6">
+                <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><FaClipboardList/> Issues Assigned</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <StatCard icon={<FaUserCheck/>} label="Total Issues" value={selectedStaffDetails.issueStats.total} color="blue"/>
+                    <StatCard icon={<FaCheckCircle/>} label="Completed" value={selectedStaffDetails.issueStats.completed} color="green"/>
+                    <StatCard icon={<FaHourglassHalf/>} label="Pending" value={selectedStaffDetails.issueStats.pending} color="yellow"/>
+                  </div>
+                   <ProgressBar label="Issue Completion" percentage={selectedStaffDetails.issueStats.completionPercentage} color="purple" />
+                </div>
+                <div className="bg-pink-50 p-4 rounded-lg border-2 border-pink-200">
+                  <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2"><FaTasks/> Tasks Assigned</h4>
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <StatCard icon={<FaTasks/>} label="Total Tasks" value={selectedStaffDetails.taskStats.total} color="blue"/>
+                    <StatCard icon={<FaCheckCircle/>} label="Completed" value={selectedStaffDetails.taskStats.completed} color="green"/>
+                    <StatCard icon={<FaHourglassHalf/>} label="Pending" value={selectedStaffDetails.taskStats.pending} color="yellow"/>
+                  </div>
+                  <ProgressBar label="Task Completion" percentage={selectedStaffDetails.taskStats.completionPercentage} color="pink" />
+                </div>
+              </div>
+            ) : (
+                <div className="text-center p-10"><div className="text-red-600 font-semibold">Could not load staff details.</div></div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {feedbackModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+            <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm pointer-events-auto" onClick={closeFeedbackModal} />
+            <div className="relative pointer-events-auto bg-gray-50 w-full max-w-3xl max-h-[90vh] flex flex-col p-6 rounded-xl shadow-2xl border-2 border-purple-300">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                <h3 className="text-xl font-bold text-purple-900 flex items-center gap-2"><FaCommentDots/> Citizen Feedback</h3>
+                <div className="flex items-center gap-3">
+                     <button
+                        onClick={() => generateAIAnalysis(feedbackModal)}
+                        disabled={loadingAIAnalysis || feedbackList.length === 0}
+                        className="px-4 py-2 text-sm font-bold bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-lg hover:from-teal-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-md flex items-center gap-2"
+                    >
+                        <FaRobot/> {loadingAIAnalysis ? "Analyzing..." : "Generate AI Analysis"}
+                    </button>
+                    <button onClick={closeFeedbackModal} className="text-2xl text-purple-400 hover:text-purple-600 font-bold">✕</button>
+                </div>
+            </div>
+
+            <div className="overflow-y-auto space-y-4 pr-2" style={{ scrollbarWidth: 'thin' }}>
+                {feedbackList.length === 0 ? (
+                    <p className="text-sm text-purple-600 text-center py-8">No feedback has been submitted for this issue.</p>
+                ) : (
+                    feedbackList.map((fb) => (
+                    <div key={fb._id} className="p-4 border-2 border-purple-200 rounded-lg bg-white shadow-sm">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="font-bold text-gray-800">{fb.submittedBy.name || 'Anonymous'}</p>
+                                <p className="text-xs text-gray-500">{new Date(fb.createdAt).toLocaleString()}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-sm font-semibold text-gray-600">Overall Satisfaction</p>
+                                <StarRating rating={fb.satisfactionRating} />
+                            </div>
+                        </div>
+                        <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                           <FeedbackItem icon={<FaThumbsUp className="text-green-500"/>} label="Resolution Quality" value={fb.resolutionQuality} />
+                           <FeedbackItem icon={<FaBullhorn className="text-blue-500"/>} label="Communication" value={fb.communication} />
+                           <FeedbackItem icon={<FaHourglassHalf className="text-yellow-500"/>} label="Resolution Time" value={fb.resolutionTime} />
+                           <FeedbackItem icon={<FaLightbulb className="text-purple-500"/>} label="Suggestions" value={fb.suggestions || 'None'} />
+                        </div>
+                    </div>
+                    ))
+                )}
+
+                {(loadingAIAnalysis || aiAnalysis) && (
+                     <div className="mt-4 p-4 border-2 border-teal-300 rounded-lg bg-gradient-to-br from-teal-50 to-cyan-50 shadow-md">
+                        <h4 className="font-bold text-teal-800 text-lg mb-3 flex items-center gap-2"><FaRobot/> AI-Powered Summary</h4>
+                        {loadingAIAnalysis ? (
+                             <div className="flex justify-center items-center p-6"><div className="text-teal-700 font-medium">Generating insights...</div></div>
+                        ) : (
+                            <AIAnalysisDisplay analysis={aiAnalysis} />
+                        )}
+                    </div>
+                )}
+            </div>
+            </div>
+        </div>
+      )}
     </div>
   )
+}
+
+
+const StarRating = ({ rating = 0 }) => (
+    <div className="flex items-center text-yellow-500 mt-1">
+        {[...Array(5)].map((_, i) => (
+            i < rating ? <FaStar key={i} /> : <FaRegStar key={i} />
+        ))}
+        <span className="ml-2 text-xs font-bold text-gray-500">({rating}/5)</span>
+    </div>
+);
+
+const FeedbackItem = ({ icon, label, value }) => (
+    <div className="flex items-start gap-2">
+        <div className="mt-1">{icon}</div>
+        <div>
+            <p className="font-semibold text-gray-500">{label}</p>
+            <p className="text-gray-800">{value || 'N/A'}</p>
+        </div>
+    </div>
+);
+
+const AIAnalysisDisplay = ({ analysis }) => {
+    const getIconForHeading = (line) => {
+        const lowerLine = line.toLowerCase();
+        if (lowerLine.includes('positive') || lowerLine.includes('strength')) return '👍';
+        if (lowerLine.includes('improvement') || lowerLine.includes('concern')) return '⚠️';
+        if (lowerLine.includes('suggestion') || lowerLine.includes('actionable')) return '💡';
+        if (lowerLine.includes('summary') || lowerLine.includes('overall')) return '📊';
+        return '🔹';
+    };
+
+    const lines = analysis.split('\n').filter(line => line.trim() !== '');
+
+    return (
+        <div className="space-y-3 font-sans">
+            {lines.map((line, index) => {
+                const trimmedLine = line.trim();
+                if (trimmedLine.endsWith(':')) {
+                    return (
+                        <h5 key={index} className="font-semibold text-teal-900 text-base flex items-center gap-2 pt-2">
+                            <span className="text-lg">{getIconForHeading(trimmedLine)}</span>
+                            {trimmedLine.slice(0, -1)}
+                        </h5>
+                    );
+                }
+                if (trimmedLine.startsWith('-') || trimmedLine.startsWith('*')) {
+                    return (
+                        <p key={index} className="pl-6 text-gray-800 flex items-start gap-2.5">
+                            <span className="text-teal-600 mt-1.5">∙</span>
+                            <span>{trimmedLine.substring(1).trim()}</span>
+                        </p>
+                    );
+                }
+                return (
+                    <p key={index} className="pl-6 text-gray-700">
+                        {trimmedLine}
+                    </p>
+                );
+            })}
+        </div>
+    );
+};
+
+const StatCard = ({ icon, label, value, color }) => {
+    const colors = {
+        blue: 'text-blue-600',
+        green: 'text-green-600',
+        yellow: 'text-yellow-600'
+    }
+    return (
+        <div className="bg-white p-4 rounded-lg flex items-center gap-4 border border-purple-200">
+            <div className={`text-2xl ${colors[color]}`}>{icon}</div>
+            <div>
+                <div className="text-sm font-bold text-gray-500">{label}</div>
+                <div className="text-2xl font-bold text-gray-800">{value}</div>
+            </div>
+        </div>
+    )
+}
+
+const ProgressBar = ({ label, percentage, color }) => {
+    const colors = {
+        purple: { bg: 'bg-purple-200', fill: 'bg-purple-600' },
+        pink: { bg: 'bg-pink-200', fill: 'bg-pink-600' }
+    }
+    const c = colors[color] || colors.purple
+
+    return (
+        <div className="mt-4">
+            <div className="flex justify-between items-center mb-1">
+                <span className="text-sm font-semibold text-gray-700">{label}</span>
+                <span className="text-sm font-bold text-gray-800">{percentage}%</span>
+            </div>
+            <div className={`w-full ${c.bg} rounded-full h-2.5`}>
+                <div className={`${c.fill} h-2.5 rounded-full`} style={{ width: `${percentage}%` }}></div>
+            </div>
+        </div>
+    )
 }

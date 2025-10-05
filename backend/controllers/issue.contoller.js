@@ -1680,41 +1680,142 @@ export const getIssueTimeline = async (req, res) => {
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
-
 function normalizeToObjectId(rawId) {
-  if (!rawId) throw new Error('No id provided');
+  if (!rawId && rawId !== 0) throw new Error('No id provided');
 
-  // Already an ObjectId instance
-  if (typeof rawId === 'object' && typeof rawId.toHexString === 'function') {
+  // If it's already an ObjectId
+  if (rawId instanceof mongoose.Types.ObjectId) {
     return rawId;
   }
 
-  // If it's a stringified "new ObjectId('...')" — extract the hex inside
-  if (typeof rawId === 'string') {
-    const match = rawId.match(/new ObjectId\(['"]([0-9a-fA-F]{24})['"]\)/);
-    if (match && match[1]) {
-      return mongoose.Types.ObjectId(match[1]);
-    }
-
-    // If it's a raw hex string of length 24 — use it directly
-    if (/^[0-9a-fA-F]{24}$/.test(rawId)) {
-      return mongoose.Types.ObjectId(rawId);
-    }
-
-    // Maybe it's already a JSON string of an ObjectId like '{"$oid":"..."}'
-    try {
-      const parsed = JSON.parse(rawId);
-      if (parsed && parsed.$oid && /^[0-9a-fA-F]{24}$/.test(parsed.$oid)) {
-        return mongoose.Types.ObjectId(parsed.$oid);
-      }
-    } catch (e) {
-      // ignore parse errors
+  // If it's an object with $oid
+  if (typeof rawId === 'object' && rawId.$oid) {
+    if (mongoose.Types.ObjectId.isValid(rawId.$oid)) {
+      return new mongoose.Types.ObjectId(rawId.$oid);
     }
   }
 
-  throw new Error(`Invalid staff id format: ${String(rawId).slice(0, 200)}`);
+  // If it's a string
+  if (typeof rawId === 'string') {
+    const s = rawId.trim();
+
+    // Plain 24-character hex string
+    if (/^[0-9a-fA-F]{24}$/.test(s) && mongoose.Types.ObjectId.isValid(s)) {
+      return new mongoose.Types.ObjectId(s);
+    }
+
+    // "new ObjectId('...')" or "ObjectId('...')"
+    const match = s.match(/(?:new\s+)?ObjectId\(['"]([0-9a-fA-F]{24})['"]\)/);
+    if (match && match[1] && mongoose.Types.ObjectId.isValid(match[1])) {
+      return new mongoose.Types.ObjectId(match[1]);
+    }
+
+    // JSON-style {"$oid":"..."} inside string
+    try {
+      const parsed = JSON.parse(s);
+      if (parsed && parsed.$oid && mongoose.Types.ObjectId.isValid(parsed.$oid)) {
+        return new mongoose.Types.ObjectId(parsed.$oid);
+      }
+    } catch (err) {
+      // not JSON, ignore
+    }
+  }
+
+  throw new Error(`Invalid id format: ${String(rawId).slice(0, 200)}`);
 }
 
+/** Controller using the normalizer and supporting either param or req.user fallback */
+export const getStaffDashboardDetails = async (req, res) => {
+  try {
+    // prefer route param, fallback to logged-in user id
+    const candidateId = req.params?.staffId ?? req?.user?._id;
+    console.log('candidateId (raw):', candidateId, ' typeof:', typeof candidateId);
+
+    if (!candidateId) {
+      return res.status(400).json({ success: false, message: 'Staff ID is required (params or authenticated user).' });
+    }
+
+    let staffObjectId;
+    try {
+      staffObjectId = normalizeToObjectId(candidateId);
+    } catch (err) {
+      console.error('Invalid staff id:', candidateId, err.message);
+      return res.status(400).json({ success: false, message: 'Invalid staff id' });
+    }
+
+    // Use the normalized ObjectId for queries
+    const allAssignedIssues = await Issue.find({ 'staffsAssigned.user': staffObjectId })
+      .populate('reportedBy', 'name email')
+      .lean();
+
+    const allAssignedTasks = await Task.find({ assignedTo: staffObjectId })
+      .populate('issueId', 'title category')
+      .sort({ deadline: 1 })
+      .lean();
+
+    console.log('Staff ObjectId:', staffObjectId.toHexString());
+    console.log('Assigned issues count:', allAssignedIssues.length);
+    console.log('Assigned tasks count:', allAssignedTasks.length);
+
+    // Build dashboardData (same logic as before)
+    const dashboardData = {
+      issueStats: { total: allAssignedIssues.length, completed: 0, pending: 0, overdue: 0 },
+      taskStats: { total: allAssignedTasks.length, completed: 0, pending: 0, overdue: 0 },
+      roles: { Coordinator: [], Supervisor: [], Worker: [] },
+      tasks: { completed: [], pending: [], overdue: [] },
+    };
+
+    const now = new Date();
+
+    for (const issue of allAssignedIssues) {
+      const staffAssignment = (issue.staffsAssigned || []).find(
+        (staff) => String(staff.user) === String(staffObjectId)
+      );
+      if (staffAssignment && dashboardData.roles[staffAssignment.role]) {
+        dashboardData.roles[staffAssignment.role].push(issue);
+      }
+      if (issue.status === 'Resolved') {
+        dashboardData.issueStats.completed++;
+      } else {
+        if (issue.deadline && new Date(issue.deadline) < now) {
+          dashboardData.issueStats.overdue++;
+        } else {
+          dashboardData.issueStats.pending++;
+        }
+      }
+    }
+
+    for (const task of allAssignedTasks) {
+      if (task.status === 'Completed') {
+        dashboardData.taskStats.completed++;
+        dashboardData.tasks.completed.push(task);
+      } else {
+        if (task.deadline && new Date(task.deadline) < now) {
+          dashboardData.taskStats.overdue++;
+          dashboardData.tasks.overdue.push(task);
+        } else {
+          dashboardData.taskStats.pending++;
+          dashboardData.tasks.pending.push(task);
+        }
+      }
+    }
+
+    dashboardData.issueStats.completionPercentage =
+      dashboardData.issueStats.total > 0
+        ? Math.round((dashboardData.issueStats.completed / dashboardData.issueStats.total) * 100)
+        : 0;
+
+    dashboardData.taskStats.completionPercentage =
+      dashboardData.taskStats.total > 0
+        ? Math.round((dashboardData.taskStats.completed / dashboardData.taskStats.total) * 100)
+        : 0;
+
+    return res.status(200).json({ success: true, dashboardData });
+  } catch (error) {
+    console.error('Error in getStaffDashboardDetails:', error);
+    return res.status(500).json({ success: false, message: 'An internal server error occurred.' });
+  }
+};
 export const getStaffDashboard = async (req, res) => {
   try {
     const rawStaffId = req?.user?._id;
