@@ -141,7 +141,7 @@ const DashboardStaff = () => {
             <StatCard title="Total Issues" value={issueStats.total} icon="📋" bgColor="bg-blue-500" />
             <StatCard title="Total Tasks" value={taskStats.total} icon="✔️" bgColor="bg-green-500" />
             <StatCard title="Pending Tasks" value={taskStats.pending} icon="⏳" bgColor="bg-yellow-500" />
-            <StatCard title="Overdue" value={taskStats.overdue + issueStats.overdue} icon="🚨" bgColor="bg-red-500" />
+            <StatCard title="Overdue Tasks & Issues" value={taskStats.overdue + issueStats.overdue} icon="🚨" bgColor="bg-red-500" />
         </div>
 
         {/* --- Tab Navigation --- */}

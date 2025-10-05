@@ -283,7 +283,7 @@ function IssueDetails() {
         <div className="bg-pink-200 rounded-xl p-5 shadow-lg border-4 border-purple-500">
           <p className="text-purple-900 font-semibold text-lg">
             <strong className="text-purple-700">📍 Location:</strong>{" "}
-            {issue.issueLocation}
+            {issue.issueDistrict + ', ' + issue.issueState + ', ' + issue.issueCountry}
           </p>
           <p className="text-purple-900 font-semibold text-lg mt-2">
             <strong className="text-purple-700">📅 Published:</strong>{" "}
@@ -326,14 +326,15 @@ function IssueDetails() {
               className="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/95"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}>
+              exit={{ opacity: 0 }}
+              onClick={() => setShowImageSlider(false)}>
               <button
                 className="absolute top-5 right-5 text-pink-300 text-5xl hover:text-pink-100 font-bold"
                 onClick={() => setShowImageSlider(false)}>
                 &times;
               </button>
 
-              <div className="relative w-4/5 max-w-3xl">
+              <div className="relative w-4/5 max-w-3xl" onClick={(e) => e.stopPropagation()}>
                 <img
                   src={issue.images[currentImageIdx]}
                   alt={`Slide ${currentImageIdx}`}
@@ -502,7 +503,8 @@ function IssueDetails() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-purple-900/95 z-50 overflow-y-auto"
-              style={{ WebkitOverflowScrolling: "touch" }}>
+              style={{ WebkitOverflowScrolling: "touch" }}
+              onClick={() => setIsFeedbackModalOpen(false)}>
               <div className="min-h-screen px-4 py-8 flex items-center justify-center">
                 <div
                   className="bg-gradient-to-br from-pink-200 to-pink-300 p-6 rounded-2xl shadow-2xl w-full max-w-2xl relative border-4 border-purple-600"
@@ -511,7 +513,8 @@ function IssueDetails() {
                     overflowY: "auto",
                     WebkitOverflowScrolling: "touch",
                     overscrollBehavior: "contain",
-                  }}>
+                  }}
+                  onClick={(e) => e.stopPropagation()}>
                   <button
                     className="absolute top-3 right-4 text-3xl font-black text-purple-900 hover:text-purple-700"
                     onClick={() => setIsFeedbackModalOpen(false)}>

@@ -147,8 +147,8 @@ const IssuesHeatmap = ({ show = false, onClose = () => {} }) => {
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="relative bg-white rounded-lg shadow-2xl w-[92%] md:w-[85%] lg:w-[80%] h-[85vh] border-4 border-purple-600 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
+      <div className="relative bg-white rounded-lg shadow-2xl w-[92%] md:w-[85%] lg:w-[80%] h-[85vh] border-4 border-purple-600 overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={onClose}
           className="absolute top-3 right-3 z-20 px-3 py-1 rounded-full bg-purple-700 text-white text-sm font-semibold hover:bg-purple-800 shadow"

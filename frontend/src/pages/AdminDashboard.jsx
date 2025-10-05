@@ -18,6 +18,8 @@ const AdminDashboard = () => {
   const [issueDetails, setIssueDetails] = useState(null);
   const [aiReport, setAiReport] = useState(null);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [feedbackList, setFeedbackList] = useState([]);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedState, setSelectedState] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
@@ -28,13 +30,24 @@ const AdminDashboard = () => {
     totalMunicipalities: 0,
   });
 
-  const states = [...new Set(users.map(u => u.state).concat(municipalities.map(m => m.state)))];
-  const districts = selectedState 
+  const states = [...new Set(
+  users.map(u => u.state).filter(Boolean)
+  .concat(municipalities.map(m => m.state).filter(Boolean))
+)];
+
+const districts = selectedState
   ? [...new Set(
-      users.filter(u => u.state === selectedState).map(u => u.district)
-        .concat(municipalities.filter(m => m.state === selectedState).map(m => m.issuedistrict))
+      users.filter(u => u.state === selectedState).map(u => u.district).filter(Boolean)
+      .concat(municipalities.filter(m => m.state === selectedState).map(m => m.issueDistrict).filter(Boolean))
     )]
   : [];
+
+
+  // States/Districts derived from completed issues for the Completed tab filters
+  const completedStates = [...new Set(completedIssues.map(i => i.issueState).filter(Boolean))];
+  const completedDistricts = selectedState
+    ? [...new Set(completedIssues.filter(i => i.issueState === selectedState).map(i => i.issueDistrict).filter(Boolean))]
+    : [...new Set(completedIssues.map(i => i.issueDistrict).filter(Boolean))];
 
   const handleLogout = async () => {
     try {
@@ -88,10 +101,22 @@ const fetchMunicipalities = async () => {
 
   const fetchIssueDetails = async (issueId) => {
     try {
-      const res = await axios.get(`http://localhost:3000/api/v1/issue/issue-details/${issueId}`, { withCredentials: true });
+      const res = await axios.get(`http://localhost:3000/api/v1/issues/issue-details/${issueId}`, { withCredentials: true });
       setIssueDetails(res.data.issue);
     } catch (err) {
       console.error('Error fetching issue details:', err);
+    }
+  };
+
+  const fetchIssueFeedback = async (issueId) => {
+    try {
+      const res = await axios.get(`http://localhost:3000/api/v1/issues/feedback/${issueId}`, { withCredentials: true });
+      setFeedbackList(res.data.feedbacks || []);
+      setShowFeedbackModal(true);
+    } catch (err) {
+      console.error('Error fetching issue feedback:', err);
+      setFeedbackList([]);
+      setShowFeedbackModal(true);
     }
   };
 
@@ -145,12 +170,12 @@ const fetchMunicipalities = async () => {
 
   const filteredMunicipalities = municipalities.filter(m =>
     (!selectedState || m.state === selectedState) &&
-    (!selectedDistrict || m.issuedistrict === selectedDistrict)
+    (!selectedDistrict || m.issueDistrict === selectedDistrict)
   );
   const filteredCompletedIssues = completedIssues.filter(issue =>
-  (!selectedState || issue.state === selectedState) &&
-  (!selectedDistrict || issue.issueDistrict === selectedDistrict)
-);
+    (!selectedState || issue.issueState === selectedState) &&
+    (!selectedDistrict || issue.issueDistrict === selectedDistrict)
+  );
 
 return (
   <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 p-8">
@@ -275,20 +300,25 @@ return (
             <div className="mb-4 space-y-2">
               <select
                 value={selectedState}
-                onChange={(e) => setSelectedState(e.target.value)}
+                onChange={(e) => { setSelectedState(e.target.value); setSelectedDistrict(''); }}
                 className="w-full p-2 border-4 border-purple-500 rounded-lg font-bold text-purple-900 focus:border-pink-500 focus:ring-2 focus:ring-pink-300"
               >
                 <option value="">All States</option>
-                {/* map over your states here */}
+                {completedStates.map((st) => (
+                  <option key={st} value={st}>{st}</option>
+                ))}
               </select>
 
               <select
                 value={selectedDistrict}
                 onChange={(e) => setSelectedDistrict(e.target.value)}
                 className="w-full p-2 border-4 border-purple-500 rounded-lg font-bold text-purple-900 focus:border-pink-500 focus:ring-2 focus:ring-pink-300"
+                disabled={selectedState === undefined}
               >
                 <option value="">All Districts</option>
-                {/* map over districts here */}
+                {completedDistricts.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
               </select>
             </div>
 
@@ -362,9 +392,9 @@ return (
     )}
 
     {/* Issue Details Modal */}
-    {selectedIssue && issueDetails && (
-      <div className="fixed inset-0 bg-purple-900/95 flex items-center justify-center p-4 z-50">
-        <div className="bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto border-4 border-purple-600 shadow-2xl">
+  {selectedIssue && issueDetails && (
+      <div className="fixed inset-0 bg-purple-900/95 flex items-center justify-center p-4 z-50" onClick={() => { setSelectedIssue(null); setIssueDetails(null); }}>
+        <div className="bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto border-4 border-purple-600 shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-2xl font-black text-purple-900 overflow-hidden">{issueDetails.title}</h3>
             <button
@@ -377,14 +407,79 @@ return (
               ✕
             </button>
           </div>
-          {/* Rest of modal content same as before */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white/80 p-4 rounded-lg border-2 border-purple-400">
+              <div className="font-bold text-purple-900 mb-2">Overview</div>
+              <div className="text-sm text-purple-800 space-y-1">
+                <div><span className="font-semibold">Category:</span> {issueDetails.category}</div>
+                <div><span className="font-semibold">Priority:</span> {issueDetails.priority}</div>
+                <div><span className="font-semibold">Status:</span> {issueDetails.status}</div>
+                <div><span className="font-semibold">Published:</span> {new Date(issueDetails.issuePublishDate).toLocaleString()}</div>
+                <div><span className="font-semibold">Location:</span> {issueDetails.issueLocation}</div>
+                <div><span className="font-semibold">District:</span> {issueDetails.issueDistrict}</div>
+                <div><span className="font-semibold">State:</span> {issueDetails.issueState}</div>
+                <div><span className="font-semibold">Country:</span> {issueDetails.issueCountry}</div>
+              </div>
+            </div>
+            <div className="bg-white/80 p-4 rounded-lg border-2 border-purple-400">
+              <div className="font-bold text-purple-900 mb-2">Description</div>
+              <div className="text-sm text-purple-800 whitespace-pre-wrap">{issueDetails.content || 'No description provided.'}</div>
+            </div>
+            {Array.isArray(issueDetails.images) && issueDetails.images.length > 0 && (
+              <div className="md:col-span-2 bg-white/80 p-4 rounded-lg border-2 border-purple-400">
+                <div className="font-bold text-purple-900 mb-2">Images</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {issueDetails.images.map((src, idx) => (
+                    <img key={idx} src={src} alt={`issue-${idx}`} className="w-full h-32 object-cover rounded border" />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     )}
 
+  {/* Feedback Modal */}
+  {showFeedbackModal && (
+    <div className="fixed inset-0 bg-purple-900/95 flex items-center justify-center p-4 z-50" onClick={() => setShowFeedbackModal(false)}>
+      <div className="bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl p-6 max-w-3xl w-full max-h-[85vh] overflow-y-auto border-4 border-purple-600 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-2xl font-black text-purple-900 overflow-hidden">Citizen Feedback</h3>
+          <button
+            onClick={() => setShowFeedbackModal(false)}
+            className="text-3xl font-black text-purple-900 hover:text-purple-700"
+          >
+            ✕
+          </button>
+        </div>
+        {feedbackList.length === 0 ? (
+          <p className="text-purple-700 font-semibold">No feedback found for this issue.</p>
+        ) : (
+          <div className="space-y-3">
+            {feedbackList.map((fb) => (
+              <div key={fb._id} className="bg-white rounded-lg p-4 border-2 border-purple-400">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="font-bold text-purple-900">{fb.submittedBy?.name || 'Anonymous'}</div>
+                  <div className="text-sm text-purple-600">{new Date(fb.createdAt).toLocaleString()}</div>
+                </div>
+                <div className="text-sm text-purple-800">
+                  <div><span className="font-semibold">Resolved:</span> {String(fb.resolved)}</div>
+                  <div><span className="font-semibold">Satisfaction:</span> {fb.satisfactionRating}/5</div>
+                  {fb.suggestions && (<div className="mt-1"><span className="font-semibold">Suggestions:</span> {fb.suggestions}</div>)}
+                  {fb.additionalComments && (<div className="mt-1"><span className="font-semibold">Comments:</span> {fb.additionalComments}</div>)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )}
+
     {/* AI Report Modal - same as before */}
     {showReportModal && aiReport && (
-      <div className="fixed inset-0 bg-purple-900/95 flex items-center justify-center p-4 z-50">
+      <div className="fixed inset-0 bg-purple-900/95 flex items-center justify-center p-4 z-50" onClick={() => setShowReportModal(false)}>
         {/* Same content as before */}
       </div>
     )}
