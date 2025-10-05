@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useSelector } from "react-redux"; 
+import { useSelector } from "react-redux";
 import IssuesHeatmap from "./IssuesHeatmap";
 
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
@@ -23,7 +23,7 @@ function IssuesMunicipality() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const user = useSelector((state) => state.auth.user);
-  const adminDistrict = user?.district || null;  
+  const adminDistrict = user?.district || null;
 
   const [filters, setFilters] = useState({
     title: searchParams.get("title") || "",
@@ -34,56 +34,50 @@ function IssuesMunicipality() {
   });
 
   const fetchFilteredIssues = async (appliedFilters) => {
-  setIsLoading(true);
-  try {
-    const query = new URLSearchParams();
+    setIsLoading(true);
+    try {
+      const query = new URLSearchParams();
+      Object.entries(appliedFilters).forEach(([key, value]) => {
+        if (value) query.append(key, value);
+      });
 
-    Object.entries(appliedFilters).forEach(([key, value]) => {
-      if (value) query.append(key, value);
-    });
-
-    if (adminDistrict) {
-      query.append("district", adminDistrict);
-    }
-
-    const res = await fetch(
-      `http://localhost:3000/api/v1/issues/all?${query.toString()}`,
-      {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+      if (adminDistrict) {
+        query.append("district", adminDistrict);
       }
-    );
 
-    if (res.ok) {
-      const data = await res.json();
-
-      const validIssues = (data.issues || []).filter(
-        (issue) => issue.issueDistrict &&
-          issue.issueDistrict.trim() !== "" &&
-          issue.issueDistrict === adminDistrict
+      const res = await fetch(
+        `http://localhost:3000/api/v1/issues/all?${query.toString()}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
       );
 
-      setIssues(validIssues);
-    } else {
-      console.error("Error fetching issues:", res.statusText);
-    }
-  } catch (error) {
-    console.error("Error fetching issues:", error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      if (res.ok) {
+        const data = await res.json();
 
+        const validIssues = (data.issues || []).filter(
+          (issue) =>
+            issue.issueDistrict &&
+            issue.issueDistrict.trim() !== "" &&
+            issue.issueDistrict === adminDistrict
+        );
+
+        setIssues(validIssues);
+      } else {
+        console.error("Error fetching issues:", res.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching issues:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (adminDistrict) {
-      fetchFilteredIssues(filters);
-    }
-  }, [adminDistrict]); // wait until user is loaded
-
-
-  const handleViewIssue = (slug) => navigate(`/issue/${slug}`);
+    if (adminDistrict) fetchFilteredIssues(filters);
+  }, [adminDistrict]);
 
   const handleApplyFilters = () => {
     setSearchParams(
@@ -92,6 +86,7 @@ function IssuesMunicipality() {
     fetchFilteredIssues(filters);
     setIsFilterOpen(false);
   };
+  const handleViewIssue = (slug) => navigate(`/issue/${slug}`);
 
   const handleResetFilters = () => {
     const resetFilters = {
@@ -106,12 +101,7 @@ function IssuesMunicipality() {
     fetchFilteredIssues(resetFilters);
     setIsFilterOpen(false);
   };
-
-  const [isHeatmapOpen, setIsHeatmapOpen] = useState(false);
-  const [allIssuesForHeatmap, setAllIssuesForHeatmap] = useState([]);
-
-  // Fetch all issues for heatmap (no district filtering)
-  const fetchAllIssuesForHeatmap = async () => {
+const fetchAllIssuesForHeatmap = async () => {
     try {
       const res = await fetch(
         "http://localhost:3000/api/v1/issues/all",
@@ -132,10 +122,13 @@ function IssuesMunicipality() {
       console.error("Error fetching all issues for heatmap:", error);
     }
   };
-
   const handleHeatmapOpen = () => {
-    setIsHeatmapOpen(true);
-    fetchAllIssuesForHeatmap();
+    // Navigate to heatmap page with the first issue's location or default
+    const firstIssue = issues[0];
+    const loc = firstIssue
+      ? { lat: firstIssue.lat, lng: firstIssue.lng }
+      : { lat: 28.9843847907343, lng: 77.70621702075009 };
+    navigate("/issues-heatmap", { state: { location: loc } });
   };
 
   return (
@@ -144,44 +137,36 @@ function IssuesMunicipality() {
       <div className="bg-gradient-to-r from-pink-400 to-pink-300 rounded-2xl p-6 shadow-2xl border-4 border-purple-600 mb-8">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="text-4xl font-black text-purple-900 overflow-hidden">🎪 All Issues</h1>
-          <div className="flex gap-3 overflow-hidden">
+          <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
             <button
               onClick={() => setIsFilterOpen(true)}
               className="bg-purple-600 hover:bg-purple-700 text-pink-100 py-2 px-6 rounded-full shadow-lg font-bold border-2 border-pink-300 transition-all duration-200 will-change-transform"
             >
               🔍 Filter
             </button>
+
             <button
               onClick={handleHeatmapOpen}
               className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-all duration-200 will-change-transform"
             >
-              🗺️ View Heatmap
+              🗺 View Heatmap
             </button>
           </div>
+
+          <button
+            onClick={() => window.location.assign("demo.html")}
+            className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-lg shadow transition-colors duration-200"
+          >
+            Demo
+          </button>
+        </div>
+       
+
         </div>
       </div>
 
-      {isHeatmapOpen && (
-        <div 
-          className="fixed inset-0 bg-purple-900/90 flex items-center justify-center z-50"
-          onClick={() => setIsHeatmapOpen(false)}
-        >
-          <div 
-            className="bg-gradient-to-br from-pink-200 to-pink-300 w-[90%] md:w-2/3 h-[80%] rounded-2xl shadow-2xl relative border-4 border-purple-600"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="absolute top-3 right-3 text-3xl font-black text-purple-900 hover:text-purple-700 z-10"
-              onClick={() => setIsHeatmapOpen(false)}
-            >
-              &times;
-            </button>
-            <div className="w-full h-full p-4">
-              <IssuesHeatmap issues={allIssuesForHeatmap} />
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       {isLoading ? (
         <div className="flex justify-center items-center h-64">

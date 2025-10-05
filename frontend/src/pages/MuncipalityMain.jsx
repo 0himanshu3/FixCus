@@ -71,7 +71,6 @@ export default function MunicipalityMain() {
   const filteredIssues = issues
     .filter(i => priorityFilter === 'all' ? true : i.priority === priorityFilter)
     .filter(i => {
-      console.log(priorityFilter);
       if (!query) return true
       
       const q = query.toLowerCase()
