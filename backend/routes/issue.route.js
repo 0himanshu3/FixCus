@@ -1,5 +1,5 @@
 import express from "express";
-import { addComment, createIssue, deleteComment, downvoteIssue, getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis } from "../controllers/issue.contoller.js";
+import { addComment, createIssue, deleteComment, downvoteIssue, getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback, getFeedbackForIssue, getReportForIssue, analyzeFeedback, reassignTaskToCoordinator, completeTaskBySupervisor } from "../controllers/issue.contoller.js";
 import { isAuthenticated, protectMunicipality } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -15,6 +15,7 @@ router.post("/downvote", isAuthenticated, downvoteIssue);
 router.post("/comment", isAuthenticated, addComment);
 router.post("/takeup", protectMunicipality, takeUpIssue);
 router.post("/assign-staff", protectMunicipality, assignStaff);
+
 
 // Get assigned staff for an issue
 router.post("/get-assigned-staff", protectMunicipality, getAssignedStaff);
@@ -44,7 +45,25 @@ router.post("/approveReject/:taskId", isAuthenticated, approveRejectTaskProof);
 // Supervisor resolves the issue
 router.post("/resolve/:issueId", isAuthenticated,  resolveIssue);
 
+router.post("/submitFeedback", isAuthenticated,  submitFeedback);
+router.get('/feedback/:issueId', isAuthenticated, getFeedbackForIssue);
+router.get('/report/:issueId', isAuthenticated, getReportForIssue);
+
+router.post("/analyze-feedback", isAuthenticated, analyzeFeedback);
+
+
+router.post(
+  "/reassign/:taskId",
+  isAuthenticated,
+  reassignTaskToCoordinator
+);
+
+// Supervisor completes their task themselves (no approval)
+router.post(
+  "/completeBySupervisor/:taskId",
+  isAuthenticated,
+  completeTaskBySupervisor
+);
+
 router.get("/:slug",isAuthenticated, getIssueBySlug);
-
-
 export default router;
