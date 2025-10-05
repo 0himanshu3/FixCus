@@ -1866,3 +1866,24 @@ export const getMunicipalityIssues = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch municipality issues' });
   }
 };
+
+export const getMyIssues = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const issues = await Issue.find({ reportedBy: userId })
+      .sort({ createdAt: -1 }); // Most recent first
+
+    res.status(200).json({
+      success: true,
+      count: issues.length,
+      issues,
+    });
+  } catch (error) {
+    console.error("Error in getMyIssues:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch your reported issues.",
+    });
+  }
+};

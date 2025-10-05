@@ -79,8 +79,7 @@ export default function MunicipalityMain() {
 
   const StaffOverview = () => {
   const total = staff.length
-  const available = staff.filter(s => s.available).length
-  const assigned = total - available
+
   return (
     <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-xl shadow-lg p-6 border-2 border-purple-200">
       <div className="flex items-center justify-between mb-2">
@@ -97,20 +96,7 @@ export default function MunicipalityMain() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        <div className="p-3 bg-white rounded-lg border border-purple-200">
-          <div className="text-xs text-purple-600 font-semibold">Available</div>
-          <div className="text-lg font-bold text-gray-900">{available}</div>
-        </div>
-        <div className="p-3 bg-white rounded-lg border border-purple-200">
-          <div className="text-xs text-purple-600 font-semibold">Assigned</div>
-          <div className="text-lg font-bold text-gray-900">{assigned}</div>
-        </div>
-        <div className="p-3 bg-white rounded-lg border border-purple-200">
-          <div className="text-xs text-purple-600 font-semibold">Avg response</div>
-          <div className="text-lg font-bold text-gray-900">{avgAgeHours}h</div>
-        </div>
-      </div>
+      
 
       <div className="space-y-2 max-h-60 overflow-auto" style={{ scrollbarWidth: 'thin' }}>
         {loadingStaff ? (
@@ -130,7 +116,7 @@ export default function MunicipalityMain() {
                 </div>
               </div>
               <div className={`text-xs font-semibold px-2 py-1 rounded-full ${s.available ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                {s.available ? '✓ Available' : '⏳ Busy'}
+               
               </div>
             </div>
           ))
