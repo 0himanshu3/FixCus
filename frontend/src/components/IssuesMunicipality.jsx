@@ -86,6 +86,7 @@ function IssuesMunicipality() {
     fetchFilteredIssues(filters);
     setIsFilterOpen(false);
   };
+  const handleViewIssue = (slug) => navigate(`/issue/${slug}`);
 
   const handleResetFilters = () => {
     const resetFilters = {
