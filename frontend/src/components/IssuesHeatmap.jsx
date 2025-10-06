@@ -98,7 +98,7 @@ const IssuesHeatmap = ({ show = false, onClose = () => {} }) => {
     }
   };
 
-  // --- FIX 1: stable hover without flicker
+  //stable hover without flicker
   const handleMouseEnter = (marker) => {
     clearTimeout(hoverTimeout.current);
     setHoveredMarker(marker);
@@ -111,7 +111,7 @@ const IssuesHeatmap = ({ show = false, onClose = () => {} }) => {
     }, 200);
   };
 
-  // --- FIX 2: heatmap that waits for map to load
+  //heatmap that waits for map to load
   useEffect(() => {
     if (!mapReady || markers.length === 0) return;
     let heatmapLayer;

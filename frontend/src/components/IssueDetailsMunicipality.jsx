@@ -391,25 +391,24 @@ function IssueDetailsMunicipality() {
 
     setAssigningStaff(true);
     try {
-      const res = await fetch(
-        `http://localhost:3000/api/v1/issues/assign-staff`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            issueId: issue._id,
-            role: roleName,
-            staffEmail,
-          }),
-        }
-      );
+      const res = await fetch(`http://localhost:3000/api/v1/issues/assign-staff`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          issueId: issue._id,
+          role: roleName,
+          staffEmail,
+        }),
+      });
+
       if (res.ok) {
         setRoleName("");
         setStaffEmail("");
         fetchIssue();
       } else {
-        alert("Failed to assign staff.");
+        const errorData = await res.json();
+        alert(errorData.message || "Failed to assign staff.");
       }
     } catch (err) {
       console.error(err);
@@ -584,6 +583,41 @@ function IssueDetailsMunicipality() {
             )}
           </div>
         )}
+
+        <AnimatePresence>
+          {showImageSlider && (
+            <motion.div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/95"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowImageSlider(false)}>
+              <button
+                className="absolute top-5 right-5 text-pink-300 text-5xl hover:text-pink-100 font-bold"
+                onClick={() => setShowImageSlider(false)}>
+                &times;
+              </button>
+
+              <div className="relative w-4/5 max-w-3xl" onClick={(e) => e.stopPropagation()}>
+                <img
+                  src={issue.images[currentImageIdx]}
+                  alt={`Slide ${currentImageIdx}`}
+                  className="w-full h-96 object-contain rounded-xl border-4 border-pink-400 shadow-2xl"
+                />
+                <button
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
+                  onClick={handlePrevImage}>
+                  {/* &#8592; */}
+                </button>
+                <button
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
+                  onClick={handleNextImage}>
+                  {/* &#8594; */}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Upvotes / Downvotes */}
         <div className="flex items-center gap-4 justify-center">

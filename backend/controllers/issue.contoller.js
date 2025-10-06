@@ -47,7 +47,7 @@ export const createIssue = async (req, res) => {
             actorId: reportedBy,
             metadata: {
                 category,
-                location: issueLocation,
+                location: issueDistrict,
                 priority: issue.priority
             }
         });
@@ -240,7 +240,9 @@ export const editComment = async (req, res) => {
         console.error("Error editing comment:", err);
         res.status(500).json({ success: false, message: "Server error" });
     }
-}; export const deleteComment = async (req, res) => {
+};
+
+export const deleteComment = async (req, res) => {
     const { commentId } = req.params;
     const userId = req.user._id;
 
@@ -565,7 +567,7 @@ export const takeUpIssue = async (req, res) => {
             description: `Issue was taken up by municipality with deadline: ${selectedDeadline.toLocaleDateString()}`,
             actorId: req.municipality._id,
             metadata: {
-                deadline: selectedDeadline,
+                deadline: selectedDeadline.toLocaleDateString(),
                 municipalityName: req.municipality.municipalityName
             }
         });
@@ -591,6 +593,17 @@ export const assignStaff = async (req, res) => {
         if (!issue) {
             return res.status(404).json({ message: "Issue not found" });
         }
+
+        //there can only be one supervisor per issue
+        if (role === "Supervisor") {
+            const supervisorExists = issue.staffsAssigned.some(
+                (s) => s.role === "Supervisor"
+            );
+            if (supervisorExists) {
+                return res.status(400).json({ message: "There can be only one supervisor per issue" });
+            }
+        }
+
 
         // Find staff by email
         const staff = await User.findOne({ email: staffEmail });
@@ -618,12 +631,12 @@ export const assignStaff = async (req, res) => {
         await issue.save();
 
         // Create timeline event for staff assignment
-        await createTimelineEvent({
+        await createTimelineEvent({ 
             issueId: issue._id,
             eventType: 'staff_assigned',
             title: 'Staff Assigned',
             description: `${staff.name} was assigned as ${role}`,
-            actorId: req.user._id,
+            actorId: req.municipality._id,
             assignedStaffId: staff._id,
             assignedStaffRole: role,
             metadata: {
@@ -702,7 +715,7 @@ export const assignTask = async (req, res) => {
             taskId: task._id,
             metadata: {
                 taskTitle: title,
-                taskDescription: description,
+                // taskDescription: description,
                 deadline: deadline,
                 roleOfAssignee
             }
@@ -1061,10 +1074,10 @@ export async function escalateOverdueTasksService({ dryRun = false } = {}) {
                         actorId: supervisorId,
                         taskId: newTask._id,
                         metadata: {
-                            originalTaskId: task._id,
+                            // originalTaskId: task._id,
                             escalatedFrom: 'Worker',
                             escalatedTo: 'Coordinator',
-                            newDeadline: newDeadline
+                            newDeadline: newDeadline.toLocaleDateString()
                         }
                     });
 
@@ -1110,10 +1123,10 @@ export async function escalateOverdueTasksService({ dryRun = false } = {}) {
                         actorId: supervisorId,
                         taskId: newTask._id,
                         metadata: {
-                            originalTaskId: task._id,
+                            // originalTaskId: task._id,
                             escalatedFrom: 'Coordinator',
                             escalatedTo: 'Supervisor',
-                            newDeadline: newDeadline
+                            newDeadline: newDeadline.toLocaleDateString()
                         }
                     });
 

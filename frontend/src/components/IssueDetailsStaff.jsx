@@ -404,8 +404,9 @@ export default function IssueDetailsStaff() {
       console.error("submitTaskProof error:", err);
       alert("Error submitting proof");
     }
-  }; // Approve or reject proof (coordinator/supervisor)
-
+  };
+  
+  // Approve or reject proof (coordinator/supervisor)
   const approveOrRejectProof = async (taskId, approve) => {
     try {
       const res = await fetch(`/api/v1/issues/approveReject/${taskId}`, {
