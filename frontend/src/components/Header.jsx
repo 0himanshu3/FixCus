@@ -26,7 +26,6 @@ const Header = ({ notifications }) => {
   const commonLinks = [
     { path: "/about", label: "About Us" },
     { path: "/gallery", label: "Gallery" },
-    { path: "/donate", label: "Donate" },
   ];
 
   const authLinks = [
@@ -36,16 +35,17 @@ const Header = ({ notifications }) => {
   
   const municipalityLinks = [
     { path: "/municipality", label: "Dashboard" },
+    { path: "/issues", label: "Issues" },
   ];
   
   const staffLinks = [
     { path: "/dashboard", label: "Dashboard" },
-    { path: "/issues", label: "Manage Issues" },
+    { path: "/issues", label: "Issues" },
   ];
   
   const adminLinks = [
     { path: "/admin/dashboard", label: "Dashboard" },
-    { path: "/admin/requests", label: "Request" },
+    { path: "/admin/requests", label: "Requests" },
   ];
   const messageLinks = [
     { path: "/organiser/messages", label: "Messages" },

@@ -281,7 +281,7 @@ function IssueDetails() {
         </div>
 
         <div className="mt-4 p-5 bg-pink-200 border-4 border-purple-500 text-purple-900 rounded-lg shadow-md">
-        <h4 className="text-lg font-semibold mb-3">📝 Issue Description:</h4>
+        <h3 className="font-bold text-2xl mb-3 text-pink-700 flex items-center gap-2">📝 Description</h3>
         <p className="text-base whitespace-pre-line font-medium">
           {issue.content || "No additional details provided."}
         </p>
@@ -289,14 +289,17 @@ function IssueDetails() {
 
 
         <div className="bg-pink-200 rounded-xl p-5 shadow-lg border-4 border-purple-500">
-          <p className="text-purple-900 font-semibold text-lg">
-            <strong className="text-purple-700">📍 Location:</strong>{" "}
-            {issue.issueDistrict + ', ' + issue.issueState + ', ' + issue.issueCountry}
-          </p>
-          <p className="text-purple-900 font-semibold text-lg mt-2">
-            <strong className="text-purple-700">📅 Published:</strong>{" "}
-            {new Date(issue.issuePublishDate).toLocaleDateString()}
-          </p>
+          <ul className="space-y-1 text-purple-900 font-semibold text-lg">
+            <li>
+              <strong className="text-purple-700">📍 Location:</strong> {issue.issueDistrict}, {issue.issueState}, {issue.issueCountry}
+            </li>
+            <li>
+              <strong className="text-purple-700">📅 Published:</strong> {new Date(issue.issuePublishDate).toLocaleDateString()}
+            </li>
+            {issue.deadline && <li>
+              <strong className="text-purple-700">🕒 Deadline:</strong> {new Date(issue.deadline).toLocaleDateString()}
+            </li>}
+          </ul>
         </div>
 
         {issue.images && issue.images.length > 0 && (

@@ -167,21 +167,54 @@ export default function Dashboard() {
             </div>
 
             {/* --- Top Issues --- */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl shadow p-4 border border-purple-50">
-                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-purple-800"><FaArrowUp className="text-green-500" /> Top Upvoted Issues</h3>
-                {topUpvoted.length === 0 ? <EmptyState text="No top upvoted issues available." /> : (
-                  <div className="divide-y">{topUpvoted.map(issue => <IssueRow key={issue._id} issue={issue} onView={toIssue} />)}</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Top Upvoted Issues */}
+              <section className="bg-white bg-opacity-90 rounded-3xl shadow-2xl p-6 border-4 border-pink-100 hover:shadow-lg transition">
+                <h3 className="text-2xl font-extrabold mb-5 flex items-center gap-3 text-pink-700 select-none">
+                  <FaArrowUp className="text-green-500 w-6 h-6" />
+                  Top Upvoted Issues
+                </h3>
+                {topUpvoted.length === 0 ? (
+                  <EmptyState text="No top upvoted issues available." />
+                ) : (
+                  <div className="divide-y divide-pink-50">
+                    {topUpvoted.map(issue => (
+                      <IssueRow
+                        key={issue._id}
+                        issue={issue}
+                        onView={toIssue}
+                        className="hover:bg-pink-50 transition-colors"
+                        badgeColor="from-green-400 to-green-600"
+                      />
+                    ))}
+                  </div>
                 )}
-              </div>
+              </section>
 
-              <div className="bg-white rounded-xl shadow p-4 border border-purple-50">
-                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-purple-800"><FaArrowDown className="text-red-500" /> Top Downvoted Issues</h3>
-                {topDownvoted.length === 0 ? <EmptyState text="No top downvoted issues available." /> : (
-                  <div className="divide-y">{topDownvoted.map(issue => <IssueRow key={issue._id} issue={issue} onView={toIssue} />)}</div>
+              {/* Top Downvoted Issues */}
+              <section className="bg-white bg-opacity-90 rounded-3xl shadow-2xl p-6 border-4 border-pink-100 hover:shadow-lg transition">
+                <h3 className="text-2xl font-extrabold mb-5 flex items-center gap-3 text-pink-700 select-none">
+                  <FaArrowDown className="text-red-500 w-6 h-6" />
+                  Top Downvoted Issues
+                </h3>
+                {topDownvoted.length === 0 ? (
+                  <EmptyState text="No downvoted issues available." />
+                ) : (
+                  <div className="divide-y divide-pink-50">
+                    {topDownvoted.map(issue => (
+                      <IssueRow
+                        key={issue._id}
+                        issue={issue}
+                        onView={toIssue}
+                        className="hover:bg-pink-50 transition-colors"
+                        badgeColor="from-red-400 to-red-600"
+                      />
+                    ))}
+                  </div>
                 )}
-              </div>
+              </section>
             </div>
+
           </div>
         )}
       </div>
