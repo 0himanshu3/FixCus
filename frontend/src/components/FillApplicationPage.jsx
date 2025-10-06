@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { toast } from 'react-toastify'
 
 export default function FillApplicationPage() {
   const { user } = useSelector((s) => s.auth || {})
@@ -75,7 +76,7 @@ export default function FillApplicationPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!user?._id) {
-      alert('You must be logged in.')
+      toast.error('You must be logged in.')
       return
     }
 
@@ -100,19 +101,19 @@ export default function FillApplicationPage() {
       )
 
       if (res.status >= 200 && res.status < 300) {
-        alert('Application submitted successfully!')
+        toast.success('Application submitted successfully!')
         setShowApplicationForm(false)
         clearForm()
         // backend may return created application in res.data.application or res.data
         const data = res.data?.application ?? res.data ?? null
         setExistingApplication(data)
       } else {
-        alert(res.data?.message || 'Submission failed.')
+        toast.error(res.data?.message || 'Submission failed.')
       }
     } catch (err) {
       console.error('submit application error', err)
       setError(err?.response?.data?.message || 'Failed to submit application.')
-      alert(err?.response?.data?.message || 'Failed to submit application.')
+      toast.error(err?.response?.data?.message || 'Failed to submit application.')
     } finally {
       setSaving(false)
     }

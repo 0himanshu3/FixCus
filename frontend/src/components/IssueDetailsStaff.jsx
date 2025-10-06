@@ -11,6 +11,7 @@ import {
 } from "firebase/storage";
 import { app } from "../firebase";
 import Timeline from "./Timeline";
+import { toast } from "react-toastify";
 
 /**
  IssueDetailsStaff
@@ -87,13 +88,13 @@ export default function IssueDetailsStaff() {
 
   // Submit reassign to a coordinator
   const submitReassignToCoordinator = async () => {
-    if (!reassignTask) return alert("No task selected");
-    if (!reassignAssignee) return alert("Select a coordinator to reassign to");
-    if (!reassignDeadline) return alert("Please select a new deadline");
+    if (!reassignTask) return toast.error("No task selected");
+    if (!reassignAssignee) return toast.error("Select a coordinator to reassign to");
+    if (!reassignDeadline) return toast.error("Please select a new deadline");
 
     const today = new Date().toISOString().split("T")[0];
     if (reassignDeadline < today)
-      return alert("Deadline cannot be in the past");
+      return toast.error("Deadline cannot be in the past");
 
     try {
       setIsReassigning(true);
@@ -119,7 +120,7 @@ export default function IssueDetailsStaff() {
       await refreshAfterAction();
     } catch (err) {
       console.error("submitReassignToCoordinator error:", err);
-      alert("Error reassigning task");
+      toast.error("Error reassigning task");
     } finally {
       setIsReassigning(false);
     }
@@ -136,9 +137,9 @@ export default function IssueDetailsStaff() {
 
   // Submit completion by supervisor (uploads images then marks Completed without needing approval)
   const submitCompleteBySupervisor = async () => {
-    if (!superCompleteTask) return alert("No task selected");
+    if (!superCompleteTask) return toast.error("No task selected");
     if (!superCompleteText.trim())
-      return alert("Please enter completion notes");
+      return toast.error("Please enter completion notes");
 
     try {
       setIsCompletingAsSupervisor(true);
@@ -166,7 +167,7 @@ export default function IssueDetailsStaff() {
         throw new Error("Complete by supervisor failed: " + txt);
       }
 
-      alert("Task marked completed.");
+      toast.success("Task marked completed.");
       setSuperCompleteModalOpen(false);
       setSuperCompleteTask(null);
       setSuperCompleteText("");
@@ -175,7 +176,7 @@ export default function IssueDetailsStaff() {
       await refreshAfterAction();
     } catch (err) {
       console.error("submitCompleteBySupervisor error:", err);
-      alert("Error completing task as supervisor");
+      toast.error("Error completing task as supervisor");
     } finally {
       setIsCompletingAsSupervisor(false);
     }
@@ -312,12 +313,12 @@ export default function IssueDetailsStaff() {
 
   const submitTaskUpdate = async () => {
     if (!updateModalTask || !updateText.trim()) {
-      alert("Please enter update text.");
+      toast.error("Please enter update text.");
       return;
     } // Guard: if task already approved/completed do nothing (UI shouldn't allow this path, but guard anyway)
 
     if (updateModalTask.status === "Completed") {
-      alert("Task is already completed.");
+      toast.info("Task is already completed.");
       setUpdateModalOpen(false);
       return;
     } // Guard: prevent updates if deadline has passed
@@ -326,7 +327,7 @@ export default function IssueDetailsStaff() {
       hasDeadlinePassed(updateModalTask.deadline) &&
       updateModalTask.status !== "Completed"
     ) {
-      alert(
+      toast.error(
         "Cannot submit update — task deadline has passed and is marked overdue."
       );
       setUpdateModalOpen(false);
@@ -346,18 +347,18 @@ export default function IssueDetailsStaff() {
       await refreshAfterAction();
     } catch (err) {
       console.error(err);
-      alert("Error submitting update");
+      toast.error("Error submitting update");
     }
   }; // Submit proof (worker/coordinator)
 
   const submitTaskProof = async () => {
-    if (!proofModalTask) return alert("No task selected");
-    if (!proofText.trim()) return alert("Please enter proof description");
+    if (!proofModalTask) return toast.error("No task selected");
+    if (!proofText.trim()) return toast.error("Please enter proof description");
     if (!proofFiles || proofFiles.length === 0)
-      return alert("Attach at least one image"); // Guard if already completed
+      return toast.error("Attach at least one image"); // Guard if already completed
 
     if (proofModalTask.status === "Completed") {
-      alert("Task already completed.");
+      toast.info("Task already completed.");
       setProofModalOpen(false);
       return;
     } // Guard: prevent proof submission if deadline passed
@@ -366,7 +367,7 @@ export default function IssueDetailsStaff() {
       hasDeadlinePassed(proofModalTask.deadline) &&
       proofModalTask.status !== "Completed"
     ) {
-      alert(
+      toast.error(
         "Cannot submit proof — task deadline has passed and is marked overdue."
       );
       setProofModalOpen(false);
@@ -402,7 +403,7 @@ export default function IssueDetailsStaff() {
       await refreshAfterAction();
     } catch (err) {
       console.error("submitTaskProof error:", err);
-      alert("Error submitting proof");
+      toast.error("Error submitting proof");
     }
   };
   
@@ -419,7 +420,7 @@ export default function IssueDetailsStaff() {
       await refreshAfterAction();
     } catch (err) {
       console.error(err);
-      alert("Error approving/rejecting proof");
+      toast.error("Error approving/rejecting proof");
     }
   };
 
@@ -427,13 +428,13 @@ export default function IssueDetailsStaff() {
   const assignTaskToAssignee = async () => {
     if (isAssigning) return; // Prevent duplicate submits
 
-    if (!assignModalAssignee) return alert("No assignee selected");
+    if (!assignModalAssignee) return toast.error("No assignee selected");
     if (!assignModalData.title || !assignModalData.deadline)
-      return alert("Title and deadline required");
+      return toast.error("Title and deadline required");
 
     const today = new Date().toISOString().split("T")[0];
     if (assignModalData.deadline < today)
-      return alert("Deadline cannot be in the past");
+      return toast.error("Deadline cannot be in the past");
 
     try {
       setIsAssigning(true);
@@ -462,7 +463,7 @@ export default function IssueDetailsStaff() {
       await refreshAfterAction();
     } catch (err) {
       console.error(err);
-      alert("Error assigning task");
+      toast.error("Error assigning task");
     } finally {
       setIsAssigning(false);
     }
@@ -501,8 +502,8 @@ export default function IssueDetailsStaff() {
 
   const submitResolution = async () => {
     if (!resolveSummary.trim())
-      return alert("Please add a summary of the resolution.");
-    if (!issue) return alert("Issue not loaded");
+      return toast.error("Please add a summary of the resolution.");
+    if (!issue) return toast.error("Issue not loaded");
 
     try {
       setIsResolving(true);
@@ -551,7 +552,7 @@ export default function IssueDetailsStaff() {
         throw new Error("Resolve failed: " + txt);
       }
 
-      alert("Issue resolved and resolution report submitted.");
+      toast.success("Issue resolved and resolution report submitted.");
       setResolveModalOpen(false);
       setResolveSummary("");
       setResolveFiles([]);
@@ -560,7 +561,7 @@ export default function IssueDetailsStaff() {
       await refreshAfterAction();
     } catch (err) {
       console.error("submitResolution error:", err);
-      alert("Error submitting resolution");
+      toast.error("Error submitting resolution");
     } finally {
       setIsResolving(false);
     }

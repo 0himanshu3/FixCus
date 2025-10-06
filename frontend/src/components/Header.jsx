@@ -14,7 +14,7 @@ const Header = ({ notifications }) => {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate("/login");
+    navigate("/");
   };
 
   const unreadCount = notifications?.filter((n) => !n.isRead).length || 0;
@@ -24,8 +24,8 @@ const Header = ({ notifications }) => {
 
   // Define navigation links based on authentication status
   const commonLinks = [
+    { path: "/home", label: "Home" },
     { path: "/about", label: "About Us" },
-    { path: "/gallery", label: "Gallery" },
   ];
 
   const authLinks = [

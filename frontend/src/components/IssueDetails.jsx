@@ -10,6 +10,7 @@ import {
 } from "firebase/storage";
 import { app } from "../firebase"; // Ensure you have this file configured
 import Timeline from "./Timeline";
+import { toast } from "react-toastify";
 
 function IssueDetails() {
   const { slug } = useParams();
@@ -119,7 +120,7 @@ function IssueDetails() {
 
   const handleFeedbackSubmit = async () => {
     if (!feedbackData.resolved || !feedbackData.satisfactionRating) {
-      return alert("Please fill out all required feedback fields.");
+      return toast.error("Please fill out all required feedback fields.");
     }
     setIsSubmittingFeedback(true);
     try {
@@ -139,7 +140,7 @@ function IssueDetails() {
       });
 
       if (res.ok) {
-        alert("Thank you for your feedback!");
+        toast.success("Thank you for your feedback!");
         setIsFeedbackModalOpen(false);
       } else {
         const errorData = await res.json();
@@ -147,7 +148,7 @@ function IssueDetails() {
       }
     } catch (err) {
       console.error(err);
-      alert(`Error: ${err.message}`);
+      toast.error(`Error: ${err.message}`);
     } finally {
       setIsSubmittingFeedback(false);
     }
@@ -737,7 +738,7 @@ const SelectGroup = ({
   options,
   feedbackData,
   setFeedbackData,
-}) => (
+  }) => (
   <div>
      {" "}
     <label className="block text-sm font-medium text-gray-700">{label}</label>

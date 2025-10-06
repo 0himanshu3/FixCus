@@ -3,6 +3,7 @@ import LocationPicker from "../components/LocationPicker";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { app } from "../firebase";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function CreateIssue() {
   const [formData, setFormData] = useState({ title: "", content: "", category: "", images: [], videos: [] });
@@ -79,7 +80,7 @@ export default function CreateIssue() {
         })
       });
       if (res.ok) {
-        window.alert("Issue created successfully!");
+        toast.success("Issue created successfully!");
         navigate("/");
       }
       else setError("Failed to create issue.");

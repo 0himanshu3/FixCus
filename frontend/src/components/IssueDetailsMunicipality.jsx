@@ -16,6 +16,7 @@ import {
 } from "chart.js";
 import { Bar, Pie, Doughnut, PolarArea } from "react-chartjs-2";
 import Timeline from "./Timeline";
+import { toast } from "react-toastify";
 
 ChartJS.register(
   ArcElement,
@@ -365,7 +366,7 @@ function IssueDetailsMunicipality() {
 
   const handleTakeUpIssue = async () => {
     if (!deadline)
-      return alert("Please set a deadline before taking up the issue");
+      return toast.info("Please set a deadline before taking up the issue");
     try {
       const res = await fetch(`http://localhost:3000/api/v1/issues/takeup`, {
         method: "POST",
@@ -383,7 +384,7 @@ function IssueDetailsMunicipality() {
     e.preventDefault?.();
 
     if (!roleName || !staffEmail) {
-      alert("Role name and staff email are required");
+      toast.error("Role name and staff email are required");
       return;
     }
 
@@ -408,11 +409,11 @@ function IssueDetailsMunicipality() {
         fetchIssue();
       } else {
         const errorData = await res.json();
-        alert(errorData.message || "Failed to assign staff.");
+        toast.error(errorData.message || "Failed to assign staff.");
       }
     } catch (err) {
       console.error(err);
-      alert("Something went wrong.");
+      toast.error("Something went wrong.");
     } finally {
       setAssigningStaff(false);
     }
