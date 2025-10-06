@@ -325,7 +325,7 @@ function IssueDetails() {
             {issue.images.length > 3 && (
               <button
                 onClick={() => setShowImageSlider(true)}
-                className="mt-4 px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-300 transform hover:scale-105 transition-all">
+                className="mt-4 cursor-pointer px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-300 transform hover:scale-105 transition-all">
                 🎭 View More
               </button>
             )}
@@ -341,7 +341,7 @@ function IssueDetails() {
               exit={{ opacity: 0 }}
               onClick={() => setShowImageSlider(false)}>
               <button
-                className="absolute top-5 right-5 text-pink-300 text-5xl hover:text-pink-100 font-bold"
+                className="absolute cursor-pointer top-5 right-5 text-pink-300 text-5xl hover:text-pink-100 font-bold"
                 onClick={() => setShowImageSlider(false)}>
                 &times;
               </button>
@@ -353,12 +353,12 @@ function IssueDetails() {
                   className="w-full h-96 object-contain rounded-xl border-4 border-pink-400 shadow-2xl"
                 />
                 <button
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
+                  className="absolute left-4 top-1/2 cursor-pointer transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
                   onClick={handlePrevImage}>
                   &#8592;
                 </button>
                 <button
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
+                  className="absolute right-4 top-1/2 cursor-pointer transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
                   onClick={handleNextImage}>
                   &#8594;
                 </button>

@@ -196,7 +196,7 @@ export default function FillApplicationPage() {
                       {!showApplicationForm && canSubmitApplication && (
                         <button
                           onClick={() => setShowApplicationForm(true)}
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition"
+                          className="bg-indigo-600 cursor-pointer hover:bg-indigo-700 text-white font-semibold py-2 px-6 rounded-lg shadow-md transition"
                         >
                           Fill Application Form
                         </button>
@@ -216,7 +216,7 @@ export default function FillApplicationPage() {
                       <h2 className="text-2xl font-bold text-gray-900">Municipality Application Form</h2>
                       <button
                         onClick={() => { setShowApplicationForm(false); clearForm() }}
-                        className="text-sm text-gray-500 hover:text-gray-700"
+                        className="text-sm cursor-pointer text-gray-500 hover:text-gray-700"
                         title="Close form"
                       >
                         ✕
@@ -297,7 +297,7 @@ export default function FillApplicationPage() {
                         <button
                           type="submit"
                           disabled={saving}
-                          className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition disabled:opacity-60"
+                          className="bg-green-600 cursor-pointer hover:bg-green-700 text-white font-semibold py-2 px-6 rounded-lg transition disabled:opacity-60"
                         >
                           {saving ? 'Submitting…' : 'Submit Application'}
                         </button>
@@ -305,7 +305,7 @@ export default function FillApplicationPage() {
                         <button
                           type="button"
                           onClick={() => { setShowApplicationForm(false); clearForm() }}
-                          className="bg-gray-300 hover:bg-gray-400 text-gray-900 font-semibold py-2 px-6 rounded-lg transition"
+                          className="bg-gray-300 cursor-pointer hover:bg-gray-400 text-gray-900 font-semibold py-2 px-6 rounded-lg transition"
                         >
                           Cancel
                         </button>

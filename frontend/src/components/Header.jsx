@@ -24,7 +24,7 @@ const Header = ({ notifications }) => {
 
   // Define navigation links based on authentication status
   const commonLinks = [
-    { path: "/home", label: "Home" },
+    { path: "/", label: "Home" },
     { path: "/about", label: "About Us" },
   ];
 
