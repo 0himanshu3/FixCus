@@ -14,14 +14,15 @@ const StatCard = ({ title, value, icon }) => (
   <motion.div
     initial={{ opacity: 0, y: 8 }}
     animate={{ opacity: 1, y: 0 }}
-    className="bg-white p-5 rounded-xl shadow-lg border border-gray-200"
+    style={{ backgroundColor: '#ffffff', borderColor: '#e5e7eb', color: '#111827' }}
+    className="p-5 rounded-xl shadow-lg border"
   >
     <div className="flex justify-between items-center">
       <div>
-        <p className="text-sm text-gray-600 font-medium">{title}</p>
-        <p className="text-2xl font-bold mt-2 text-gray-900">{value}</p>
+        <p style={{ color: '#4b5563', fontSize: '0.875rem', fontWeight: 500 }}>{title}</p>
+        <p style={{ color: '#111827', fontSize: '1.5rem', fontWeight: 700, marginTop: '0.5rem' }}>{value}</p>
       </div>
-      <div className="text-3xl text-gray-300">{icon}</div>
+      <div style={{ color: '#d1d5db', fontSize: '1.875rem' }}>{icon}</div>
     </div>
   </motion.div>
 );
@@ -100,9 +101,8 @@ const MonthlyAnalysis = () => {
     });
   };
 
-  if (loading) return <div className="p-8 text-gray-600">Loading analysis...</div>;
-  if (error) return <div className="p-8 text-red-600">{error}</div>;
-
+if (loading) return <div style={{ padding: '2rem', color: '#4b5563' }}>Loading analysis...</div>;
+  if (error) return <div style={{ padding: '2rem', color: '#b91c1c' }}>{error}</div>;
   const {
     assignedIssues = 0,
     completedIssues = 0,
@@ -112,7 +112,11 @@ const MonthlyAnalysis = () => {
     mostDownvoted = null,
     votesData = []
   } = data || {};
-
+  const newMostDownvoted =
+  mostDownvoted && mostUpvoted && mostDownvoted._id === mostUpvoted._id
+    ? null
+    : mostDownvoted;
+    
   const pieData = [
     { name: 'Completed', value: completedIssues },
     { name: 'Pending', value: Math.max(assignedIssues - completedIssues, 0) }
@@ -125,19 +129,25 @@ const MonthlyAnalysis = () => {
   }));
 
   return (
-    <div id="monthly-analysis-container" className="bg-gray-50 min-h-screen p-8">
-      <div className="max-w-7xl mx-auto">
+      <div id="monthly-analysis-container" style={{ backgroundColor: '#f9fafb', minHeight: '100vh', padding: '2rem' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
         
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Monthly Analysis</h1>
-            <p className="text-sm text-gray-500 mt-1">Overview of issues & performance</p>
+            <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: '#111827' }}>Monthly Analysis</h1>
+            <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>Overview of issues & performance</p>
           </div>
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 font-medium"
+            style={{
+              padding: '0.5rem 1rem',
+              borderRadius: '0.5rem',
+              borderColor: '#d1d5db',
+              color: '#111827',
+              fontWeight: 500
+            }}
           >
             {months.map((m) => (
               <option key={m.value} value={m.value}>{m.label}</option>
@@ -146,7 +156,7 @@ const MonthlyAnalysis = () => {
         </div>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           <StatCard title="Assigned Issues" value={assignedIssues} icon={<FaTasks />} />
           <StatCard title="Completed Issues" value={completedIssues} icon={<FaCheckCircle />} />
           <StatCard title="Avg Completion Time" value={formatTime(avgCompletionTimeHours)} icon={<FaUsers />} />
@@ -154,104 +164,115 @@ const MonthlyAnalysis = () => {
         </div>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          
-          {/* Pie Chart */}
-          <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-            <h3 className="text-lg font-bold mb-4 text-gray-900">Completion Rate</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={48}
-                  outerRadius={72}
-                  paddingAngle={3}
-                  label={({ percent }) => `${Math.round(percent * 100)}%`}
-                >
-                  <Cell fill={COLORS[0]} />
-                  <Cell fill={COLORS[1]} />
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+<div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem', marginBottom: '2rem' }}>
+  
+  {/* Pie Chart */}
+  <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb', overflow: 'auto', maxHeight: '24rem' }}>
+    <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem', color: '#111827' }}>Completion Rate</h3>
+    <ResponsiveContainer width="100%" height={250}>
+      <PieChart>
+        <Pie
+          data={pieData}
+          dataKey="value"
+          nameKey="name"
+          innerRadius={48}
+          outerRadius={72}
+          paddingAngle={3}
+          label={({ percent }) => `${Math.round(percent * 100)}%`}
+        >
+          <Cell fill={COLORS[0]} />
+          <Cell fill={COLORS[1]} />
+        </Pie>
+        <Tooltip />
+        <Legend />
+      </PieChart>
+    </ResponsiveContainer>
+  </div>
 
-          {/* Bar Chart */}
-          <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-            <h3 className="text-lg font-bold mb-4 text-gray-900">Top Issues (Upvotes vs Downvotes)</h3>
-            {votesBarData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={votesBarData} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="name" interval={0} angle={-20} textAnchor="end" height={60} />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="upvotes" fill="#3b82f6" />
-                  <Bar dataKey="downvotes" fill="#ef4444" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-gray-500">No issue votes data available.</p>
-            )}
-          </div>
-        </div>
+  {/* Bar Chart */}
+  <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
+    <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem', color: '#111827' }}>Top Issues (Upvotes vs Downvotes)</h3>
+    {votesBarData.length > 0 ? (
+      <ResponsiveContainer width="100%" height={260}>
+        <BarChart data={votesBarData} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <XAxis dataKey="name" interval={0} angle={-20} textAnchor="end" height={60} />
+          <YAxis />
+          <Tooltip />
+          <Legend />
+          <Bar dataKey="upvotes" fill="#3b82f6" />
+          <Bar dataKey="downvotes" fill="#ef4444" />
+        </BarChart>
+      </ResponsiveContainer>
+    ) : (
+      <p style={{ color: '#6b7280' }}>No issue votes data available.</p>
+    )}
+  </div>
+</div>
 
-        {/* Most Upvoted/Downvoted */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
+          {/* Most Upvoted/Downvoted */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
           
           {/* Most Upvoted */}
           {mostUpvoted ? (
-            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-              <h4 className="text-lg font-bold flex items-center gap-2 text-gray-900 mb-4">
-                <FaThumbsUp className="text-green-500" /> Most Upvoted Issue
+            <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
+              <h4 style={{ fontSize: '1.125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#111827' }}>
+                <FaThumbsUp style={{ color: '#22c55e' }} /> Most Upvoted Issue
               </h4>
-              <p className="text-lg font-semibold text-gray-900">{mostUpvoted.title}</p>
-              <p className="text-sm text-gray-600 mt-2">Upvotes: {mostUpvoted.upvotes || 0}</p>
+              <p style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827' }}>{mostUpvoted.title}</p>
+              <p style={{ fontSize: '0.875rem', marginTop: '0.5rem', color: '#4b5563' }}>Upvotes: {mostUpvoted.upvotes || 0}</p>
               <Link 
-                to={`/issue/${mostUpvoted._id}`} 
-                className="mt-4 inline-block px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow"
+                to={`/issue/${mostUpvoted.slug}`} 
+                style={{ marginTop: '1rem', display: 'inline-block', padding: '0.625rem 1.5rem', backgroundColor: '#2563eb', color: '#ffffff', borderRadius: '0.5rem', fontWeight: 600, textDecoration: 'none' }}
               >
                 View Issue
               </Link>
             </div>
           ) : (
-            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-              <p className="text-gray-500">No upvoted issues available.</p>
+            <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
+              <p style={{ color: '#6b7280' }}>No upvoted issues available.</p>
             </div>
           )}
 
           {/* Most Downvoted */}
-          {mostDownvoted ? (
-            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-              <h4 className="text-lg font-bold flex items-center gap-2 text-gray-900 mb-4">
-                <FaThumbsDown className="text-red-500" /> Most Downvoted Issue
+          {newMostDownvoted ? (
+            <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
+              <h4 style={{ fontSize: '1.125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#111827' }}>
+                <FaThumbsDown style={{ color: '#ef4444' }} /> Most Downvoted Issue
               </h4>
-              <p className="text-lg font-semibold text-gray-900">{mostDownvoted.title}</p>
-              <p className="text-sm text-gray-600 mt-2">Downvotes: {mostDownvoted.downvotes || 0}</p>
+              <p style={{ fontSize: '1.125rem', fontWeight: 600, color: '#111827' }}>{newMostDownvoted.title}</p>
+              <p style={{ fontSize: '0.875rem', marginTop: '0.5rem', color: '#4b5563' }}>Downvotes: {newMostDownvoted.downvotes || 0}</p>
               <Link 
-                to={`/issue/${mostDownvoted._id}`} 
-                className="mt-4 inline-block px-6 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition shadow"
+                to={`/issue/${newMostDownvoted._id}`} 
+                style={{ marginTop: '1rem', display: 'inline-block', padding: '0.625rem 1.5rem', backgroundColor: '#2563eb', color: '#ffffff', borderRadius: '0.5rem', fontWeight: 600, textDecoration: 'none' }}
               >
                 View Issue
               </Link>
             </div>
           ) : (
-            <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-              <p className="text-gray-500">No downvoted issues available.</p>
+            <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
+              <p style={{ color: '#6b7280' }}>No downvoted issues available.</p>
             </div>
           )}
         </div>
 
         {/* Download Button */}
-        <div className="flex justify-center">
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
           <button
             onClick={handleDownloadPDF}
             disabled={pdfLoading}
-            className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition shadow-lg"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1.5rem',
+              backgroundColor: '#8b5cf6',
+              color: '#ffffff',
+              fontWeight: 600,
+              borderRadius: '0.5rem',
+              cursor: pdfLoading ? 'not-allowed' : 'pointer'
+            }}
           >
             <FaDownload />
             {pdfLoading ? 'Generating PDF...' : 'Download PDF'}

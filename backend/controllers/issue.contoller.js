@@ -471,41 +471,34 @@ export const getMonthlyAnalysis = async (req, res) => {
 
         const avgCompletionTimeHours = completedIssues.length > 0
             ? completedIssues.reduce((sum, issue) => {
-                const created = new Date(issue.createdAt);
-                const resolved = new Date(issue.updatedAt);
+                const created = new Date(issue.issueTakenUpTime);
+                const resolved = new Date(issue.resolvedAt);
                 return sum + (resolved - created) / (1000 * 60 * 60);
             }, 0) / completedIssues.length
             : 0;
 
-        const mostUpvotedArr = await Issue.aggregate([
-            { $match: { createdBy: userId, createdAt: { $gte: startDate, $lte: endDate } } },
-            { $addFields: { upvoteCount: { $size: "$upvotes" } } },
-            { $sort: { upvoteCount: -1 } },
-            { $limit: 1 }
-        ]);
+        const issuesWithCounts = assignedIssues.map(issue => ({
+            ...issue.toObject(), 
+            upvoteCount: issue.upvotes?.length || 0,
+            downvoteCount: issue.downvotes?.length || 0
+            }));
 
-        const mostDownvotedArr = await Issue.aggregate([
-            { $match: { createdBy: userId, createdAt: { $gte: startDate, $lte: endDate } } },
-            { $addFields: { downvoteCount: { $size: "$downvotes" } } },
-            { $sort: { downvoteCount: -1 } },
-            { $limit: 1 }
-        ]);
+            const mostUpvoted = issuesWithCounts.length
+            ? issuesWithCounts.reduce((max, issue) => issue.upvoteCount > max.upvoteCount ? issue : max)
+            : null;
 
-        const mostUpvoted = mostUpvotedArr[0] || null;
-        const mostDownvoted = mostDownvotedArr[0] || null;
+            const mostDownvoted = issuesWithCounts.length
+            ? issuesWithCounts.reduce((max, issue) => issue.downvoteCount > max.downvoteCount ? issue : max)
+            : null;
 
-        const votesData = await Issue.aggregate([
-            { $match: { issueTakenUpBy: userId, createdAt: { $gte: startDate, $lte: endDate } } },
-            {
-                $project: {
-                    title: 1,
-                    upvotes: { $size: "$upvotes" },
-                    downvotes: { $size: "$downvotes" }
-                }
-            },
-            { $sort: { upvotes: -1 } },
-            { $limit: 5 }
-        ]);
+            const votesData = issuesWithCounts
+            .map(issue => ({
+                title: issue.title,
+                upvotes: issue.upvoteCount,
+                downvotes: issue.downvoteCount
+            }))
+            .sort((a, b) => b.upvotes - a.upvotes)
+            .slice(0, 5);
 
         res.json({
             assignedIssues: totalAssigned,
