@@ -2013,3 +2013,52 @@ export const getMyIssues = async (req, res) => {
     });
   }
 };
+
+export async function escalateIssuePriority() {
+  const now = new Date();
+  const results = {
+    processed: 0,
+    updated: 0,
+    errors: []
+  };
+
+  const issuesToProcess = await Issue.find({
+    status: "Open",
+    priority: { $ne: "Critical" },
+    issueTakenUpBy: null 
+  });
+
+  results.processed = issuesToProcess.length;
+  const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
+
+  for (const issue of issuesToProcess) {
+    try {
+      const diffMs = now - new Date(issue.issuePublishDate);
+      const diffHours = diffMs / (1000 * 60 * 60);
+      const escalationPeriodsPassed = Math.floor(diffHours / 48);
+
+      if (escalationPeriodsPassed <= 0) {
+        continue;
+      }
+
+      const expectedPriorityIndex = Math.min(
+        escalationPeriodsPassed, 
+        priorityLevels.length - 1
+      );
+
+      const currentPriorityIndex = priorityLevels.indexOf(issue.priority);
+
+      if (currentPriorityIndex < expectedPriorityIndex) {
+        const newPriority = priorityLevels[expectedPriorityIndex];
+        issue.priority = newPriority;
+        await issue.save();
+        results.updated++;
+      }
+    } catch (err) {
+      console.error(`Error processing issue ${issue._id}:`, err);
+      results.errors.push({ issueId: issue._id, error: err.message });
+    }
+  }
+
+  return results;
+}

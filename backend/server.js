@@ -3,7 +3,7 @@ import { app } from "./app.js";
 import http, { createServer } from "http";
 import { Server } from "socket.io";
 import cron from "node-cron";
-import { escalateOverdueTasksService } from "./controllers/issue.contoller.js";
+import { escalateIssuePriority, escalateOverdueTasksService } from "./controllers/issue.contoller.js";
 import { sendDeadlineRemindersService } from "./controllers/notification.controller.js";
 
 const server = http.createServer(app);
@@ -52,6 +52,17 @@ cron.schedule("0 9,18 * * *", async () => {
   }
 });
 
+cron.schedule("0 0,12 * * *", async () => {
+  try {
+    console.log("[CRON] Running escalateIssuePriority");
+    const result = await escalateIssuePriority();
+    console.log("[CRON] Issue priority escalation summary:", result);
+  }
+  catch (err) {
+    console.error("[CRON] Issue priority escalation error:", err);
+  }
+});
+
 server.listen(process.env.PORT || 3000, () => {
     console.log(`Server is running on port ${process.env.PORT || 3000}`);
     console.log(`Socket.IO server is ready`);
@@ -60,9 +71,19 @@ server.listen(process.env.PORT || 3000, () => {
 (async () => {
   try {
     console.log("Manual escalation started");
-    const result = await escalateOverdueTasksService();
+    const result = await escalateIssuePriority();
     console.log("Manual escalation finished, summary:", result);
   } catch (err) {
     console.error("Manual escalation error:", err);
+  }
+})();
+
+(async () => {
+  try {
+    console.log("Manual Running escalateOverdueTasksService");
+    const result = await escalateOverdueTasksService();
+    console.log("Manual escalateOverdueTasksService summary:", result);
+  } catch (err) {
+    console.error("Manual escalateOverdueTasksService error:", err);
   }
 })();

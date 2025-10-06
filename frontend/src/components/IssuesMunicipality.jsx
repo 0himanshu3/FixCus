@@ -34,7 +34,15 @@ function IssuesMunicipality() {
     recency: searchParams.get("recency") || "",
   });
 
-  const fetchFilteredIssues = async (appliedFilters) => {
+ const fetchFilteredIssues = async (appliedFilters) => {
+    const priorityValues = {
+      "Very Low": 0,
+      "Low": 1,
+      "Medium": 2,
+      "High": 3,
+      "Critical": 4,
+    };
+
     setIsLoading(true);
     try {
       const query = new URLSearchParams();
@@ -65,7 +73,17 @@ function IssuesMunicipality() {
             issue.issueDistrict === adminDistrict
         );
 
-        setIssues(validIssues);
+        const sortedIssues = validIssues.sort((a, b) => {
+          const priorityDifference = priorityValues[b.priority] - priorityValues[a.priority];
+          
+          if (priorityDifference !== 0) {
+            return priorityDifference;
+          }
+
+          return new Date(a.issuePublishDate) - new Date(b.issuePublishDate);
+        });
+
+        setIssues(sortedIssues);
       } else {
         console.error("Error fetching issues:", res.statusText);
       }
