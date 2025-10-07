@@ -297,28 +297,8 @@ export default function CreateIssue() {
             </div>
           </div>
 
-            {/* Videos */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Videos</label>
-              <div className="flex gap-3 items-center">
-                <input type="file" multiple accept="video/*" onChange={e => setVideoFiles([...e.target.files])} />
-                <button
-                  type="button"
-                  onClick={() => uploadFiles(videoFiles, "videos")}
-                  className="px-4 py-2 rounded-md bg-purple-600 text-white hover:bg-purple-700"
-                >
-                  Upload
-                </button>
-              </div>
-              <div className="mt-2 space-y-1">
-                {uploadProgress.videos.map((p, i) => (
-                  <div key={i} className="text-sm text-gray-600">Video {i + 1}: {p}%</div>
-                ))}
-              </div>
-            </div>
+        
 
-            {/* Error */}
-            {error && <div className="md:col-span-2 text-red-600">{error}</div>}
           </div>
 
           {/* Submit Button */}

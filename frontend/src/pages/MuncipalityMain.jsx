@@ -145,7 +145,7 @@ export default function MunicipalityMain() {
       setSelectedStaff(staffMember)
       setLoadingStaffDetails(true)
       setIsStaffModalOpen(true)
-      const res = await axios.get(`http://localhost:3000/api/v1/auth/staff-dashboard/${staffMember._id}`, {
+      const res = await axios.get(`http://localhost:3000/api/v1/issues/staff-dashboard/${staffMember._id}`, {
         withCredentials: true,
       })
       setSelectedStaffDetails(res.data.dashboardData)
