@@ -77,17 +77,23 @@ function IssuesMunicipality() {
             issue.issueDistrict === adminDistrict
         );
 
-        const sortedIssues = validIssues.sort((a, b) => {
-          const priorityDifference = priorityValues[b.priority] - priorityValues[a.priority];
-          
-          if (priorityDifference !== 0) {
-            return priorityDifference;
-          }
+        const isAnyFilterActive = Object.values(appliedFilters).some(value => !!value);
 
-          return new Date(a.issuePublishDate) - new Date(b.issuePublishDate);
-        });
+        let finalIssues;
+        if (isAnyFilterActive) {
+          finalIssues = validIssues;
+        } else {
+          finalIssues = validIssues.sort((a, b) => {
+            const priorityDifference = priorityValues[b.priority] - priorityValues[a.priority];
+            if (priorityDifference !== 0) {
+              return priorityDifference;
+            }
+            return new Date(a.issuePublishDate) - new Date(b.issuePublishDate);
+          });
+        }
 
-        setIssues(sortedIssues);
+        setIssues(finalIssues);
+
       } else {
         console.error("Error fetching issues:", res.statusText);
       }
@@ -97,6 +103,7 @@ function IssuesMunicipality() {
       setIsLoading(false);
     }
   };
+
 
   useEffect(() => {
     if (adminDistrict) fetchFilteredIssues(filters);
