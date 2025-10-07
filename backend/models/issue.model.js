@@ -2,13 +2,17 @@ import mongoose from "mongoose";
 
 // Updated categories
 const issueCategories = [
-  "Education & Skill Development",
-  "Sports & Cultural Events",
-  "Health & Well-being",
-  "Women Empowerment",
-  "Environmental Sustainability",
-  "Social Inclusion & Awareness",
-];
+    "Road damage",
+    "Waterlogging / Drainage Issues",
+    "Improper Waste Management",
+    "Street lights/Exposed Wires",
+    "Unauthorized loudspeakers",
+    "Burning of garbage",
+    "Encroachment / Illegal Construction",
+    "Damaged Public Property",
+    "Stray Animal Menace",
+    "General Issue"
+  ];
 
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
 

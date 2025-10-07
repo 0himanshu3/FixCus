@@ -1,5 +1,5 @@
 import express from "express";
-import { addComment, createIssue,getMunicipalityIssues, deleteComment,getMyIssues,getCompletedIssuesByDistrict, downvoteIssue, getTopIssues,getSummary,getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback, getFeedbackForIssue, getReportForIssue, analyzeFeedback, reassignTaskToCoordinator, completeTaskBySupervisor, getIssueTimeline,  getStaffDashboardDetails } from "../controllers/issue.contoller.js";
+import { addComment, createIssue,getMunicipalityIssues, deleteComment,getMyIssues,getCompletedIssuesByDistrict, downvoteIssue, getTopIssues,getSummary,getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback, getFeedbackForIssue, getReportForIssue, analyzeFeedback, reassignTaskToCoordinator, completeTaskBySupervisor, getIssueTimeline,  getStaffDashboardDetails, classifyIssueImage } from "../controllers/issue.contoller.js";
 import { isAuthenticated, protectMunicipality } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -75,3 +75,6 @@ router.get("/timeline/:issueId", isAuthenticated, getIssueTimeline);
 
 router.get("/:slug",isAuthenticated, getIssueBySlug);
 export default router;
+
+//for image classification
+router.post("/classify", classifyIssueImage);

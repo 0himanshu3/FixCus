@@ -9,6 +9,6 @@
   font-style: normal;
 }
 
-button{
+button, Link{
   cursor: pointer;
 }

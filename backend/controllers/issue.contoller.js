@@ -10,6 +10,7 @@ import {
 import Feedback from "../models/feedback.model.js";
 import { createTimelineEvent, getTimelineEvents } from "../utils/timelineHelper.js";
 import mongoose from "mongoose";
+import fetch from "node-fetch";
 
 export const createIssue = async (req, res) => {
     try {
@@ -149,9 +150,6 @@ export const upvoteIssue = async (req, res) => {
 };
 
 
-// =====================
-// Downvote an Issue
-// =====================
 export const downvoteIssue = async (req, res) => {
     const { issueId } = req.body;
     const userId = req.user._id;
@@ -179,9 +177,6 @@ export const downvoteIssue = async (req, res) => {
 };
 
 
-// =====================
-// Add a Comment
-// =====================
 export const addComment = async (req, res) => {
     const { issueId, content } = req.body;
     const userId = req.user._id;
@@ -980,7 +975,6 @@ export const resolveIssue = async (req, res) => {
         return res.status(500).json({ message: "Server Error" });
     }
 };
-
 
 
 export async function escalateOverdueTasksService({ dryRun = false } = {}) {
@@ -2062,3 +2056,82 @@ export async function escalateIssuePriority() {
 
   return results;
 }
+
+
+export const classifyIssueImage = async (req, res) => {
+  try {
+    const { imageUrl } = req.body;
+
+    if (!imageUrl) {
+      return res.status(400).json({ success: false, message: "Image URL required" });
+    }
+
+    // First, we download the image that the frontend has already uploaded to Firebase.
+    const imageResponse = await fetch(imageUrl);
+    if (!imageResponse.ok) {
+        return res.status(500).json({ success: false, message: "Failed to fetch image from URL" });
+    }
+    const imageBlob = await imageResponse.blob(); // Get the image as a binary blob
+
+    const hfResponse = await fetch(
+      "https://api-inference.huggingface.co/models/google/vit-base-patch16-224",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.HF_API_KEY}`,
+          "Content-Type": imageBlob.type,
+        },
+        body: imageBlob,
+      }
+    );
+
+    const result = await hfResponse.json();
+
+    if (!Array.isArray(result) || result.length === 0) {
+      console.error("Hugging Face API returned no results:", result);
+      return res.status(500).json({ success: false, message: "Model returned no results" });
+    }
+
+    const topPrediction = result[0];
+    const label = topPrediction.label.toLowerCase();
+
+    // This map connects the AI's general labels to YOUR specific project categories.
+    const categoryMap = {
+        "Road damage": ["road", "street", "pothole", "crack", "asphalt", "pavement", "manhole", "traffic cone", "highway"],
+        "Waterlogging / Drainage Issues": ["water", "puddle", "flood", "drain", "sewer", "gutter", "culvert", "clogged", "overflow"],
+        "Improper Waste Management": ["garbage", "trash", "litter", "waste", "dumpster", "bin", "plastic bag", "rubbish", "debris", "landfill"],
+        "Street lights/Exposed Wires": ["streetlight", "lamp post", "pole", "wire", "cable", "electrical", "power line", "utility pole"],
+        "Unauthorized loudspeakers": ["loudspeaker", "speaker", "amplifier", "sound system", "horn", "megaphone"],
+        "Burning of garbage": ["fire", "smoke", "burning", "flame", "bonfire", "incinerator"],
+        "Encroachment / Illegal Construction": ["construction site", "scaffolding", "brick", "cement", "barricade", "shop", "stall", "encroachment", "makeshift"],
+        "Damaged Public Property": ["bench", "bus stop", "sign", "fence", "wall", "graffiti", "vandalism", "broken"],
+        "Stray Animal Menace": ["dog", "cow", "pig", "monkey", "animal", "stray"],
+    };
+
+    let suggestedCategory = "General Issue"; 
+    let highestScore = 0;
+
+    // Find the best matching category from the model's predictions
+    for (const category in categoryMap) {
+        const keywords = categoryMap[category];
+        for (const prediction of result) {
+            const predLabel = prediction.label.toLowerCase();
+            if (keywords.some(keyword => predLabel.includes(keyword))) {
+                if (prediction.score > highestScore) {
+                    suggestedCategory = category;
+                    highestScore = prediction.score;
+                }
+            }
+        }
+    }
+
+    res.json({
+      success: true,
+      category: suggestedCategory,
+    });
+    
+  } catch (err) {
+    console.error("Image classification error:", err);
+    res.status(500).json({ success: false, message: "Server error during classification" });
+  }
+};
