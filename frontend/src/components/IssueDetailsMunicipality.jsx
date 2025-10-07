@@ -273,6 +273,7 @@ const FeedbackVisualizer = ({ feedbacks }) => {
   );
 };
 
+
 function IssueDetailsMunicipality() {
   const { slug } = useParams();
   const [issue, setIssue] = useState(null);
@@ -302,6 +303,15 @@ function IssueDetailsMunicipality() {
   const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   const [isTimelineModalOpen, setIsTimelineModalOpen] = useState(false);
 
+  // Suggested staff states
+  const [suggestedStaff, setSuggestedStaff] = useState([]);
+  const [loadingSuggested, setLoadingSuggested] = useState(false);
+  const [assigningSuggestedId, setAssigningSuggestedId] = useState(null); // userId being assigned
+  const [assigningAllSuggested, setAssigningAllSuggested] = useState(false);
+
+  // Derived list: suggested but not already assigned
+  const [unassignedSuggested, setUnassignedSuggested] = useState([]);
+
   async function fetchStaff() {
     try {
       setLoadingStaff(true);
@@ -329,6 +339,9 @@ function IssueDetailsMunicipality() {
         const data = await res.json();
         setIssue(data.issue);
         setStaffAssignments(data.issue.staffsAssigned || []);
+        // suggestions will be loaded by effect watching issue & user
+      } else {
+        console.error("Failed to fetch issue", res.status);
       }
     } catch (err) {
       console.error(err);
@@ -337,10 +350,100 @@ function IssueDetailsMunicipality() {
     }
   };
 
+  // Fetch suggested staff for an issue
+  async function fetchSuggestedStaff(issueId) {
+    if (!issueId) return;
+    setLoadingSuggested(true);
+    try {
+      const res = await axios.get(
+        `http://localhost:3000/api/v1/issues/${issueId}/suggested-staff`,
+        { withCredentials: true }
+      );
+      const data = res.data || {};
+      const suggested = data.suggested || data.suggestions || data.top || [];
+      setSuggestedStaff(suggested);
+    } catch (err) {
+      console.error("fetchSuggestedStaff", err);
+      setSuggestedStaff([]);
+    } finally {
+      setLoadingSuggested(false);
+    }
+  }
+
   useEffect(() => {
     fetchIssue();
     fetchStaff();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
+
+  useEffect(() => {
+  if (
+    issue &&
+    user &&
+    issue.issueTakenUpBy &&
+    ((issue.issueTakenUpBy._id && issue.issueTakenUpBy._id === user._id) ||
+      String(issue.issueTakenUpBy) === String(user._id))
+  ) {
+    fetchSuggestedStaff(issue._id);
+  } else {
+    setSuggestedStaff([]);
+    setUnassignedSuggested([]);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [issue, user]);
+
+// 2) Compute unassignedSuggested robustly by normalizing ids & emails
+useEffect(() => {
+  // Build set of assigned user ids and assigned emails for quick lookup
+  const assignedIdSet = new Set();
+  const assignedEmailSet = new Set();
+
+  (issue?.staffsAssigned || []).forEach((as) => {
+    if (!as) return;
+
+    // as.user might be a string id, an ObjectId-like, or a populated object with _id and email
+    let u = as.user;
+
+    // If the staff entry itself sometimes contains email directly (rare), check that
+    if (as.email) {
+      assignedEmailSet.add(String(as.email).toLowerCase());
+    }
+
+    // If as.user is an object with _id
+    if (u && typeof u === "object") {
+      if (u._id) assignedIdSet.add(String(u._id));
+      if (u.email) assignedEmailSet.add(String(u.email).toLowerCase());
+    } else if (u) {
+      // as.user is probably an id string
+      assignedIdSet.add(String(u));
+    }
+  });
+
+  // Also consider any populated 'staffsAssigned' items that may be nested deeper
+  // (already handled above but safe-guard)
+  // Build unassignedSuggested by checking candidate.userId / candidate.user / candidate._id and candidate.email
+  const filtered = (suggestedStaff || []).filter((c) => {
+    // normalize candidate id & email
+    const candId = c.userId || c.user || c._id || null;
+    const candIdStr = candId ? String(candId) : null;
+    const candEmailStr = c.email ? String(c.email).toLowerCase() : null;
+
+    // If candidate id exists and is in assigned ids -> filter out
+    if (candIdStr && assignedIdSet.has(candIdStr)) return false;
+
+    // If candidate email exists and matches assigned email -> filter out
+    if (candEmailStr && assignedEmailSet.has(candEmailStr)) return false;
+
+    // Not assigned
+    return true;
+  });
+
+  // Debugging: uncomment to inspect what's happening (remove in production)
+  // console.log("assignedIdSet", Array.from(assignedIdSet), "assignedEmailSet", Array.from(assignedEmailSet));
+  // console.log("suggestedStaff", suggestedStaff, "unassignedAfterFilter", filtered);
+
+  setUnassignedSuggested(filtered);
+}, [suggestedStaff, issue]);
 
   useEffect(() => {
     const originalOverflow = window.getComputedStyle(document.body).overflow;
@@ -381,7 +484,7 @@ function IssueDetailsMunicipality() {
   };
 
   const handleAssignStaff = async (e) => {
-    e.preventDefault?.();
+    e?.preventDefault?.();
 
     if (!roleName || !staffEmail) {
       toast.error("Role name and staff email are required");
@@ -406,9 +509,10 @@ function IssueDetailsMunicipality() {
       if (res.ok) {
         setRoleName("");
         setStaffEmail("");
-        fetchIssue();
+        await fetchIssue();
+        await fetchSuggestedStaff(issue._id);
       } else {
-        const errorData = await res.json();
+        const errorData = await res.json().catch(() => ({}));
         toast.error(errorData.message || "Failed to assign staff.");
       }
     } catch (err) {
@@ -475,6 +579,84 @@ function IssueDetailsMunicipality() {
     }
   };
 
+  // Suggested staff assignment - single candidate
+  const handleAssignSuggestedSingle = async (candidate, role) => {
+    if (!candidate?.email) {
+      toast.error("Candidate email missing");
+      return;
+    }
+    if (assigningSuggestedId) return; // already assigning
+    const candidateId = candidate.userId || candidate.user || candidate._id;
+    setAssigningSuggestedId(candidateId);
+    try {
+      const res = await fetch(`http://localhost:3000/api/v1/issues/assign-staff`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          issueId: issue._id,
+          role,
+          staffEmail: candidate.email,
+        }),
+      });
+
+      if (res.ok) {
+        toast.success(`${candidate.name} assigned as ${role}`);
+        // Refresh issue & suggestions
+        await fetchIssue();
+        await fetchSuggestedStaff(issue._id);
+      } else {
+        const errorData = await res.json().catch(() => ({}));
+        toast.error(errorData.message || "Failed to assign suggested staff.");
+      }
+    } catch (err) {
+      console.error("handleAssignSuggestedSingle", err);
+      toast.error("Something went wrong while assigning.");
+    } finally {
+      setAssigningSuggestedId(null);
+    }
+  };
+
+  // Suggested staff assignment - assign all unassigned suggested in bulk
+  // Note: backend endpoint assigns top-5; frontend limits the UI to unassigned ones.
+  const handleAssignAllSuggested = async () => {
+    if (assigningAllSuggested) return;
+    // If there are no unassigned suggested, no-op
+    if (!unassignedSuggested || unassignedSuggested.length === 0) {
+      toast.info("No suggested staff to assign.");
+      return;
+    }
+
+    setAssigningAllSuggested(true);
+    try {
+      // If you have a backend bulk endpoint that assigns only top5,
+      // but you want to only assign the unassigned ones, you might need a custom backend.
+      // Here we'll call the existing bulk endpoint (which assigns top5) — but it's fine because
+      // duplicates are avoided server-side; frontend just uses it for convenience.
+      const res = await fetch(
+        `http://localhost:3000/api/v1/issues/${issue._id}/assign-suggested`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+      if (res.ok) {
+        toast.success("Top suggested staff assigned");
+        await fetchIssue();
+        await fetchSuggestedStaff(issue._id);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.message || "Failed to assign suggested staff.");
+      }
+    } catch (err) {
+      console.error("handleAssignAllSuggested", err);
+      toast.error("Something went wrong while assigning all suggested staff.");
+    } finally {
+      setAssigningAllSuggested(false);
+    }
+  };
+
   const handleNextImage = () =>
     setCurrentImageIdx((prev) => (prev + 1) % issue.images.length);
   const handlePrevImage = () =>
@@ -528,9 +710,7 @@ function IssueDetailsMunicipality() {
           </h2>
           <p>
             {issue.content || (
-              <span className="italic text-gray-400">
-                No description provided.
-              </span>
+              <span className="italic text-gray-400">No description provided.</span>
             )}
           </p>
         </div>
@@ -558,9 +738,7 @@ function IssueDetailsMunicipality() {
         {/* Images Section */}
         {issue.images && issue.images.length > 0 && (
           <div className="bg-gradient-to-br from-pink-300 to-pink-200 rounded-xl p-5 shadow-xl border-4 border-purple-600">
-            <h2 className="text-2xl font-black text-purple-900 mb-4">
-              🎨 Images
-            </h2>
+            <h2 className="text-2xl font-black text-purple-900 mb-4">🎨 Images</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {issue.images.slice(0, 3).map((img, idx) => (
                 <img
@@ -578,7 +756,8 @@ function IssueDetailsMunicipality() {
             {issue.images.length > 3 && (
               <button
                 onClick={() => setShowImageSlider(true)}
-                className="mt-4 px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-300 transform hover:scale-105 transition-all">
+                className="mt-4 px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-300 transform hover:scale-105 transition-all"
+              >
                 🎭 View More
               </button>
             )}
@@ -592,14 +771,19 @@ function IssueDetailsMunicipality() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowImageSlider(false)}>
+              onClick={() => setShowImageSlider(false)}
+            >
               <button
                 className="absolute top-5 right-5 text-pink-300 text-5xl hover:text-pink-100 font-bold"
-                onClick={() => setShowImageSlider(false)}>
+                onClick={() => setShowImageSlider(false)}
+              >
                 &times;
               </button>
 
-              <div className="relative w-4/5 max-w-3xl" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="relative w-4/5 max-w-3xl"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <img
                   src={issue.images[currentImageIdx]}
                   alt={`Slide ${currentImageIdx}`}
@@ -607,14 +791,12 @@ function IssueDetailsMunicipality() {
                 />
                 <button
                   className="absolute left-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
-                  onClick={handlePrevImage}>
-                  {/* &#8592; */}
-                </button>
+                  onClick={handlePrevImage}
+                />
                 <button
                   className="absolute right-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
-                  onClick={handleNextImage}>
-                  {/* &#8594; */}
-                </button>
+                  onClick={handleNextImage}
+                />
               </div>
             </motion.div>
           )}
@@ -634,7 +816,8 @@ function IssueDetailsMunicipality() {
         <div className="text-center">
           <button
             onClick={() => setIsTimelineModalOpen(true)}
-            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-pink-100 font-black text-lg rounded-full shadow-lg hover:from-purple-700 hover:to-purple-800 border-4 border-pink-400 transform hover:scale-105 transition-all">
+            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-pink-100 font-black text-lg rounded-full shadow-lg hover:from-purple-700 hover:to-purple-800 border-4 border-pink-400 transform hover:scale-105 transition-all"
+          >
             📅 View Issue Timeline
           </button>
         </div>
@@ -649,11 +832,11 @@ function IssueDetailsMunicipality() {
               issue.comments.map((c) => (
                 <div
                   key={c._id}
-                  className="bg-white rounded-lg p-4 shadow-md border-2 border-pink-400">
+                  className="bg-white rounded-lg p-4 shadow-md border-2 border-pink-400"
+                >
                   <p className="text-purple-900 font-medium">{c.content}</p>
                   <p className="text-sm text-purple-600 mt-2">
-                    🎪 By {c.user.name} on{" "}
-                    {new Date(c.createdAt).toLocaleString()}
+                    🎪 By {c.user.name} on {new Date(c.createdAt).toLocaleString()}
                   </p>
                 </div>
               ))
@@ -666,9 +849,7 @@ function IssueDetailsMunicipality() {
         {/* Municipality Action: Take Up Issue */}
         {issue.status === "Open" && !issue.issueTakenUpBy && (
           <div className="bg-gradient-to-r from-pink-300 to-pink-200 rounded-xl p-6 shadow-xl border-4 border-purple-600">
-            <h2 className="text-2xl font-black text-purple-900 mb-4">
-              🎯 Take Up Issue
-            </h2>
+            <h2 className="text-2xl font-black text-purple-900 mb-4">🎯 Take Up Issue</h2>
             <input
               type="date"
               value={deadline}
@@ -678,113 +859,180 @@ function IssueDetailsMunicipality() {
             />
             <button
               onClick={handleTakeUpIssue}
-              className="w-full px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-black text-lg hover:bg-purple-800 shadow-lg border-4 border-pink-400 transform hover:scale-105 transition-all">
+              className="w-full px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-black text-lg hover:bg-purple-800 shadow-lg border-4 border-pink-400 transform hover:scale-105 transition-all"
+            >
               🎪 Take Up & Set Deadline
             </button>
           </div>
         )}
 
         {/* Municipality Action: Assign Staff or View Reports */}
-        {issue.issueTakenUpBy && issue.issueTakenUpBy._id === user._id && (
-          <div className="bg-gradient-to-r from-pink-300 to-pink-200 rounded-xl p-6 shadow-xl border-4 border-purple-600">
-            <h2 className="text-2xl font-black overflow-hidden text-purple-900 mb-4">
-              {isResolved ? "Final Staff Assignments" : "👥 Assign Staff"}
-            </h2>
+        {issue.issueTakenUpBy &&
+          ((issue.issueTakenUpBy._id && issue.issueTakenUpBy._id === user._id) ||
+            String(issue.issueTakenUpBy) === String(user._id)) && (
+            <div className="bg-gradient-to-r from-pink-300 to-pink-200 rounded-xl p-6 shadow-xl border-4 border-purple-600">
+              <h2 className="text-2xl font-black overflow-hidden text-purple-900 mb-4">
+                {isResolved ? "Final Staff Assignments" : "👥 Assign Staff"}
+              </h2>
 
-            {!isResolved && (
-              <>
-                <select
-                  value={roleName}
-                  onChange={(e) => setRoleName(e.target.value)}
-                  className="border-4 border-purple-500 rounded-lg px-4 py-3 w-full mb-4 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
-                  required>
-                  <option value="">Select Role</option>
-                  <option value="Worker">Worker</option>
-                  <option value="Supervisor">Supervisor</option>
-                  <option value="Coordinator">Coordinator</option>
-                </select>
+              {!isResolved && (
+                <>
+                  {/* Suggested Staff Members (only unassigned) */}
+                  <div className="mt-6 bg-gradient-to-r from-white/80 to-white/60 rounded-xl p-4 border-4 border-purple-300 shadow-md">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-black text-xl text-purple-900">⭐ Suggested Staff Members</h3>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => fetchSuggestedStaff(issue._id)}
+                          className="px-3 py-1 rounded-full border-2 border-purple-400 text-sm font-semibold hover:bg-purple-50"
+                        >
+                          Refresh
+                        </button>
+                        <button
+                          onClick={handleAssignAllSuggested}
+                          disabled={assigningAllSuggested || !unassignedSuggested || unassignedSuggested.length === 0}
+                          className="px-3 py-1 rounded-full bg-green-600 text-white font-black text-sm hover:bg-green-700 disabled:opacity-50"
+                        >
+                          {assigningAllSuggested ? "Assigning..." :
+                            `Assign All (${unassignedSuggested ? unassignedSuggested.length : 0})`}
+                        </button>
+                      </div>
+                    </div>
 
-                <select
-                  value={staffEmail}
-                  onChange={(e) => setStaffEmail(e.target.value)}
-                  className="border-4 border-purple-500 rounded-lg px-4 py-3 w-full mb-4 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
-                  required>
-                  <option value="">Select Staff</option>
-                  {staff.map((s) => (
-                    <option key={s._id} value={s.email}>
-                      {`${s.name} (${s.email}) — ${
-                        s.available ? "Available" : "Busy"
-                      }`}
-                    </option>
-                  ))}
-                </select>
+                    {loadingSuggested ? (
+                      <div className="flex justify-center items-center py-6">
+                        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-purple-500"></div>
+                      </div>
+                    ) : unassignedSuggested && unassignedSuggested.length > 0 ? (
+                      <div className="mt-4 space-y-3">
+                        {unassignedSuggested.map((c, idx) => {
+                          const suggestedRole = idx === 0 ? "Supervisor" : idx === 1 ? "Coordinator" : "Worker";
+                          const userId = c.userId || c.user || c._id;
+                          const isAssigning = assigningSuggestedId === userId;
+                          return (
+                            <div key={userId} className="p-3 bg-white rounded-lg shadow-sm border-2 border-purple-200 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <img src={c.avatar || "/default-avatar.png"} alt={c.name} className="w-12 h-12 rounded-full object-cover border-2 border-purple-300" />
+                                <div>
+                                  <p className="font-semibold text-purple-900">{c.name}</p>
+                                  <p className="text-sm text-gray-600">{c.email}</p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Score: {(c.score || 0).toFixed(3)} • Solved: {(c.solvedRate || 0).toFixed(2)} • AssignedCount: {c.assignedCount || 0}
+                                  </p>
+                                </div>
+                              </div>
 
-                <button
-                  onClick={handleAssignStaff}
-                  className="w-full px-6 py-3 bg-green-600 text-white rounded-full font-black text-lg hover:bg-green-700 shadow-lg border-4 border-purple-500 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={!roleName || !staffEmail || assigningStaff}>
-                  {assigningStaff ? "Assigning..." : "✅ Assign Staff"}
-                </button>
-              </>
-            )}
+                              <div className="flex items-center gap-3">
+                                <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-700 font-bold text-sm border-2 border-purple-200">{suggestedRole}</span>
 
-            <div className="mt-6 space-y-3">
-              <h3 className="font-black text-xl text-purple-900">
-                🎭 Assigned Staff
-              </h3>
-              {issue.staffsAssigned && issue.staffsAssigned.length > 0 ? (
-                issue.staffsAssigned.map((s, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 bg-white rounded-lg shadow-md border-2 border-pink-400">
-                    <p className="text-purple-900 font-semibold">
-                      <strong>Role:</strong> {s.role}
-                    </p>
-                    <p className="text-purple-900 font-semibold">
-                      <strong>Name:</strong> {s.user?.name || "N/A"}
-                    </p>
-                    <p className="text-purple-900 font-semibold">
-                      <strong>Email:</strong> {s.user?.email || "N/A"}
-                    </p>
+                                <button
+                                  onClick={() => handleAssignSuggestedSingle(c, suggestedRole)}
+                                  disabled={isAssigning}
+                                  className="px-4 py-2 rounded-full bg-blue-600 text-white font-black hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                  {isAssigning ? "Assigning..." : "Assign"}
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="mt-4 text-sm text-gray-600">No suggested staff (unassigned) found for this category.</p>
+                    )}
                   </div>
-                ))
-              ) : (
-                <p className="text-purple-700 font-semibold">
-                  No staff assigned yet.
-                </p>
+
+                  {/* Manual assign controls (existing) */}
+                  <div className="mt-6">
+                    <select
+                      value={roleName}
+                      onChange={(e) => setRoleName(e.target.value)}
+                      className="border-4 border-purple-500 rounded-lg px-4 py-3 w-full mb-4 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+                      required
+                    >
+                      <option value="">Select Role</option>
+                      <option value="Worker">Worker</option>
+                      <option value="Supervisor">Supervisor</option>
+                      <option value="Coordinator">Coordinator</option>
+                    </select>
+
+                    <select
+                      value={staffEmail}
+                      onChange={(e) => setStaffEmail(e.target.value)}
+                      className="border-4 border-purple-500 rounded-lg px-4 py-3 w-full mb-4 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+                      required
+                    >
+                      <option value="">Select Staff</option>
+                      {staff.map((s) => (
+                        <option key={s._id} value={s.email}>
+                          {`${s.name} (${s.email}) — ${s.available ? "Available" : "Busy"}`}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      onClick={handleAssignStaff}
+                      className="w-full px-6 py-3 bg-green-600 text-white rounded-full font-black text-lg hover:bg-green-700 shadow-lg border-4 border-purple-500 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!roleName || !staffEmail || assigningStaff}
+                    >
+                      {assigningStaff ? "Assigning..." : "✅ Assign Staff"}
+                    </button>
+                  </div>
+                </>
               )}
-            </div>
 
-            {isResolved && (
-              <div className="mt-8 pt-6 border-t-4 border-dashed border-purple-500">
-                <h3 className="font-black text-xl text-purple-900 mb-4">
-                  Post-Resolution Reports
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <button
-                      onClick={handleViewFeedback}
-                      className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-full font-black text-lg hover:bg-blue-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all">
-                      📢 View Citizen Feedback
-                    </button>
-                    <button
-                      onClick={handleViewReport}
-                      className="flex-1 px-6 py-3 bg-teal-600 text-white rounded-full font-black text-lg hover:bg-teal-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all">
-                      📜 View Supervisor Report
-                    </button>
-                  </div>
-                  <div>
-                    <button
-                      onClick={handleGenerateAnalysis}
-                      className="w-full px-6 py-3 bg-indigo-600 text-white rounded-full font-black text-lg hover:bg-indigo-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all">
-                      🤖 Generate AI Feedback Analysis
-                    </button>
+              <div className="mt-6 space-y-3">
+                <h3 className="font-black text-xl text-purple-900">🎭 Assigned Staff</h3>
+                {issue.staffsAssigned && issue.staffsAssigned.length > 0 ? (
+                  issue.staffsAssigned.map((s, idx) => (
+                    <div key={idx} className="p-4 bg-white rounded-lg shadow-md border-2 border-pink-400">
+                      <p className="text-purple-900 font-semibold">
+                        <strong>Role:</strong> {s.role}
+                      </p>
+                      <p className="text-purple-900 font-semibold">
+                        <strong>Name:</strong> {s.user?.name || "N/A"}
+                      </p>
+                      <p className="text-purple-900 font-semibold">
+                        <strong>Email:</strong> {s.user?.email || "N/A"}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-purple-700 font-semibold">No staff assigned yet.</p>
+                )}
+              </div>
+
+              {isResolved && (
+                <div className="mt-8 pt-6 border-t-4 border-dashed border-purple-500">
+                  <h3 className="font-black text-xl text-purple-900 mb-4">Post-Resolution Reports</h3>
+                  <div className="space-y-4">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <button
+                        onClick={handleViewFeedback}
+                        className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-full font-black text-lg hover:bg-blue-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all"
+                      >
+                        📢 View Citizen Feedback
+                      </button>
+                      <button
+                        onClick={handleViewReport}
+                        className="flex-1 px-6 py-3 bg-teal-600 text-white rounded-full font-black text-lg hover:bg-teal-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all"
+                      >
+                        📜 View Supervisor Report
+                      </button>
+                    </div>
+                    <div>
+                      <button
+                        onClick={handleGenerateAnalysis}
+                        className="w-full px-6 py-3 bg-indigo-600 text-white rounded-full font-black text-lg hover:bg-indigo-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all"
+                      >
+                        🤖 Generate AI Feedback Analysis
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
       </div>
 
       {/* Citizen Feedback Modal */}
@@ -794,16 +1042,16 @@ function IssueDetailsMunicipality() {
             className="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/95 p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}>
+            exit={{ opacity: 0 }}
+          >
             <div className="bg-gradient-to-br from-pink-200 to-pink-100 rounded-xl p-6 shadow-xl border-4 border-purple-600 w-full max-w-4xl max-h-[90vh] overflow-y-auto relative">
               <button
                 onClick={() => setShowFeedbackModal(false)}
-                className="absolute top-4 right-4 text-purple-700 text-4xl hover:text-pink-500 font-bold">
+                className="absolute top-4 right-4 text-purple-700 text-4xl hover:text-pink-500 font-bold"
+              >
                 &times;
               </button>
-              <h2 className="text-2xl font-black text-purple-900 mb-4">
-                📢 Citizen Feedback
-              </h2>
+              <h2 className="text-2xl font-black text-purple-900 mb-4">📢 Citizen Feedback</h2>
               {loadingFeedback ? (
                 <div className="flex justify-center items-center h-48">
                   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
@@ -812,74 +1060,32 @@ function IssueDetailsMunicipality() {
                 <>
                   <FeedbackVisualizer feedbacks={citizenFeedbacks} />
                   <div className="space-y-4 mt-6">
-                    <h3 className="text-xl font-black text-purple-900 text-center">
-                      Detailed Feedback Entries
-                    </h3>
+                    <h3 className="text-xl font-black text-purple-900 text-center">Detailed Feedback Entries</h3>
                     {citizenFeedbacks.map((feedback) => (
-                      <div
-                        key={feedback._id}
-                        className="p-4 bg-white rounded-lg shadow-md border-2 border-pink-400 text-purple-800 space-y-2">
-                        <p>
-                          <strong>Submitted By:</strong>{" "}
-                          {feedback.submittedBy?.name || "Anonymous"}
-                        </p>
-                        <p>
-                          <strong>Date:</strong>{" "}
-                          {new Date(feedback.createdAt).toLocaleString()}
-                        </p>
+                      <div key={feedback._id} className="p-4 bg-white rounded-lg shadow-md border-2 border-pink-400 text-purple-800 space-y-2">
+                        <p><strong>Submitted By:</strong> {feedback.submittedBy?.name || "Anonymous"}</p>
+                        <p><strong>Date:</strong> {new Date(feedback.createdAt).toLocaleString()}</p>
                         <hr className="border-purple-300" />
-                        <p>
-                          <strong>Issue Resolved:</strong>{" "}
-                          <span className="font-bold">{feedback.resolved}</span>
-                        </p>
-                        <p>
-                          <strong>Resolution Time:</strong>{" "}
-                          {feedback.resolutionTime}
-                        </p>
-                        <p>
-                          <strong>Resolution Quality:</strong>{" "}
-                          {feedback.resolutionQuality}
-                        </p>
-                        <p>
-                          <strong>Staff Professionalism:</strong>{" "}
-                          {feedback.staffProfessionalism}
-                        </p>
+                        <p><strong>Issue Resolved:</strong> <span className="font-bold">{feedback.resolved}</span></p>
+                        <p><strong>Resolution Time:</strong> {feedback.resolutionTime}</p>
+                        <p><strong>Resolution Quality:</strong> {feedback.resolutionQuality}</p>
+                        <p><strong>Staff Professionalism:</strong> {feedback.staffProfessionalism}</p>
                         <hr className="border-purple-300" />
-                        <p>
-                          <strong>Overall Satisfaction:</strong>{" "}
-                          <span className="font-bold">
-                            {feedback.satisfactionRating} / 5
-                          </span>
-                        </p>
-                        <p>
-                          <strong>Complaint Taken Seriously:</strong>{" "}
-                          {feedback.takenSeriously}
-                        </p>
-                        <p>
-                          <strong>Clear Communication:</strong>{" "}
-                          {feedback.clearCommunication}
-                        </p>
-                        <p>
-                          <strong>Future Trust:</strong> {feedback.futureTrust}
-                        </p>
-                        <p>
-                          <strong>Would Use System Again:</strong>{" "}
-                          {feedback.useSystemAgain}
-                        </p>
+                        <p><strong>Overall Satisfaction:</strong> <span className="font-bold">{feedback.satisfactionRating} / 5</span></p>
+                        <p><strong>Complaint Taken Seriously:</strong> {feedback.takenSeriously}</p>
+                        <p><strong>Clear Communication:</strong> {feedback.clearCommunication}</p>
+                        <p><strong>Future Trust:</strong> {feedback.futureTrust}</p>
+                        <p><strong>Would Use System Again:</strong> {feedback.useSystemAgain}</p>
                         {feedback.suggestions && (
                           <div>
                             <strong>Suggestions:</strong>
-                            <blockquote className="mt-1 p-2 bg-purple-100 border-l-4 border-purple-400 italic">
-                              {feedback.suggestions}
-                            </blockquote>
+                            <blockquote className="mt-1 p-2 bg-purple-100 border-l-4 border-purple-400 italic">{feedback.suggestions}</blockquote>
                           </div>
                         )}
                         {feedback.additionalComments && (
                           <div>
                             <strong>Additional Comments:</strong>
-                            <blockquote className="mt-1 p-2 bg-purple-100 border-l-4 border-purple-400 italic">
-                              {feedback.additionalComments}
-                            </blockquote>
+                            <blockquote className="mt-1 p-2 bg-purple-100 border-l-4 border-purple-400 italic">{feedback.additionalComments}</blockquote>
                           </div>
                         )}
                         {feedback.photos && feedback.photos.length > 0 && (
@@ -887,12 +1093,7 @@ function IssueDetailsMunicipality() {
                             <h3 className="font-bold mt-4">Attached Photos:</h3>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
                               {feedback.photos.map((photo, idx) => (
-                                <img
-                                  key={idx}
-                                  src={photo}
-                                  alt="Feedback"
-                                  className="w-full h-24 object-cover rounded-md border-2 border-purple-400"
-                                />
+                                <img key={idx} src={photo} alt="Feedback" className="w-full h-24 object-cover rounded-md border-2 border-purple-400" />
                               ))}
                             </div>
                           </div>
@@ -902,9 +1103,7 @@ function IssueDetailsMunicipality() {
                   </div>
                 </>
               ) : (
-                <p className="text-center font-bold text-purple-700 py-10">
-                  No citizen feedback has been submitted for this issue yet.
-                </p>
+                <p className="text-center font-bold text-purple-700 py-10">No citizen feedback has been submitted for this issue yet.</p>
               )}
             </div>
           </motion.div>
@@ -918,16 +1117,16 @@ function IssueDetailsMunicipality() {
             className="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/95 p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}>
+            exit={{ opacity: 0 }}
+          >
             <div className="bg-gradient-to-br from-pink-200 to-pink-100 rounded-xl p-6 shadow-xl border-4 border-purple-600 w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
               <button
                 onClick={() => setShowReportModal(false)}
-                className="absolute top-4 right-4 text-purple-700 text-4xl hover:text-pink-500 font-bold">
+                className="absolute top-4 right-4 text-purple-700 text-4xl hover:text-pink-500 font-bold"
+              >
                 &times;
               </button>
-              <h2 className="text-2xl font-black text-purple-900 mb-4">
-                📜 Supervisor Resolution Report
-              </h2>
+              <h2 className="text-2xl font-black text-purple-900 mb-4">📜 Supervisor Resolution Report</h2>
               {loadingReport ? (
                 <div className="flex justify-center items-center h-48">
                   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
@@ -935,70 +1134,37 @@ function IssueDetailsMunicipality() {
               ) : supervisorReport ? (
                 <div className="space-y-6 text-purple-800">
                   <div>
-                    <h3 className="font-bold text-xl mb-2">
-                      Resolution Summary
-                    </h3>
-                    <blockquote className="p-4 bg-purple-100 border-l-4 border-purple-500 italic">
-                      {supervisorReport.summary}
-                    </blockquote>
-                    <p className="text-sm mt-2">
-                      <strong>Report by:</strong>{" "}
-                      {supervisorReport.supervisor?.name}
-                    </p>
-                    <p className="text-sm">
-                      <strong>Date:</strong>{" "}
-                      {new Date(supervisorReport.createdAt).toLocaleString()}
-                    </p>
+                    <h3 className="font-bold text-xl mb-2">Resolution Summary</h3>
+                    <blockquote className="p-4 bg-purple-100 border-l-4 border-purple-500 italic">{supervisorReport.summary}</blockquote>
+                    <p className="text-sm mt-2"><strong>Report by:</strong> {supervisorReport.supervisor?.name}</p>
+                    <p className="text-sm"><strong>Date:</strong> {new Date(supervisorReport.createdAt).toLocaleString()}</p>
                   </div>
 
-                  {supervisorReport.images &&
-                    supervisorReport.images.length > 0 && (
-                      <div>
-                        <h3 className="font-bold text-xl mb-2">
-                          Resolution Images
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                          {supervisorReport.images.map((img, idx) => (
-                            <img
-                              key={idx}
-                              src={img}
-                              alt="Resolution"
-                              className="w-full h-32 object-cover rounded-lg border-2 border-purple-400"
-                            />
-                          ))}
-                        </div>
+                  {supervisorReport.images && supervisorReport.images.length > 0 && (
+                    <div>
+                      <h3 className="font-bold text-xl mb-2">Resolution Images</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {supervisorReport.images.map((img, idx) => (
+                          <img key={idx} src={img} alt="Resolution" className="w-full h-32 object-cover rounded-lg border-2 border-purple-400" />
+                        ))}
                       </div>
-                    )}
+                    </div>
+                  )}
 
                   <div>
-                    <h3 className="font-bold text-xl mb-2">
-                      Staff Performance Review
-                    </h3>
+                    <h3 className="font-bold text-xl mb-2">Staff Performance Review</h3>
                     <div className="space-y-3">
                       {supervisorReport.staffPerformance.map((staff, idx) => (
-                        <div
-                          key={idx}
-                          className="p-3 bg-white rounded-lg shadow border-2 border-pink-300">
+                        <div key={idx} className="p-3 bg-white rounded-lg shadow border-2 border-pink-300">
                           <div className="flex justify-between items-start">
                             <div>
-                              <p className="font-bold text-lg">
-                                {staff.name}{" "}
-                                <span className="text-sm font-medium text-purple-600">
-                                  ({staff.role})
-                                </span>
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {staff.email}
-                              </p>
+                              <p className="font-bold text-lg">{staff.name} <span className="text-sm font-medium text-purple-600">({staff.role})</span></p>
+                              <p className="text-xs text-gray-500">{staff.email}</p>
                             </div>
-                            <p className="text-lg font-black text-purple-700">
-                              Rating: {staff.rating} / 5
-                            </p>
+                            <p className="text-lg font-black text-purple-700">Rating: {staff.rating} / 5</p>
                           </div>
                           {staff.comment && (
-                            <blockquote className="mt-2 text-sm p-2 bg-gray-50 border-l-4 border-gray-300 italic">
-                              "{staff.comment}"
-                            </blockquote>
+                            <blockquote className="mt-2 text-sm p-2 bg-gray-50 border-l-4 border-gray-300 italic">"{staff.comment}"</blockquote>
                           )}
                         </div>
                       ))}
@@ -1006,9 +1172,7 @@ function IssueDetailsMunicipality() {
                   </div>
                 </div>
               ) : (
-                <p className="text-center font-bold text-purple-700 py-10">
-                  The supervisor's report for this issue could not be found.
-                </p>
+                <p className="text-center font-bold text-purple-700 py-10">The supervisor's report for this issue could not be found.</p>
               )}
             </div>
           </motion.div>
@@ -1022,22 +1186,20 @@ function IssueDetailsMunicipality() {
             className="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/95 p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}>
+            exit={{ opacity: 0 }}
+          >
             <div className="bg-gradient-to-br from-pink-200 to-pink-100 rounded-xl p-6 shadow-xl border-4 border-purple-600 w-full max-w-3xl max-h-[90vh] overflow-y-auto relative">
               <button
                 onClick={() => setShowAnalysisModal(false)}
-                className="absolute top-4 right-4 text-purple-700 text-4xl hover:text-pink-500 font-bold">
+                className="absolute top-4 right-4 text-purple-700 text-4xl hover:text-pink-500 font-bold"
+              >
                 &times;
               </button>
-              <h2 className="text-2xl font-black text-purple-900 mb-4">
-                🤖 AI Feedback Analysis
-              </h2>
+              <h2 className="text-2xl font-black text-purple-900 mb-4">🤖 AI Feedback Analysis</h2>
               {isGeneratingAnalysis ? (
                 <div className="flex flex-col justify-center items-center h-48 space-y-4">
                   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-                  <p className="font-semibold text-purple-700">
-                    Generating summary, please wait...
-                  </p>
+                  <p className="font-semibold text-purple-700">Generating summary, please wait...</p>
                 </div>
               ) : (
                 <AnalysisRenderer analysis={aiAnalysis} />

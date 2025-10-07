@@ -1,5 +1,5 @@
 import express from "express";
-import { addComment, createIssue,getMunicipalityIssues, deleteComment,getMyIssues,getCompletedIssuesByDistrict, downvoteIssue, getTopIssues,getSummary,getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback, getFeedbackForIssue, getReportForIssue, analyzeFeedback, reassignTaskToCoordinator, completeTaskBySupervisor, getIssueTimeline,  getStaffDashboardDetails, classifyIssueImage, generateIssueFromImage } from "../controllers/issue.contoller.js";
+import { addComment, createIssue,getMunicipalityIssues, deleteComment,getMyIssues,getCompletedIssuesByDistrict, downvoteIssue, getTopIssues,getSummary,getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback, getFeedbackForIssue, getReportForIssue, analyzeFeedback, reassignTaskToCoordinator, completeTaskBySupervisor, getIssueTimeline,  getStaffDashboardDetails, classifyIssueImage, generateIssueFromImage, assignSuggestedStaff, getSuggestedStaff } from "../controllers/issue.contoller.js";
 import { isAuthenticated, protectMunicipality } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -69,6 +69,10 @@ router.post(
   isAuthenticated,
   completeTaskBySupervisor
 );
+
+router.get("/:issueId/suggested-staff", isAuthenticated, getSuggestedStaff);
+
+router.post("/:issueId/assign-suggested", isAuthenticated, assignSuggestedStaff);
 
 // Get timeline events for an issue
 router.get("/timeline/:issueId", isAuthenticated, getIssueTimeline);
