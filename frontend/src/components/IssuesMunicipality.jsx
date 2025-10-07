@@ -6,12 +6,12 @@ import IssuesHeatmap from "./IssuesHeatmap";
 
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
 const issueCategories = [
-  "Education & Skill Development",
-  "Sports & Cultural Events",
-  "Health & Well-being",
-  "Women Empowerment",
-  "Environmental Sustainability",
-  "Social Inclusion & Awareness",
+  "Road damage",
+    "Water leakage & Drainage Issues",
+    "Improper Waste Management",
+    "Non-functional street lights/Exposed Wires",
+    "Unauthorized loudspeakers",
+    "Burning of garbage"
 ];
 const statusOptions = ["Open", "In Progress", "Resolved"];
 
