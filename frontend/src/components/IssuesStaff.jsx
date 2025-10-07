@@ -176,7 +176,7 @@ function IssuesStaff() {
                 {/* Header */}
                 <div className="text-center mb-4">
                   <div className="text-xs font-black text-purple-700 tracking-widest mb-1">MUNICIPAL ISSUE</div>
-                  <h2 className="text-3xl font-black text-purple-900 overflow-hidden uppercase leading-tight group-hover:text-pink-700 transition-colors duration-300" style={{ textShadow: '2px 2px 0px rgba(236, 72, 153, 0.3)' }}>
+                  <h2 className="text-3xl font-black text-purple-900 overflow-hidden uppercase leading-tight group-hover:text-pink-700 transition-colors duration-300 truncate" style={{ textShadow: '2px 2px 0px rgba(236, 72, 153, 0.3)' }}>
                     {event.title}
                   </h2>
                   <div className="text-xs font-black text-purple-700 tracking-widest mt-1">━━ COMPLAINT REPORT ━━</div>

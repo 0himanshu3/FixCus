@@ -2149,7 +2149,7 @@ export const classifyIssueImage = async (req, res) => {
 };
 
 dotenv.config({ path: 'config/config.env' });
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Helper function to automatically discover the MIME type from a URL
 async function urlToGenerativePart(url) {
