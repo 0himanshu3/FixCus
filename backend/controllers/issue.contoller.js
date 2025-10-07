@@ -13,6 +13,10 @@ import mongoose from "mongoose";
 
 export const createIssue = async (req, res) => {
     try {
+        console.log("createIssue called");
+        
+        console.log(req.body);
+        
         const { title, content, category, issueLocation, issuePublishDate, images, videos, issueDistrict, issueState, issueCountry } = req.body;
 
         if (!title || !category || !issueLocation || !issuePublishDate) {
@@ -1382,6 +1386,8 @@ export const analyzeFeedback = async (req, res) => {
                 ]
             })
         });
+        console.log(response);
+        
 
         if (!response.ok) {
             const errorBody = await response.text();
@@ -1390,7 +1396,8 @@ export const analyzeFeedback = async (req, res) => {
 
         const jsonResponse = await response.json();
         const analysis = jsonResponse.choices?.[0]?.message?.content;
-
+        console.log(analysis);
+        
         if (!analysis) {
             throw new Error("Received an invalid response from the AI model.");
         }
