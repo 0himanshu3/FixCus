@@ -3,7 +3,7 @@ import { app } from "./app.js";
 import http, { createServer } from "http";
 import { Server } from "socket.io";
 import cron from "node-cron";
-import { escalateIssuePriority, escalateOverdueTasksService } from "./controllers/issue.contoller.js";
+import { escalateIssuePriority, escalateOverdueTasksService,reopenUnresolvedIssues} from "./controllers/issue.contoller.js";
 import { sendDeadlineRemindersService } from "./controllers/notification.controller.js";
 
 const server = http.createServer(app);
@@ -49,6 +49,16 @@ cron.schedule("0 9,18 * * *", async () => {
     console.log("[CRON] Deadline reminders summary:", result);
   } catch (err) {
     console.error("[CRON] Deadline reminders error:", err);
+  }
+});
+
+cron.schedule("0 9,18 * * *", async () => {
+  try {
+    console.log("[CRON] Running reopenUnresolvedIssues");
+    const result = await reopenUnresolvedIssues();
+    console.log("[CRON] ReOpen Unresolved issues:",result);
+  } catch (err) {
+    console.error("[CRON] Reopending Unresolved issues error:", err);
   }
 });
 

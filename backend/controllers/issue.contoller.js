@@ -2453,3 +2453,61 @@ top5.forEach((c, idx) => {
     issue: updatedIssue,
   });
 });
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export const reopenUnresolvedIssues = async () => {
+  try {
+    const now = new Date();
+
+    const overdueIssues = await Issue.find({
+      deadline: { $lt: now },
+      resolvedAt: { $exists: false },
+      status: { $ne: 'Resolved' }
+    });
+
+    for (const issue of overdueIssues) {
+  if (!issue) continue;
+
+  console.log('Now processing:', issue._id, '| status:', issue.status);
+
+  await Task.deleteMany({ issueId: issue._id });
+
+  issue.status = 'Not Resolved';
+  await issue.save();
+
+  const baseTitle = issue.title.replace(/ Reopend-\d+$/, '');
+
+  const similarIssues = await Issue.find({
+    title: { $regex: `^${escapeRegExp(baseTitle)} Reopend-\\d+$`, $options: 'i' }
+  });
+
+  const nextReopenNumber = similarIssues.length + 1;
+  const newTitle = `${baseTitle} Reopend-${nextReopenNumber}`;
+  const newIssue = new Issue({
+    title: newTitle,
+    category: issue.category,
+    priority: issue.priority,
+    content: issue.content,
+    images: issue.images,
+    videos: [],
+    issueLocation: issue.issueLocation,
+    issueDistrict: issue.issueDistrict,
+    issueState: issue.issueState,
+    issueCountry: issue.issueCountry,
+    issuePublishDate: new Date(),
+    status: 'Open',
+    reportedBy: issue.reportedBy, 
+  });
+  await newIssue.save();
+}
+
+    console.log(`Checked ${overdueIssues.length} overdue issues. Reopened issues where needed.`);
+    return overdueIssues.length;
+  } catch (err) {
+    console.error('Reopen Issues Error:', err);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
