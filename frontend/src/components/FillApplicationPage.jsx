@@ -172,7 +172,7 @@ export default function FillApplicationPage() {
         userId: user?._id || '',
         supportingDocuments: uploadedUrls, // URLs array
       }
-
+      console.log(payload.supportingDocuments);
       const res = await axios.post(
         'http://localhost:3000/api/v1/municipality/apply',
         payload,
@@ -267,16 +267,22 @@ export default function FillApplicationPage() {
                       <div>
                         <strong>Supporting documents:</strong>
                         {Array.isArray(existingApplication.supportingDocuments) && existingApplication.supportingDocuments.length > 0 ? (
-                          <ul className="list-disc ml-5 mt-1 text-gray-600">
+                          <ul className="list-disc ml-5 mt-1 text-gray-600 space-y-1">
                             {existingApplication.supportingDocuments.map((d, idx) => (
-                              <li key={idx}>
-                                {/* If it's a URL, show link; otherwise show filename */}
-                                {typeof d === 'string' && d.startsWith('http') ? (
-                                  <a href={d} target="_blank" rel="noreferrer" className="text-indigo-600 hover:underline">{d}</a>
-                                ) : d}
+                              <li key={idx} className="flex items-center gap-3">
+                                <span className="text-purple-800 font-medium">File {idx + 1}</span>
+                                <a
+                                  href={d}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 text-xs rounded shadow"
+                                >
+                                  View PDF
+                                </a>
                               </li>
                             ))}
                           </ul>
+
                         ) : <span className="ml-2 text-gray-500"> None</span>}
                       </div>
                       <div className="mt-3">
