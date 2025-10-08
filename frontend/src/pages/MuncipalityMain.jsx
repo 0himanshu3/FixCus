@@ -15,7 +15,6 @@ export default function MunicipalityMain() {
   const [loadingStaff, setLoadingStaff] = useState(false)
   const [query, setQuery] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('all')
-  const [selectedIssue, setSelectedIssue] = useState(null)
   
   // State for Feedback Modal
   const [feedbackModal, setFeedbackModal] = useState(null) // This will hold the issueId
@@ -37,7 +36,7 @@ export default function MunicipalityMain() {
     if (!issues.length) return 0
     const totalHours = issues.reduce((sum, it) => {
       const created = new Date(it.createdAt)
-      const now = new Date()
+      const now = new Date(it.resolvedAt)
       return sum + (now - created) / (1000 * 60 * 60)
     }, 0)
     return Math.round(totalHours / issues.length)
@@ -208,9 +207,7 @@ export default function MunicipalityMain() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className={`text-xs font-semibold px-2 py-1 rounded-full ${s.available ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
-                        {s.available ? 'Available' : 'Offline'}
-                    </div>
+                    
                     <button
                         onClick={() => handleViewStaffDetails(s)}
                         className="px-3 py-1 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition shadow-sm"
@@ -254,11 +251,11 @@ export default function MunicipalityMain() {
               onChange={e=>setPriorityFilter(e.target.value)}
               className="py-2.5 px-4 border-2 border-purple-200 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 font-medium bg-white"
             >
-              <option value="all">All priorities</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-              <option value="verylow">Very Low</option>
+              <option value="All">All priorities</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+              <option value="Very Low">Very Low</option>
             </select>
           </div>
 
@@ -279,7 +276,7 @@ export default function MunicipalityMain() {
                     <tr><td colSpan="3" className="p-6 text-center text-purple-600 font-medium">No pending issues found.</td></tr>
                   ) : (
                     filteredIssues.map(issue => (
-                      <tr key={issue._id} className="hover:bg-purple-50 transition cursor-pointer" onClick={()=>setSelectedIssue(issue)}>
+                      <tr key={issue._id} className="hover:bg-purple-50 transition cursor-pointer" onClick={()=>navigate(`/issue/${issue.slug}`)}>
                         <td className="px-6 py-4">
                           <div className="font-semibold text-gray-900">{issue.title}</div>
                           <div className="text-xs text-purple-600 font-medium mt-1">📅 {new Date(issue.createdAt).toLocaleString()}</div>
@@ -399,48 +396,7 @@ export default function MunicipalityMain() {
         </div>
       </div>
 
-      {selectedIssue && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="absolute inset-0 backdrop-blur-sm pointer-events-auto" onClick={()=>setSelectedIssue(null)}/>
-          <div className="relative pointer-events-auto bg-white rounded-xl w-full lg:w-3/5 max-h-[90vh] overflow-y-auto p-6 shadow-2xl border-2 border-purple-300">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900">{selectedIssue.title}</h3>
-                <p className="text-sm text-purple-600 font-medium mt-1">📍 {selectedIssue.location || selectedIssue.issueDistrict} • 📅 {new Date(selectedIssue.createdAt).toLocaleString()}</p>
-              </div>
-              <button onClick={()=>setSelectedIssue(null)} className="text-2xl text-purple-400 hover:text-purple-600 font-bold">✕</button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
-                <h4 className="font-bold text-gray-900 mb-2">📝 Description</h4>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedIssue.message || selectedIssue.content || '—'}</p>
-              </div>
-
-              <div className="bg-purple-50 p-4 rounded-lg border-2 border-purple-200">
-                <h4 className="font-bold text-gray-900 mb-2">📎 Supporting Documents</h4>
-                {selectedIssue.supportingDocuments && selectedIssue.supportingDocuments.length > 0 ? (
-                  <div className="flex gap-2 flex-wrap">
-                    {selectedIssue.supportingDocuments.map((f, i)=> (
-                      <a key={i} href={f.url || '#'} target="_blank" rel="noreferrer" className="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-sm font-bold hover:bg-purple-700 border-2 border-purple-300">
-                        📄 Document {i+1}
-                      </a>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-purple-600 font-medium">No documents</p>
-                )}
-              </div>
-
-              <div className="flex gap-3 justify-end">
-                <button onClick={()=>setSelectedIssue(null)} className="px-6 py-2.5 bg-purple-600 text-white rounded-lg font-bold hover:bg-purple-700 shadow-lg transition">
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       {isStaffModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
