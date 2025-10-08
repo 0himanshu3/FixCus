@@ -9,12 +9,11 @@ export const applicationReq = async (req, res) => {
       message,
       adminName,
       municipalityName,
-      userId
+      userId,
+      supportingDocuments=[]
     } = req.body
     
 
-    // Multer adds the files to req.files
-    const supportingDocuments = req.files?.map(file => file.filename) || []
 
     const application = new MunicipalityApplication({
       address,

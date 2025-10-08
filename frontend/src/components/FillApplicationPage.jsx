@@ -4,21 +4,29 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 
+/* Firebase imports */
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
+import { app } from '../firebase'
+import { getAuth } from "firebase/auth";
+
 export default function FillApplicationPage() {
   const { user } = useSelector((s) => s.auth || {})
   const navigate = useNavigate()
-
+  const auth=getAuth()
   const [showApplicationForm, setShowApplicationForm] = useState(false)
   const [formData, setFormData] = useState({
     address: '',
-    supportingDocuments: [], // File objects (client-side)
+    supportingDocuments: [], // will store uploaded file URLs
     message: '',
     establishmentDate: '',
   })
+  const [supportingFiles, setSupportingFiles] = useState([]) // local File objects
   const [existingApplication, setExistingApplication] = useState(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [uploadProgress, setUploadProgress] = useState([]) // per-file %
+  const [isUploading, setIsUploading] = useState(false)
 
   // redirect to home if not logged in
   useEffect(() => {
@@ -61,7 +69,10 @@ export default function FillApplicationPage() {
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || [])
-    setFormData((prev) => ({ ...prev, supportingDocuments: files }))
+    setSupportingFiles(files)
+    // reset any previous progress / uploaded urls (optional)
+    setUploadProgress(Array(files.length).fill(0))
+    setFormData(prev => ({ ...prev, supportingDocuments: [] }))
   }
 
   const clearForm = () => {
@@ -71,6 +82,52 @@ export default function FillApplicationPage() {
       message: '',
       establishmentDate: '',
     })
+    setSupportingFiles([])
+    setUploadProgress([])
+  }
+
+  // Upload files to Firebase and return array of URLs
+  const uploadFilesToFirebase = async (filesArray) => {
+  
+    if (!filesArray || filesArray.length === 0) return []
+    console.log(auth.currentUser);
+    setIsUploading(true)
+    const storage = getStorage(app)
+    const urls = []
+    const progressArr = Array(filesArray.length).fill(0)
+    setUploadProgress(progressArr)
+
+    await Promise.all(
+      filesArray.map((file, idx) => {
+        // folder for municipality applications
+        const fileRef = ref(storage, `municipality-apps/${Date.now()}-${Math.round(Math.random()*1e6)}-${file.name}`)
+        const uploadTask = uploadBytesResumable(fileRef, file)
+
+        return new Promise((resolve, reject) => {
+          uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+              const pct = snapshot.totalBytes ? Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100) : 0
+              progressArr[idx] = pct
+              setUploadProgress([...progressArr])
+            },
+            (err) => reject(err),
+            async () => {
+              try {
+                const url = await getDownloadURL(uploadTask.snapshot.ref)
+                urls[idx] = url
+                resolve()
+              } catch (err) {
+                reject(err)
+              }
+            }
+          )
+        })
+      })
+    )
+
+    setIsUploading(false)
+    return urls
   }
 
   const handleSubmit = async (e) => {
@@ -80,10 +137,32 @@ export default function FillApplicationPage() {
       return
     }
 
+    if (!formData.address || !formData.message || !formData.establishmentDate) {
+      toast.error('Please fill all required fields.')
+      return
+    }
+
     setSaving(true)
     setError(null)
 
     try {
+      // if user selected files but they are not uploaded yet, upload them now
+      let uploadedUrls = formData.supportingDocuments || []
+      if (supportingFiles.length > 0 && uploadedUrls.length === 0) {
+        try {
+          uploadedUrls = await uploadFilesToFirebase(supportingFiles)
+          setFormData(prev => ({ ...prev, supportingDocuments: uploadedUrls }))
+          // clear local files after upload
+          setSupportingFiles([])
+        } catch (err) {
+          console.error('uploadFilesToFirebase error', err)
+          toast.error('Failed to upload supporting documents.')
+          setSaving(false)
+          return
+        }
+      }
+
+      // Build payload: send supportedDocuments as array of URLs
       const payload = {
         address: formData.address,
         establishmentDate: formData.establishmentDate,
@@ -91,9 +170,9 @@ export default function FillApplicationPage() {
         adminName: user?.name || '',
         municipalityName: user?.municipalityName || user?.name || '',
         userId: user?._id || '',
-        supportingDocuments: formData.supportingDocuments.map((f) => f.name),
+        supportingDocuments: uploadedUrls, // URLs array
       }
-
+      console.log(payload.supportingDocuments);
       const res = await axios.post(
         'http://localhost:3000/api/v1/municipality/apply',
         payload,
@@ -104,7 +183,6 @@ export default function FillApplicationPage() {
         toast.success('Application submitted successfully!')
         setShowApplicationForm(false)
         clearForm()
-        // backend may return created application in res.data.application or res.data
         const data = res.data?.application ?? res.data ?? null
         setExistingApplication(data)
       } else {
@@ -116,6 +194,23 @@ export default function FillApplicationPage() {
       toast.error(err?.response?.data?.message || 'Failed to submit application.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  // Optional: allow manual upload before submitting
+  const handleManualUpload = async () => {
+    if (supportingFiles.length === 0) {
+      toast.info('No files selected to upload.')
+      return
+    }
+    try {
+      const urls = await uploadFilesToFirebase(supportingFiles)
+      setFormData(prev => ({ ...prev, supportingDocuments: urls }))
+      setSupportingFiles([])
+      toast.success('Files uploaded successfully.')
+    } catch (err) {
+      console.error('manual upload error', err)
+      toast.error('Failed to upload files.')
     }
   }
 
@@ -133,7 +228,6 @@ export default function FillApplicationPage() {
           <div className="text-center text-purple-600 py-8">Loading…</div>
         ) : (
           <>
-            {/* If user already approved */}
             {user?.accountApproved ? (
               <div className="bg-white rounded-lg shadow-lg p-6 border-2 border-purple-200">
                 <h2 className="text-xl font-semibold text-gray-900">Account Approved</h2>
@@ -148,7 +242,6 @@ export default function FillApplicationPage() {
               </div>
             ) : (
               <>
-                {/* If existing application */}
                 {existingApplication ? (
                   <div className="bg-white rounded-lg shadow-lg p-6 border-2 border-purple-200 mb-6">
                     <div className="flex items-start justify-between">
@@ -174,9 +267,22 @@ export default function FillApplicationPage() {
                       <div>
                         <strong>Supporting documents:</strong>
                         {Array.isArray(existingApplication.supportingDocuments) && existingApplication.supportingDocuments.length > 0 ? (
-                          <ul className="list-disc ml-5 mt-1 text-gray-600">
-                            {existingApplication.supportingDocuments.map((d, idx) => <li key={idx}>{d}</li>)}
+                          <ul className="list-disc ml-5 mt-1 text-gray-600 space-y-1">
+                            {existingApplication.supportingDocuments.map((d, idx) => (
+                              <li key={idx} className="flex items-center gap-3">
+                                <span className="text-purple-800 font-medium">File {idx + 1}</span>
+                                <a
+                                  href={d}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 text-xs rounded shadow"
+                                >
+                                  View PDF
+                                </a>
+                              </li>
+                            ))}
                           </ul>
+
                         ) : <span className="ml-2 text-gray-500"> None</span>}
                       </div>
                       <div className="mt-3">
@@ -209,7 +315,6 @@ export default function FillApplicationPage() {
                   </div>
                 )}
 
-                {/* Application Form */}
                 {showApplicationForm && !user?.accountApproved && (
                   <div className="bg-white rounded-lg shadow-lg p-8 border-2 border-purple-200">
                     <div className="flex items-center justify-between mb-4">
@@ -257,22 +362,65 @@ export default function FillApplicationPage() {
                       </div>
 
                       <div>
-                        <label htmlFor="supportingDocuments" className="block text-sm font-medium text-gray-700 mb-2">Supporting Documents (Images)</label>
+                        <label htmlFor="supportingDocuments" className="block text-sm font-medium text-gray-700 mb-2">Supporting Documents (PDFs)</label>
                         <input
                           type="file"
                           id="supportingDocuments"
                           name="supportingDocuments"
                           onChange={handleFileChange}
                           multiple
-                          accept="image/*,application/pdf"
+                          accept="application/pdf"
                           className="w-full"
                         />
-                        {formData.supportingDocuments.length > 0 && (
+
+                        {/* Selected files preview */}
+                        {supportingFiles.length > 0 && (
                           <div className="mt-2">
-                            <p className="text-sm text-gray-600">Selected files:</p>
+                            <p className="text-sm text-gray-600">Selected files (not uploaded yet):</p>
                             <ul className="text-sm text-gray-500 list-disc ml-5">
-                              {formData.supportingDocuments.map((file, index) => (
+                              {supportingFiles.map((file, index) => (
                                 <li key={index}>• {file.name}</li>
+                              ))}
+                            </ul>
+
+                            <div className="mt-2 flex gap-2">
+                              <button
+                                type="button"
+                                onClick={handleManualUpload}
+                                disabled={isUploading}
+                                className="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-60"
+                              >
+                                {isUploading ? 'Uploading...' : 'Upload Documents'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { setSupportingFiles([]); setUploadProgress([]); }}
+                                className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+                              >
+                                Clear selection
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Upload progress */}
+                        {uploadProgress.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {uploadProgress.map((p, i) => (
+                              <div key={i} className="text-sm text-gray-600">
+                                File {i + 1}: {p}% uploaded
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Uploaded URLs (if any) */}
+                        {Array.isArray(formData.supportingDocuments) && formData.supportingDocuments.length > 0 && (
+                          <div className="mt-3">
+                            <p className="text-sm text-gray-600">Uploaded documents:</p>
+                            <ul className="text-sm text-indigo-600 list-disc ml-5">
+                              {formData.supportingDocuments.map((url, idx) => (
+                                <li key={idx}><a href={url} target="_blank" rel="noreferrer" className="hover:underline">{url}</a></li>
                               ))}
                             </ul>
                           </div>

@@ -136,11 +136,23 @@ const ApplicationRequest = () => {
                 {selectedRequest.supportingDocuments.length === 0 ? (
                   <p className="font-semibold text-purple-600 italic">No documents uploaded.</p>
                 ) : (
-                  <ul className="list-disc ml-5 space-y-1">
-                    {selectedRequest.supportingDocuments.map((doc, idx) => (
-                      <li key={idx} className="font-semibold text-purple-900">{doc}</li>
-                    ))}
-                  </ul>
+                 <ul className="list-disc ml-5 space-y-1">
+                  {selectedRequest.supportingDocuments.map((doc, idx) => (
+                    <li key={idx} className="font-semibold text-purple-900 flex items-center gap-3">
+                      <span>File {idx + 1}</span>
+                      <a
+                        href={doc}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-purple-700 hover:bg-purple-800 text-white px-2 py-1 text-xs rounded shadow"
+                      >
+                        View PDF
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+
+
                 )}
               </div>
             </div>

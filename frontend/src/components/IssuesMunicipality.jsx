@@ -77,17 +77,23 @@ function IssuesMunicipality() {
             issue.issueDistrict === adminDistrict
         );
 
-        const sortedIssues = validIssues.sort((a, b) => {
-          const priorityDifference = priorityValues[b.priority] - priorityValues[a.priority];
-          
-          if (priorityDifference !== 0) {
-            return priorityDifference;
-          }
+        const isAnyFilterActive = Object.values(appliedFilters).some(value => !!value);
 
-          return new Date(a.issuePublishDate) - new Date(b.issuePublishDate);
-        });
+        let finalIssues;
+        if (isAnyFilterActive) {
+          finalIssues = validIssues;
+        } else {
+          finalIssues = validIssues.sort((a, b) => {
+            const priorityDifference = priorityValues[b.priority] - priorityValues[a.priority];
+            if (priorityDifference !== 0) {
+              return priorityDifference;
+            }
+            return new Date(a.issuePublishDate) - new Date(b.issuePublishDate);
+          });
+        }
 
-        setIssues(sortedIssues);
+        setIssues(finalIssues);
+
       } else {
         console.error("Error fetching issues:", res.statusText);
       }
@@ -97,6 +103,7 @@ function IssuesMunicipality() {
       setIsLoading(false);
     }
   };
+
 
   useEffect(() => {
     if (adminDistrict) fetchFilteredIssues(filters);
@@ -228,7 +235,7 @@ const fetchAllIssuesForHeatmap = async () => {
                 {/* Header */}
                 <div className="text-center mb-4">
                   <div className="text-xs font-black text-purple-700 tracking-widest mb-1">MUNICIPAL ISSUE</div>
-                  <h2 className="text-3xl font-black text-purple-900 overflow-hidden uppercase leading-tight group-hover:text-pink-700 transition-colors duration-300" style={{ textShadow: '2px 2px 0px rgba(236, 72, 153, 0.3)' }}>
+                  <h2 className="text-3xl font-black text-purple-900 overflow-hidden uppercase leading-tight group-hover:text-pink-700 transition-colors duration-300 truncate" style={{ textShadow: '2px 2px 0px rgba(236, 72, 153, 0.3)' }}>
                     {event.title}
                   </h2>
                   <div className="text-xs font-black text-purple-700 tracking-widest mt-1">━━ COMPLAINT REPORT ━━</div>

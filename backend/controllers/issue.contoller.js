@@ -5,13 +5,16 @@ import { Municipality } from "../models/muncipality.model.js";
 import { ResolutionReport } from "../models/resolutionReport.model.js";
 import {
     sendTaskEscalationNotificationToStaff,
-    sendTaskAssignmentNotification
+    sendTaskAssignmentNotification,
+    sendIssueAssignedNotification
 } from "./notification.controller.js";
 import Feedback from "../models/feedback.model.js";
 import { createTimelineEvent, getTimelineEvents } from "../utils/timelineHelper.js";
 import mongoose from "mongoose";
 import fetch from "node-fetch";
 import asyncHandler from "express-async-handler";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import dotenv from "dotenv";
 
 export const createIssue = async (req, res) => {
     try {
@@ -624,6 +627,9 @@ export const assignStaff = async (req, res) => {
         staff.issuesParticipated.push({ issueId: issue._id });
         await issue.save();
         await staff.save();
+      
+        //send notification to the staff 
+        await sendIssueAssignedNotification(issue, staff._id);
 
         // Create timeline event for staff assignment
         await createTimelineEvent({ 
@@ -2143,6 +2149,69 @@ export const classifyIssueImage = async (req, res) => {
   } catch (err) {
     console.error("Image classification error:", err);
     res.status(500).json({ success: false, message: "Server error during classification" });
+  }
+};
+
+dotenv.config({ path: 'config/config.env' });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+// Helper function to automatically discover the MIME type from a URL
+async function urlToGenerativePart(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image from URL: ${response.statusText}`);
+  }
+  
+  const mimeType = response.headers.get('content-type');
+  if (!mimeType || !mimeType.startsWith('image/')) {
+      throw new Error(`URL did not point to a valid image. Found MIME type: ${mimeType}`);
+  }
+
+  const buffer = await response.arrayBuffer();
+  return {
+    inlineData: {
+      data: Buffer.from(buffer).toString("base64"),
+      mimeType,
+    },
+  };
+}
+
+export const generateIssueFromImage = async (req, res) => {
+  try {
+    const { imageUrl } = req.body;
+    if (!imageUrl) {
+      return res.status(400).json({ success: false, message: "Image URL is required." });
+    }
+
+    // Using the model name confirmed to be available to your key
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const prompt = `
+      Analyze the attached image of a civic issue. 
+      Act as a concerned citizen reporting this problem.
+      Based only on the visual information in the image, provide a structured JSON object with three fields:
+      1. A concise, descriptive "title" for the issue (e.g., "Large pothole causing hazard on main road").
+      2. A detailed "description" of the problem, explaining what is wrong and why it is a concern.
+      3. A suggested "category" from this exact list: ["Road damage", "Waterlogging / Drainage Issues", "Improper Waste Management", "Street lights/Exposed Wires", "Burning of garbage", "Damaged Public Property", "Encroachment / Illegal Construction", "Stray Animal Menace", "General Issue"].
+
+      Your entire response must be ONLY the raw JSON object, with no extra text or markdown formatting.
+    `;
+
+    const imagePart = await urlToGenerativePart(imageUrl);
+
+    const result = await model.generateContent([prompt, imagePart]);
+    const responseText = result.response.text();
+    
+    const jsonString = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+    const data = JSON.parse(jsonString);
+
+    res.json({ success: true, data });
+
+  } catch (error) {
+    console.error("Error with Gemini API:", error);
+    // Provide a more specific error message back to the frontend if possible
+    const errorMessage = error.message || "Failed to generate issue details from image.";
+    res.status(500).json({ success: false, message: errorMessage });
   }
 };
 
