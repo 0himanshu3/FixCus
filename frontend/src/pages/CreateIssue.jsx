@@ -32,40 +32,79 @@ export default function CreateIssue() {
     "Stray Animal Menace",
     "General Issue"
   ];
+const uploadFiles = async (filesArray, type) => {
+  if (!filesArray || filesArray.length === 0) return [];
 
-  const uploadFiles = async (filesArray, type) => {
-    if (filesArray.length === 0) return;
-    const storage = getStorage(app);
-    const urls = [];
-    const progressArr = Array(filesArray.length).fill(0);
-    setUploadProgress(prev => ({ ...prev, [type]: progressArr }));
+  const storage = getStorage(app);
+  const progressArr = Array(filesArray.length).fill(0);
+  setUploadProgress(prev => ({ ...prev, [type]: progressArr }));
 
-    await Promise.all(
-      filesArray.map((file, idx) => {
-        const fileRef = ref(storage, Date.now() + "-" + file.name);
-        const uploadTask = uploadBytesResumable(fileRef, file);
+  const results = await Promise.all(filesArray.map((file, idx) => {
+    return new Promise((resolve) => {
+      try {
+        // Use a folder to keep paths tidy (optional)
+        const path = `${type}/${Date.now()}-${file.name}`;
+        const fileRef = ref(storage, path);
 
-        return new Promise((resolve, reject) => {
-          uploadTask.on(
-            "state_changed",
-            snapshot => {
-              progressArr[idx] = ((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(0);
-              setUploadProgress(prev => ({ ...prev, [type]: [...progressArr] }));
-            },
-            err => reject(err),
-            async () => {
+        // Set contentType metadata explicitly (helps for videos)
+        const metadata = { contentType: file.type || (file.name.match(/\.(mp4|mov|webm)$/i) ? 'video/mp4' : 'application/octet-stream') };
+
+        const uploadTask = uploadBytesResumable(fileRef, file, metadata);
+
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+            progressArr[idx] = percent;
+            setUploadProgress(prev => ({ ...prev, [type]: [...progressArr] }));
+            // Helpful debug:
+            console.log(`[upload ${type}] ${file.name} progress: ${percent}%`);
+          },
+          (err) => {
+            // Log and resolve with error object so Promise.all continues
+            console.error(`[upload ${type}] ERROR uploading ${file.name}:`, err);
+            resolve({ success: false, name: file.name, error: err.message || err.code || String(err) });
+          },
+          async () => {
+            try {
+              // Snapshot ref should be available; log its fullPath for debugging
+              console.log(`[upload ${type}] completed: snapshot ref path:`, uploadTask.snapshot.ref.fullPath);
+
               const url = await getDownloadURL(uploadTask.snapshot.ref);
-              urls.push(url);
-              resolve();
+              console.log(`[upload ${type}] got downloadURL for ${file.name}:`, url);
+              resolve({ success: true, name: file.name, url });
+            } catch (e) {
+              console.error(`[upload ${type}] ERROR getting downloadURL for ${file.name}:`, e);
+              resolve({ success: false, name: file.name, error: e.message || e.code || String(e) });
             }
-          );
-        });
-      })
-    );
+          }
+        );
+      } catch (outerErr) {
+        console.error(`[upload ${type}] unexpected error for ${file.name}:`, outerErr);
+        resolve({ success: false, name: file.name, error: outerErr.message || String(outerErr) });
+      }
+    });
+  }));
 
-    setFormData(prev => ({ ...prev, [type]: [...prev[type], ...urls] }));
-    type === "images" ? setImageFiles([]) : setVideoFiles([]);
-  };
+  // build urls array of successful uploads
+  const urls = results.filter(r => r.success).map(r => r.url);
+  // log failed ones
+  const failed = results.filter(r => !r.success);
+  if (failed.length > 0) {
+    console.warn(`[upload ${type}] some files failed:`, failed);
+    // optionally show toast for failures
+    failed.forEach(f => toast.error(`Failed to upload ${f.name}: ${f.error}`));
+  }
+
+  // Update formData only with successful urls
+  setFormData(prev => ({ ...prev, [type]: [...prev[type], ...urls] }));
+
+  if (type === "images") setImageFiles([]);
+  else setVideoFiles([]);
+
+  return results; // returns full results so caller can inspect per-file outcome
+};
+
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -296,6 +335,26 @@ export default function CreateIssue() {
               ))}
             </div>
           </div>
+          <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Videos</label>
+              <div className="flex gap-3 items-center">
+                <input type="file" multiple accept="video/*" onChange={e => setVideoFiles([...e.target.files])} />
+                <button
+                  type="button"
+                  onClick={() => uploadFiles(videoFiles, "videos")}
+                  className="px-4 py-2 rounded-md bg-purple-600 text-white hover:bg-purple-700"
+                >
+                  Upload
+                </button>
+              </div>
+              <div className="mt-2 space-y-1">
+                {uploadProgress.videos.map((p, i) => (
+                  <div key={i} className="text-sm text-gray-600">Video {i + 1}: {p}%</div>
+                ))}
+              </div>
+            </div>
+
+            {error && <div className="md:col-span-2 text-red-600">{error}</div>}
 
         
 
