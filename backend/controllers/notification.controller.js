@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { io } from "../server.js";
+import { generateIssueAssignedEmailTemplate } from "../utils/emailTemplates.js";
 
 //Send notification when an issue is assigned to a staff
 export const sendIssueAssignedNotification = async (issue, staffId) => {
@@ -21,6 +22,15 @@ export const sendIssueAssignedNotification = async (issue, staffId) => {
             relatedIssue: issue._id,
             url: `/issues/${issue._id}`
         });
+
+      const emailBody = generateIssueAssignedEmailTemplate(staff.name, issue.title);
+
+      // Send the email
+      await sendEmail({
+        email: staff.email,
+        subject: "New Issue Assigned",
+        message: emailBody
+      });
 
         // Emit real-time notification via socket
         io.to(staff._id.toString()).emit("new-notification", {
@@ -58,11 +68,12 @@ export const sendIssueCompletedNotification = async (issue, citizenId) => {
             isRead: false
         });
 
+        const emailMsg = generateIssueCompletedEmailTemplate(citizen.name, issue.title);
         // Send email
         await sendEmail({
             email: citizen.email,
             subject: `Issue Completed: ${issue.title}`,
-            message: `Hello ${citizen.name},\n\nYour issue "${issue.title}" has been completed. Thank you for reporting it.\n\n- Municipality Team`
+            message: emailMsg
         });
 
     } catch (error) {
@@ -244,6 +255,14 @@ export const sendTaskEscalationNotificationToStaff = async (staffId, issue, esca
       }
     });
 
+    const emailMsg = generateTaskEscalationEmailTemplate(issue.title, msg);
+    // Send email notification
+    await sendEmail({
+      email: staff.email,
+      subject: "Task Escalation Notification",
+      message: emailMsg
+    });
+
     // Emit real-time notification via socket
     io.to(staff._id.toString()).emit("new-notification", {
       message: msg,
@@ -287,6 +306,14 @@ export const sendTaskAssignmentNotification = async (taskId, assigneeId, issue) 
         issueId: issue._id,
         assignmentType: "new"
       }
+    });
+
+    const emailMsg = generateTaskAssignmentEmailTemplate(issue.title, assignee.name);
+    // Send email notification
+    await sendEmail({
+      email: assignee.email,
+      subject: "New Task Assigned",
+      message: emailMsg
     });
 
     io.to(assignee._id.toString()).emit("new-notification", {
@@ -333,6 +360,14 @@ export const sendTaskDeadlineReminderNotification = async (taskId, assigneeId, i
         deadline: deadline.toISOString(),
         daysLeft: timeLeft
       }
+    });
+
+    const emailMsg = generateTaskDeadlineReminderEmailTemplate(issue.title, assignee.name, deadline, timeLeft);
+    // Send email notification
+    await sendEmail({
+      email: assignee.email,
+      subject: "Task Deadline Reminder",
+      message: emailMsg
     });
 
     io.to(assignee._id.toString()).emit("new-notification", {

@@ -5,7 +5,8 @@ import { Municipality } from "../models/muncipality.model.js";
 import { ResolutionReport } from "../models/resolutionReport.model.js";
 import {
     sendTaskEscalationNotificationToStaff,
-    sendTaskAssignmentNotification
+    sendTaskAssignmentNotification,
+    sendIssueAssignedNotification
 } from "./notification.controller.js";
 import Feedback from "../models/feedback.model.js";
 import { createTimelineEvent, getTimelineEvents } from "../utils/timelineHelper.js";
@@ -626,6 +627,9 @@ export const assignStaff = async (req, res) => {
         staff.issuesParticipated.push({ issueId: issue._id });
         await issue.save();
         await staff.save();
+      
+        //send notification to the staff 
+        await sendIssueAssignedNotification(issue, staff._id);
 
         // Create timeline event for staff assignment
         await createTimelineEvent({ 
