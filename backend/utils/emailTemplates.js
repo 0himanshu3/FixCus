@@ -1,3 +1,5 @@
+import e from "express";
+
 export function generateVerificationOtpEmailTemplate(otpCode){
     return `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #000; color: #fff;">
 
@@ -18,7 +20,7 @@ export function generateVerificationOtpEmailTemplate(otpCode){
     <p style="font-size: 16px; color: #ccc;">If you did not request this email, please ignore it.</p>
 
     <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
-        <p>Thank you,<br>Bookblors Team</p>
+        <p>Thank you,<br>FixCus Team</p>
         <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
     </footer>
 
@@ -40,7 +42,7 @@ export function generateForgotPasswordEmailTemplate(resetPasswordUrl){
     <p style="font-size: 16px; color: #ccc;">If the button above doesn't work, copy and paste the following URL into your browser:</p>
     <p style="font-size: 16px; color: #fff; word-wrap: break-word;">${resetPasswordUrl}</p>
     <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
-        <p>Thank you,<br>Bookworm Team</p>
+        <p>Thank you,<br>FixCus Team</p>
         <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
     </footer>
 </div>`
@@ -63,7 +65,7 @@ export function generateOrganizerApprovalEmailTemplate(organizerName, organizerE
     <p style="font-size: 16px; color: #ccc;">Please review and take the necessary action.</p>
 
     <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
-        <p>Thank you,<br>Bookblors Team</p>
+        <p>Thank you,<br>FixCus Team</p>
         <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
     </footer>
 
@@ -71,112 +73,71 @@ export function generateOrganizerApprovalEmailTemplate(organizerName, organizerE
 }
 
 
-export function generateTaskAssignmentEmailTemplate(eventTitle, tasks) {
-    const taskList = tasks.map(task => `<li>${task}</li>`).join("");
 
+
+export function generateIssueAssignedEmailTemplate(staffName, issueTitle) {
     return `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #000; color: #fff;">
-
-    <h2 style="color: #fff; text-align: center;">New Task Assignment</h2>
-
-    <p style="font-size: 16px; color: #ccc;">Dear Volunteer,</p>
-
-    <p style="font-size: 16px; color: #ccc;">You have been assigned new tasks for the event: <strong>${eventTitle}</strong>.</p>
-
-    <p style="font-size: 16px; color: #ccc;">Here are your assigned tasks:</p>
-
-    <ul style="margin: 15px 0; padding-left: 20px; color: #fff;">
-        ${taskList}
-    </ul>
-
-    <p style="font-size: 16px; color: #ccc;">Please complete these tasks at your earliest convenience.</p>
-
+    <h2 style="color: #fff; text-align: center;">New Issue Assigned</h2>
+    <p style="font-size: 16px; color: #ccc;">Dear ${staffName},</p>
+    <p style="font-size: 16px; color: #ccc;">You have been assigned a new issue: <strong>${issueTitle}</strong>.</p>
+    <p style="font-size: 16px; color: #ccc;">Please take the necessary actions to address this issue.</p>
     <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
         <p>Thank you,<br>FixCus Team</p>
         <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
     </footer>
-
 </div>`;
 }
 
-export function generateUserRegistrationEmailTemplate(volunteerName, eventTitle) {
-    return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9;">
-        <h2 style="color: #333; text-align: center;">New Volunteer Registration</h2>
-        <p style="font-size: 16px; color: #555;">Hello,</p>
-
-        <p style="font-size: 16px; color: #555;">
-            A new volunteer has registered for your event <strong>${eventTitle}</strong>.
-        </p>
-
-        <div style="margin: 20px 0; padding: 10px; background-color: #fff; border-left: 4px solid #007bff;">
-            <p style="font-size: 16px; color: #333;"><strong>Volunteer Name:</strong> ${volunteerName}</p>
-        </div>
-
-        <p style="font-size: 16px; color: #555;">You can check your event dashboard for more details.</p>
-
-        <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #888;">
-            <p>Thank you,<br>FixCus Team</p>
-            <p style="font-size: 12px;">This is an automated message. Please do not reply.</p>
-        </footer>
-    </div>
-    `;
+export function generateIssueCompletedEmailTemplate(citizenName, issueTitle) {
+    return `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #000; color: #fff;">
+    <h2 style="color: #fff; text-align: center;">Issue Resolved</h2>
+    <p style="font-size: 16px; color: #ccc;">Dear ${citizenName},</p>
+    <p style="font-size: 16px; color: #ccc;">We are pleased to inform you that your reported issue: <strong>${issueTitle}</strong> has been resolved.</p>
+    <p style="font-size: 16px; color: #ccc;">Thank you for bringing this to our attention. If you have any further concerns, please do not hesitate to contact us.</p>
+    <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
+        <p>Thank you,<br>FixCus Team</p>
+        <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
+    </footer>
+</div>`;
 }
 
-
-export function generateEventCompletionEmailTemplate(eventTitle) {
+export function generateTaskEscalationEmailTemplate(issueTitle, msg) {
     return `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #000; color: #fff;">
-  
-      <h2 style="color: #fff; text-align: center;">Thank You for Your Support!</h2>
-  
-      <p style="font-size: 16px; color: #ccc;">Dear Volunteer,</p>
-  
-      <p style="font-size: 16px; color: #ccc;">The event <strong>${eventTitle}</strong> has successfully concluded, and we sincerely appreciate your contribution.</p>
-  
-      <p style="font-size: 16px; color: #ccc;">We hereby invite you to fill the event feedback form with your honest thoughts. Thank you!</p>
-  
-      <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
-          <p>Thank you,<br>FixCus Team</p>
-          <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
-      </footer>
-  
-  </div>`;
-  }
-  
+    <h2 style="color: #fff; text-align: center;">Task Escalation Notification</h2>
+    <p style="font-size: 16px; color: #ccc;">Dear Team,</p>
+    <p style="font-size: 16px; color: #ccc;">The following issue has been escalated: <strong>${issueTitle}</strong>.</p>
+    <p style="font-size: 16px; color: #ccc;">Escalation Message: ${msg}</p>
+    <p style="font-size: 16px; color: #ccc;">Please take the necessary actions to address this issue.</p>
+    <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
+        <p>Thank you,<br>FixCus Team</p>
+        <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
+    </footer>
+</div>`;
+}
 
-  export function generateReplyEmailTemplate(userName, replyText) {
+export function generateTaskAssignmentEmailTemplate(issueTitle, assigneeName) {
     return `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #000; color: #fff;">
-  
-      <h2 style="color: #fff; text-align: center;">Response to Your Inquiry</h2>
-  
-      <p style="font-size: 16px; color: #ccc;">Dear ${userName},</p>
-  
-      <p style="font-size: 16px; color: #ccc;">Thank you for reaching out to us. Below is our response to your query:</p>
-  
-      <blockquote style="font-size: 16px; color: #fff; padding: 10px; border-left: 4px solid #ccc; background: #222;">
-        ${replyText}
-      </blockquote>
-  
-      <p style="font-size: 16px; color: #ccc;">If you have any further questions, feel free to contact us again.</p>
-  
-      <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
-          <p>Best regards,<br>FixCus Team</p>
-          <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
-      </footer>
-  
-    </div>`;
-  }
-  
+    <h2 style="color: #fff; text-align: center;">New Task Assigned</h2>
+    <p style="font-size: 16px; color: #ccc;">Dear ${assigneeName},</p>
+    <p style="font-size: 16px; color: #ccc;">You have been assigned a new task related to the issue: <strong>${issueTitle}</strong>.</p>
+    <p style="font-size: 16px; color: #ccc;">Please log in to your account to view the task details and take the necessary actions.</p>
+    <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
+        <p>Thank you,<br>FixCus Team</p>
+        <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
+    </footer>
+</div>`;
+}
 
-
-export const generateCompletedDonationTemplate = (donorName, amount, ) => {
+export function generateTaskDeadlineReminderEmailTemplate(issueTitle, assigneeName, deadline, timeLeft) {
     return `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background-color: #000; color: #fff;">
-        <h2 style="color: #fff; text-align: center;">Thank You for Your Support!</h2>
-        <p style="font-size: 16px; color: #ccc;">Dear ${donorName},</p>
-        <p style="font-size: 16px; color: #ccc;">We sincerely appreciate your generous donation of <strong>₹${amount}</strong>.</p>
-        <p style="font-size: 16px; color: #ccc;">Your support helps us continue our mission to make a difference. Thank you!</p>
-        <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
-            <p>Thank you,<br>FixCus Team</p>
-            <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
-        </footer>
-    </div>`;
-};
+    <h2 style="color: #fff; text-align: center;">Task Deadline Reminder</h2>
+    <p style="font-size: 16px; color: #ccc;">Dear ${assigneeName},</p>
+    <p style="font-size: 16px; color: #ccc;">This is a reminder that the task related to the issue: <strong>${issueTitle}</strong> is due on <strong>${new Date(deadline).toLocaleString()}</strong>.</p>
+    <p style="font-size: 16px; color: #ccc;">Time left to complete the task: <strong>${timeLeft}</strong>.</p>
+    <footer style="margin-top: 20px; text-align: center; font-size: 14px; color: #666;">
+        <p>Thank you,<br>FixCus Team</p>
+        <p style="font-size: 12px; color: #444;">This is an automated message. Please do not reply to this email.</p>
+    </footer>
+</div>`;
+}
+
