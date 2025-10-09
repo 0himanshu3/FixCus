@@ -693,6 +693,14 @@ export default function IssueDetailsStaff() {
                 />
               ))}
             </div>
+            {issue.images.length > 3 && (
+              <button
+                onClick={() => setShowImageSlider(true)}
+                className="mt-4 px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-300 transform hover:scale-105 transition-all"
+              >
+                🎭 View More
+              </button>
+            )}
           </div>
         )}
 
@@ -720,62 +728,71 @@ export default function IssueDetailsStaff() {
                 &times;
               </motion.button>
 
-              {/* Image Container */}
+              {/* Image Wrapper (scales dynamically) */}
               <motion.div
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="relative w-4/5 max-w-2xl aspect-video flex items-center justify-center rounded-2xl overflow-hidden shadow-2xl"
+                className="relative flex flex-col items-center justify-center"
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Blurred Background of the Image */}
-                <div
-                  className="absolute inset-0 bg-center bg-cover blur-3xl scale-110 brightness-75"
-                  style={{
-                    backgroundImage: `url(${issue.images[currentImageIdx]})`,
-                  }}
-                ></div>
+                {/* The inner container auto-sizes based on the image */}
+                <div className="relative inline-block">
+                  {/* Blurred Background */}
+                  <div
+                    className="absolute inset-0 bg-center bg-cover blur-3xl scale-150 brightness-75 rounded-2xl"
+                    style={{
+                      backgroundImage: `url(${issue.images[currentImageIdx]})`,
+                    }}
+                  ></div>
 
-                {/* Foreground Image */}
-                <img
-                  src={issue.images[currentImageIdx]}
-                  alt={`Slide ${currentImageIdx}`}
-                  className="relative z-10 max-h-[80vh] object-contain rounded-2xl"
-                />
+                  {/* Foreground Image */}
+                  <img
+                    src={issue.images[currentImageIdx]}
+                    alt={`Slide ${currentImageIdx}`}
+                    className="relative z-10 max-h-[80vh] max-w-[90vw] object-contain rounded-2xl"
+                  />
 
-                {/* Left Arrow */}
-                <motion.button
-                  whileHover={{ scale: 1.15, backgroundColor: "rgba(0,0,0,0.6)" }}
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute left-6 top-1/2 -translate-y-1/2 text-white text-4xl font-bold bg-black/40 hover:bg-black/70 rounded-full w-14 h-14 flex items-center justify-center shadow-lg backdrop-blur-md transition-all"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentImageIdx(
-                      (p) => (p - 1 + issue.images.length) % issue.images.length
-                    );
-                  }}
-                >
-                  <span className="translate-x-[-2px]">&#8592;</span>
-                </motion.button>
+                  {/* Left Arrow */}
+                  <motion.button
+                    whileHover={{
+                      scale: 1.15,
+                      backgroundColor: "rgba(0,0,0,0.6)",
+                    }}
+                    whileTap={{ scale: 0.9 }}
+                    className="absolute left-[-4rem] top-1/2 -translate-y-1/2 text-white text-4xl font-bold bg-black/40 hover:bg-black/70 rounded-full w-12 h-12 flex items-center justify-center shadow-lg backdrop-blur-md transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIdx(
+                        (p) => (p - 1 + issue.images.length) % issue.images.length
+                      );
+                    }}
+                  >
+                    <span className="translate-x-[-2px]">&#8592;</span>
+                  </motion.button>
 
-                {/* Right Arrow */}
-                <motion.button
-                  whileHover={{ scale: 1.15, backgroundColor: "rgba(0,0,0,0.6)" }}
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute right-6 top-1/2 -translate-y-1/2 text-white text-4xl font-bold bg-black/40 hover:bg-black/70 rounded-full w-14 h-14 flex items-center justify-center shadow-lg backdrop-blur-md transition-all"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentImageIdx(
-                      (p) => (p + 1) % issue.images.length
-                    );
-                  }}
-                >
-                  <span className="translate-x-[2px]">&#8594;</span>
-                </motion.button>
+                  {/* Right Arrow */}
+                  <motion.button
+                    whileHover={{
+                      scale: 1.15,
+                      backgroundColor: "rgba(0,0,0,0.6)",
+                    }}
+                    whileTap={{ scale: 0.9 }}
+                    className="absolute right-[-4rem] top-1/2 -translate-y-1/2 text-white text-4xl font-bold bg-black/40 hover:bg-black/70 rounded-full w-12 h-12 flex items-center justify-center shadow-lg backdrop-blur-md transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIdx(
+                        (p) => (p + 1) % issue.images.length
+                      );
+                    }}
+                  >
+                    <span className="translate-x-[2px]">&#8594;</span>
+                  </motion.button>
+                </div>
 
-                {/* Image Counter */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white text-sm px-4 py-1 rounded-full backdrop-blur-sm">
+                {/* Image Counter (kept below image, centered) */}
+                <div className="mt-4 bg-black/50 text-white text-sm px-4 py-1 rounded-full backdrop-blur-sm">
                   {currentImageIdx + 1} / {issue.images.length}
                 </div>
               </motion.div>

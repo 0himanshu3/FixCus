@@ -2194,7 +2194,7 @@ export const generateIssueFromImage = async (req, res) => {
       Analyze the attached image of a civic issue. 
       Act as a concerned citizen reporting this problem.
       Based only on the visual information in the image, provide a structured JSON object with three fields:
-      1. A concise, descriptive "title" for the issue (e.g., "Large pothole on main road").
+      1. A concise, "title" for the issue (e.g., "Large pothole on main road"). Do not make it long as its just the title.
       2. A detailed "description" of the problem, explaining what is wrong and why it is a concern. Do not make it sound like telling whats in the image like "This image shows...". Instead, describe the issue as a citizen would when reporting it.
       3. A suggested "category" from this exact list: ["Road damage", "Waterlogging / Drainage Issues", "Improper Waste Management", "Street lights/Exposed Wires", "Burning of garbage", "Damaged Public Property", "Encroachment / Illegal Construction", "Unauthorized loudspeakers", "Stray Animal Menace", "General Issue"].
       4. The issues are in indian context so consider that while generating the response.
