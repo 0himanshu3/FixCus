@@ -335,34 +335,94 @@ function IssueDetails() {
         <AnimatePresence>
           {showImageSlider && (
             <motion.div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/95"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowImageSlider(false)}>
-              <button
-                className="absolute cursor-pointer top-5 right-5 text-pink-300 text-5xl hover:text-pink-100 font-bold"
-                onClick={() => setShowImageSlider(false)}>
+              transition={{ duration: 0.25 }}
+              className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-lg bg-transparent/30"
+              onClick={() => setShowImageSlider(false)}
+            >
+              {/* Close Button */}
+              <motion.button
+                whileHover={{ scale: 1.15, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                className="absolute top-6 right-6 text-white text-4xl font-bold hover:text-pink-300 transition-all duration-200 drop-shadow-lg"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowImageSlider(false);
+                }}
+              >
                 &times;
-              </button>
+              </motion.button>
 
-              <div className="relative w-4/5 max-w-3xl" onClick={(e) => e.stopPropagation()}>
-                <img
-                  src={issue.images[currentImageIdx]}
-                  alt={`Slide ${currentImageIdx}`}
-                  className="w-full h-96 object-contain rounded-xl border-4 border-pink-400 shadow-2xl"
-                />
-                <button
-                  className="absolute left-4 top-1/2 cursor-pointer transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
-                  onClick={handlePrevImage}>
-                  &#8592;
-                </button>
-                <button
-                  className="absolute right-4 top-1/2 cursor-pointer transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
-                  onClick={handleNextImage}>
-                  &#8594;
-                </button>
-              </div>
+              {/* Image Wrapper (scales dynamically) */}
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="relative flex flex-col items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* The inner container auto-sizes based on the image */}
+                <div className="relative inline-block">
+                  {/* Blurred Background */}
+                  <div
+                    className="absolute inset-0 bg-center bg-cover blur-3xl scale-150 brightness-75 rounded-2xl"
+                    style={{
+                      backgroundImage: `url(${issue.images[currentImageIdx]})`,
+                    }}
+                  ></div>
+
+                  {/* Foreground Image */}
+                  <img
+                    src={issue.images[currentImageIdx]}
+                    alt={`Slide ${currentImageIdx}`}
+                    className="relative z-10 max-h-[80vh] max-w-[90vw] object-contain rounded-2xl"
+                  />
+
+                  {/* Left Arrow */}
+                  <motion.button
+                    whileHover={{
+                      scale: 1.15,
+                      backgroundColor: "rgba(0,0,0,0.6)",
+                    }}
+                    whileTap={{ scale: 0.9 }}
+                    className="absolute left-[-4rem] top-1/2 -translate-y-1/2 text-white text-4xl font-bold bg-black/40 hover:bg-black/70 rounded-full w-12 h-12 flex items-center justify-center shadow-lg backdrop-blur-md transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIdx(
+                        (p) => (p - 1 + issue.images.length) % issue.images.length
+                      );
+                    }}
+                  >
+                    <span className="translate-x-[-2px]">&#8592;</span>
+                  </motion.button>
+
+                  {/* Right Arrow */}
+                  <motion.button
+                    whileHover={{
+                      scale: 1.15,
+                      backgroundColor: "rgba(0,0,0,0.6)",
+                    }}
+                    whileTap={{ scale: 0.9 }}
+                    className="absolute right-[-4rem] top-1/2 -translate-y-1/2 text-white text-4xl font-bold bg-black/40 hover:bg-black/70 rounded-full w-12 h-12 flex items-center justify-center shadow-lg backdrop-blur-md transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIdx(
+                        (p) => (p + 1) % issue.images.length
+                      );
+                    }}
+                  >
+                    <span className="translate-x-[2px]">&#8594;</span>
+                  </motion.button>
+                </div>
+
+                {/* Image Counter (kept below image, centered) */}
+                <div className="mt-4 bg-black/50 text-white text-sm px-4 py-1 rounded-full backdrop-blur-sm">
+                  {currentImageIdx + 1} / {issue.images.length}
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

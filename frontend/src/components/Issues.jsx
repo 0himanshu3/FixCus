@@ -31,6 +31,7 @@ function Issues() {
     priority: searchParams.get("priority") || "",
     status: searchParams.get("status") || "",
     location: searchParams.get("location") || "",
+    votes: searchParams.get("votes") || "",
     recency: searchParams.get("recency") || "",
   });
 
@@ -93,6 +94,7 @@ function Issues() {
       priority: "",
       status: "",
       location: "",
+      votes: "",
       recency: "",
     };
     setFilters(resetFilters);
@@ -305,6 +307,18 @@ function Issues() {
               className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
             />
 
+            <select
+              value={filters.votes}
+              onChange={(e) =>
+                setFilters({ ...filters, votes: e.target.value })
+              }
+              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+            >
+              <option value="">Sort by votes</option>
+              <option value="upvoted">Most Upvoted First</option>
+              <option value="downvoted">Most Downvoted First</option>
+            </select>
+              
             <select
               value={filters.recency}
               onChange={(e) =>

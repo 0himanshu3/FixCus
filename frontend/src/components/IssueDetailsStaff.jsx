@@ -43,6 +43,9 @@ export default function IssueDetailsStaff() {
   const [proofText, setProofText] = useState("");
   const [proofFiles, setProofFiles] = useState([]);
   const [proofUploadProgress, setProofUploadProgress] = useState([]); // Assign modal
+  const [showProofImageSlider, setShowProofImageSlider] = useState(false);
+  const [currentProofImageIdx, setCurrentProofImageIdx] = useState(0);
+  const [currentTask, setCurrentTask] = useState(null);
 
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [assignModalAssignee, setAssignModalAssignee] = useState(null);
@@ -627,7 +630,7 @@ export default function IssueDetailsStaff() {
           </div>
         </div>
 
-        {/* NEW: Description Section */}
+        {/* Description Section */}
         <div className="bg-white/80 border-4 border-yellow-200 rounded-xl shadow-lg p-6 text-lg text-purple-900 leading-relaxed">
           <h2 className="font-bold text-2xl mb-3 text-pink-700 flex items-center gap-2">
             📝 Description
@@ -690,6 +693,14 @@ export default function IssueDetailsStaff() {
                 />
               ))}
             </div>
+            {issue.images.length > 3 && (
+              <button
+                onClick={() => setShowImageSlider(true)}
+                className="mt-4 px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-300 transform hover:scale-105 transition-all"
+              >
+                🎭 View More
+              </button>
+            )}
           </div>
         )}
 
@@ -700,38 +711,95 @@ export default function IssueDetailsStaff() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex items-center justify-center bg-purple-900/95">
-              <button
-                className="absolute top-5 right-5 text-pink-300 text-5xl hover:text-pink-100 font-bold"
-                onClick={() => setShowImageSlider(false)}>
+              transition={{ duration: 0.25 }}
+              className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-lg bg-transparent/30"
+              onClick={() => setShowImageSlider(false)}
+            >
+              {/* Close Button */}
+              <motion.button
+                whileHover={{ scale: 1.15, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                className="absolute top-6 right-6 text-white text-4xl font-bold hover:text-pink-300 transition-all duration-200 drop-shadow-lg"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowImageSlider(false);
+                }}
+              >
                 &times;
-              </button>
-              <div className="relative w-4/5 max-w-3xl">
-                <img
-                  src={issue.images[currentImageIdx]}
-                  alt={`Slide ${currentImageIdx}`}
-                  className="w-full h-96 object-contain rounded-xl border-4 border-pink-400 shadow-2xl"
-                />
-                <button
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
-                  onClick={() =>
-                    setCurrentImageIdx(
-                      (p) => (p - 1 + issue.images.length) % issue.images.length
-                    )
-                  }>
-                  &#8592;
-                </button>
-                <button
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-pink-300 text-5xl hover:text-pink-100 bg-purple-800/50 rounded-full w-14 h-14 flex items-center justify-center"
-                  onClick={() =>
-                    setCurrentImageIdx((p) => (p + 1) % issue.images.length)
-                  }>
-                  &#8594;
-                </button>
-              </div>
+              </motion.button>
+
+              {/* Image Wrapper (scales dynamically) */}
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="relative flex flex-col items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* The inner container auto-sizes based on the image */}
+                <div className="relative inline-block">
+                  {/* Blurred Background */}
+                  <div
+                    className="absolute inset-0 bg-center bg-cover blur-3xl scale-150 brightness-75 rounded-2xl"
+                    style={{
+                      backgroundImage: `url(${issue.images[currentImageIdx]})`,
+                    }}
+                  ></div>
+
+                  {/* Foreground Image */}
+                  <img
+                    src={issue.images[currentImageIdx]}
+                    alt={`Slide ${currentImageIdx}`}
+                    className="relative z-10 max-h-[80vh] max-w-[90vw] object-contain rounded-2xl"
+                  />
+
+                  {/* Left Arrow */}
+                  <motion.button
+                    whileHover={{
+                      scale: 1.15,
+                      backgroundColor: "rgba(0,0,0,0.6)",
+                    }}
+                    whileTap={{ scale: 0.9 }}
+                    className="absolute left-[-4rem] top-1/2 -translate-y-1/2 text-white text-4xl font-bold bg-black/40 hover:bg-black/70 rounded-full w-12 h-12 flex items-center justify-center shadow-lg backdrop-blur-md transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIdx(
+                        (p) => (p - 1 + issue.images.length) % issue.images.length
+                      );
+                    }}
+                  >
+                    <span className="translate-x-[-2px]">&#8592;</span>
+                  </motion.button>
+
+                  {/* Right Arrow */}
+                  <motion.button
+                    whileHover={{
+                      scale: 1.15,
+                      backgroundColor: "rgba(0,0,0,0.6)",
+                    }}
+                    whileTap={{ scale: 0.9 }}
+                    className="absolute right-[-4rem] top-1/2 -translate-y-1/2 text-white text-4xl font-bold bg-black/40 hover:bg-black/70 rounded-full w-12 h-12 flex items-center justify-center shadow-lg backdrop-blur-md transition-all"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIdx(
+                        (p) => (p + 1) % issue.images.length
+                      );
+                    }}
+                  >
+                    <span className="translate-x-[2px]">&#8594;</span>
+                  </motion.button>
+                </div>
+
+                {/* Image Counter (kept below image, centered) */}
+                <div className="mt-4 bg-black/50 text-white text-sm px-4 py-1 rounded-full backdrop-blur-sm">
+                  {currentImageIdx + 1} / {issue.images.length}
+                </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
+
 
         {/* Videos Section */}
         {issue.videos?.length > 0 && (
@@ -1236,19 +1304,113 @@ export default function IssueDetailsStaff() {
                                     {task.taskCompletionProof}
                                   </p>
                                   {task.taskProofImages?.length > 0 && (
-                                    <div className="mt-2 grid grid-cols-3 gap-2">
+                                    <div className="mt-2 grid grid-cols-8 gap-2">
                                       {task.taskProofImages.map((pi, i) => (
                                         <img
                                           key={i}
                                           src={pi}
                                           alt={`coord-proof-${i}`}
-                                          className="w-full h-20 object-cover rounded border-2 border-purple-300"
+                                          className="w-20 h-20 object-cover rounded border-2 border-purple-300 hover:scale-110 cursor-pointer"
+                                          onClick={() => { 
+                                            setCurrentTask(task);
+                                            setCurrentProofImageIdx(i);
+                                            setShowProofImageSlider(true);
+                                          }}
                                         />
                                       ))}
                                     </div>
                                   )}
                                 </div>
                               )}
+
+                            <AnimatePresence>
+                              {showProofImageSlider && (
+                                <motion.div
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  transition={{ duration: 0.25 }}
+                                  className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-transparent/30"
+                                  onClick={() => setShowProofImageSlider(false)}
+                                >
+                                  {/* Close Button */}
+                                  <motion.button
+                                    whileHover={{ scale: 1.15, rotate: 90 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    className="absolute top-6 right-6 text-white text-4xl font-bold hover:text-pink-300 transition-all duration-200 drop-shadow-lg"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowProofImageSlider(false);
+                                    }}
+                                  >
+                                    &times;
+                                  </motion.button>
+
+                                  {/* Image Container */}
+                                  <motion.div
+                                    initial={{ scale: 0.95, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0.95, opacity: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="relative w-4/5 max-w-2xl aspect-video flex items-center justify-center rounded-xl overflow-hidden shadow-2xl"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    {/* Blurred Background of the Image */}
+                                    <div
+                                      className="absolute inset-0 bg-center bg-cover blur-3xl scale-110 brightness-75"
+                                      style={{
+                                        backgroundImage: `url(${currentTask.taskProofImages[currentProofImageIdx]})`,
+                                      }}
+                                    ></div>
+
+                                    {/* Foreground Image */}
+                                    <img
+                                      src={currentTask.taskProofImages[currentProofImageIdx]}
+                                      alt={`Slide ${currentProofImageIdx}`}
+                                      className="relative z-10 max-h-[70vh] object-contain rounded-2xl"
+                                    />
+
+                                    {/* Left Arrow */}
+                                    <motion.button
+                                      whileHover={{ scale: 1.15, backgroundColor: "rgba(0,0,0,0.6)" }}
+                                      whileTap={{ scale: 0.9 }}
+                                      className="absolute left-6 top-1/2 -translate-y-1/2 text-white text-4xl font-bold bg-black/40 hover:bg-black/70 rounded-full w-14 h-14 flex items-center justify-center shadow-lg backdrop-blur-md transition-all"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCurrentProofImageIdx(
+                                          (p) =>
+                                            (p - 1 + currentTask.taskProofImages.length) %
+                                            currentTask.taskProofImages.length
+                                        );
+                                      }}
+                                    >
+                                      <span className="translate-x-[-2px]">&#8592;</span>
+                                    </motion.button>
+
+                                    {/* Right Arrow */}
+                                    <motion.button
+                                      whileHover={{ scale: 1.15, backgroundColor: "rgba(0,0,0,0.6)" }}
+                                      whileTap={{ scale: 0.9 }}
+                                      className="absolute right-6 top-1/2 -translate-y-1/2 text-white text-4xl font-bold bg-black/40 hover:bg-black/70 rounded-full w-14 h-14 flex items-center justify-center shadow-lg backdrop-blur-md transition-all"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCurrentProofImageIdx(
+                                          (p) => (p + 1) % currentTask.taskProofImages.length
+                                        );
+                                      }}
+                                    >
+                                      <span className="translate-x-[2px]">&#8594;</span>
+                                    </motion.button>
+
+                                    {/* Image Counter */}
+                                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-sm px-4 py-1 rounded-full backdrop-blur-sm">
+                                      {currentProofImageIdx + 1} / {currentTask.taskProofImages.length}
+                                    </div>
+                                  </motion.div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+
 
                               {task.taskUpdates?.length > 0 && (
                                 <div className="mt-2">
@@ -1433,7 +1595,6 @@ export default function IssueDetailsStaff() {
           </div>
         )}
 
-        {/* ---------------- MODALS ---------------- */}
         {/* Reassign Modal */}
         <AnimatePresence>
           {reassignModalOpen && reassignTask && (
