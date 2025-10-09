@@ -308,7 +308,7 @@ export default function MunicipalityMain() {
             <div className="flex items-center justify-between mb-3">
                 <div>
                 <h3 className="text-2xl font-semibold text-gray-900">✅ Resolved Issues</h3>
-                <p className="text-sm text-purple-600">Recently completed issues — view feedback</p>
+                <p className="text-sm text-purple-600">Recently completed issues</p>
                 </div>
                 <div className="text-sm text-purple-600 font-medium">{resolvedIssues.length} resolved</div>
             </div>
@@ -442,7 +442,7 @@ export default function MunicipalityMain() {
 
       {feedbackModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-            <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm pointer-events-auto" onClick={closeFeedbackModal} />
+            <div className="absolute inset-0 bg-opacity-30 backdrop-blur-sm pointer-events-auto" onClick={closeFeedbackModal} />
             <div className="relative pointer-events-auto bg-gray-50 w-full max-w-3xl max-h-[90vh] flex flex-col p-6 rounded-xl shadow-2xl border-2 border-purple-300">
             <div className="flex items-center justify-between mb-4 flex-shrink-0">
                 <h3 className="text-xl font-bold text-purple-900 flex items-center gap-2"><FaCommentDots/> Citizen Feedback</h3>

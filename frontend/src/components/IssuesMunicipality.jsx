@@ -35,6 +35,7 @@ function IssuesMunicipality() {
     category: searchParams.get("category") || "",
     priority: searchParams.get("priority") || "",
     status: searchParams.get("status") || "",
+    votes: searchParams.get("votes") || "",
     recency: searchParams.get("recency") || "",
   });
 
@@ -124,6 +125,7 @@ function IssuesMunicipality() {
       category: "",
       priority: "",
       status: "",
+      votes: "",
       recency: "",
     };
     setFilters(resetFilters);
@@ -355,6 +357,18 @@ const fetchAllIssuesForHeatmap = async () => {
                   {s}
                 </option>
               ))}
+            </select>
+              
+            <select
+              value={filters.votes}
+              onChange={(e) =>
+                setFilters({ ...filters, votes: e.target.value })
+              }
+              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+             >
+              <option value="">Sort by votes</option>
+              <option value="upvoted">Most Upvoted First</option>
+              <option value="downvoted">Most Downvoted First</option>
             </select>
 
             <select

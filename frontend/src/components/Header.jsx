@@ -35,7 +35,7 @@ const Header = ({ notifications }) => {
   
   const municipalityLinks = [
     { path: "/municipality", label: "Dashboard" },
-    // { path: "/issues", label: "Issues" },
+    { path: "/issues", label: "Issues" },
   ];
   
   const staffLinks = [

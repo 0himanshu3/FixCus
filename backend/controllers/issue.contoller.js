@@ -81,6 +81,7 @@ export const getIssues = async (req, res) => {
             priority,
             status,
             location,
+            votes,
             recency, // newest / oldest
         } = req.query;
 
@@ -113,10 +114,13 @@ export const getIssues = async (req, res) => {
             ];
         }
 
-        // Build sort
+        // Build sort option
         let sortOption = { createdAt: -1 }; // default newest first
         if (recency === "newest") sortOption = { createdAt: -1 };
         else if (recency === "oldest") sortOption = { createdAt: 1 };
+      
+        if (votes === "upvoted") sortOption = { upvotes: -1 };
+        else if (votes === "downvoted") sortOption = { downvotes: -1 };
 
         const issues = await Issue.find(filter)
             .populate("reportedBy", "name email")
@@ -2184,15 +2188,16 @@ export const generateIssueFromImage = async (req, res) => {
     }
 
     // Using the model name confirmed to be available to your key
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
       Analyze the attached image of a civic issue. 
       Act as a concerned citizen reporting this problem.
       Based only on the visual information in the image, provide a structured JSON object with three fields:
-      1. A concise, descriptive "title" for the issue (e.g., "Large pothole causing hazard on main road").
-      2. A detailed "description" of the problem, explaining what is wrong and why it is a concern.
-      3. A suggested "category" from this exact list: ["Road damage", "Waterlogging / Drainage Issues", "Improper Waste Management", "Street lights/Exposed Wires", "Burning of garbage", "Damaged Public Property", "Encroachment / Illegal Construction", "Stray Animal Menace", "General Issue"].
+      1. A concise, descriptive "title" for the issue (e.g., "Large pothole on main road").
+      2. A detailed "description" of the problem, explaining what is wrong and why it is a concern. Do not make it sound like telling whats in the image like "This image shows...". Instead, describe the issue as a citizen would when reporting it.
+      3. A suggested "category" from this exact list: ["Road damage", "Waterlogging / Drainage Issues", "Improper Waste Management", "Street lights/Exposed Wires", "Burning of garbage", "Damaged Public Property", "Encroachment / Illegal Construction", "Unauthorized loudspeakers", "Stray Animal Menace", "General Issue"].
+      4. The issues are in indian context so consider that while generating the response.
 
       Your entire response must be ONLY the raw JSON object, with no extra text or markdown formatting.
     `;
@@ -2208,7 +2213,7 @@ export const generateIssueFromImage = async (req, res) => {
     res.json({ success: true, data });
 
   } catch (error) {
-    console.error("Error with Gemini API:", error);
+    console.error("Error with Gemini API:", error); 
     // Provide a more specific error message back to the frontend if possible
     const errorMessage = error.message || "Failed to generate issue details from image.";
     res.status(500).json({ success: false, message: errorMessage });
