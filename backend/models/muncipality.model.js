@@ -39,6 +39,23 @@ const municipalitySchema = new mongoose.Schema({
     state: { type: String },
     country: { type: String },
 
+    division: {
+        type: String,
+        required: true,
+        enum: [
+            "Road damage",
+            "Waterlogging / Drainage Issues",
+            "Improper Waste Management",
+            "Street lights/Exposed Wires",
+            "Unauthorized loudspeakers",
+            "Burning of garbage",
+            "Encroachment / Illegal Construction",
+            "Damaged Public Property",
+            "Stray Animal Menace",
+            "General Issue"
+        ]
+    },
+
     verificationCode: Number,
     verificationCodeExpire: Date,
     resetPasswordToken: String,
