@@ -426,3 +426,103 @@ export const getStaffs = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+
+export const assignMunicipalityStaff = async (req, res, next) => {
+  try {
+    // ---- Basic auth/role check ----
+    // Assume auth middleware has set req.user (with at least .role and .id)
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: "Not authenticated" });
+    }
+
+    // ---- Validate input ----
+    const { email, expertises } = req.body;
+
+    if (!email || typeof email !== "string" || !email.includes("@")) {
+      return res.status(400).json({ success: false, message: "Valid email is required." });
+    }
+
+    if (!Array.isArray(expertises) || expertises.length === 0) {
+      return res.status(400).json({ success: false, message: "Please provide an array of at least one expertise." });
+    }
+
+    const issueCategories = [
+      "Road damage",
+      "Waterlogging / Drainage Issues",
+      "Improper Waste Management",
+      "Street lights/Exposed Wires",
+      "Unauthorized loudspeakers",
+      "Burning of garbage",
+      "Encroachment / Illegal Construction",
+      "Damaged Public Property",
+      "Stray Animal Menace",
+      "General Issue"
+    ];
+
+    // Note: be careful: your frontend used "Street lights/Exposed Wires" (no extra slash).
+    // Make sure the strings match exactly between frontend and backend. If you prefer,
+    // normalize/alias them. For now we check exact membership (case-sensitive).
+    // If some category labels differ, adjust issueCategories accordingly.
+    const invalid = expertises.filter(e => !issueCategories.includes(e));
+    if (invalid.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Some provided expertises are invalid.",
+        invalidExpertises: invalid
+      });
+    }
+
+    // ---- Find user ----
+    const user = await User.findOne({ email: email.toLowerCase() }).select("+password"); // .select only to be explicit
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User with that email not found." });
+    }
+
+    // ---- Update role and expertises ----
+    user.role = "Municipality Staff";
+    user.expertises = expertises;
+    // Optionally, you might set other flags like accountApproved = true, availability defaults, etc.
+    await user.save();
+
+    // return sanitized user (omit password)
+    const safeUser = await User.findById(user._id).select("-password -resetPasswordToken -resetPasswordExpires -verificationCode -verificationCodeExpire");
+
+    return res.status(200).json({
+      success: true,
+      message: "User promoted to Municipality Staff and expertises assigned.",
+      user: safeUser
+    });
+  } catch (err) {
+    console.error("assignMunicipalityStaff error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const updateStaffExpertises = async (req, res) => {
+  try {
+    if (!req.user) return res.status(401).json({ success: false, message: "Not authenticated" });
+
+
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ success: false, message: "Staff id required in params." });
+
+    const { expertises } = req.body;
+
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ success: false, message: "Staff not found." });
+
+    // Ensure role is Municipality Staff (optional, but keeps data consistent)
+    if (user.role !== "Municipality Staff") user.role = "Municipality Staff";
+
+    user.expertises = expertises;
+    await user.save();
+
+    const safeUser = await User.findById(user._id).select("-password -resetPasswordToken -resetPasswordExpires -verificationCode -verificationCodeExpire");
+
+    return res.status(200).json({ success: true, message: "Expertises updated", user: safeUser });
+  } catch (err) {
+    console.error("updateStaffExpertises error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};

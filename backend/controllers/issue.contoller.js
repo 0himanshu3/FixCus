@@ -2250,74 +2250,147 @@ async function computeStaffStatsForCategory(category) {
  * GET /api/v1/issues/:issueId/suggested-staff
  * Returns top 5 suggested staff for the issue's category along with computed metrics.
  */
+
 export const getSuggestedStaff = asyncHandler(async (req, res) => {
   const { issueId } = req.params;
   if (!issueId || !mongoose.Types.ObjectId.isValid(issueId)) {
     return res.status(400).json({ message: "Invalid issueId" });
   }
 
+  // Load issue and ensure it exists
   const issue = await Issue.findById(issueId).lean();
   if (!issue) return res.status(404).json({ message: "Issue not found" });
 
   const category = issue.category;
+
+  // Already assigned users
+  const alreadyAssignedSet = new Set(
+    (issue.staffsAssigned || [])
+      .map(sa => sa && sa.user ? String(sa.user) : null)
+      .filter(Boolean)
+  );
+
+  // staffStats for this category
   const staffStats = await computeStaffStatsForCategory(category);
 
-  if (!staffStats || staffStats.length === 0) {
+  const workedUserIds = (staffStats || [])
+    .map(s => String(s.userId))
+    .filter(id => !alreadyAssignedSet.has(id));
+
+  // Users: either worked in this category or have expertise
+  const users = await User.find({
+    role: "Municipality Staff",
+    $or: [
+      { _id: { $in: workedUserIds.map(id => mongoose.Types.ObjectId(id)) } },
+      { expertises: category }
+    ]
+  })
+    .select("name email avatar expertises issuesParticipated tasksAlloted")
+    .lean();
+
+  if (!users || users.length === 0) {
     return res.json({ suggested: [] });
   }
 
-  // Load user documents
-  const userIds = staffStats.map((s) => s.userId);
-  const users = await User.find({ _id: { $in: userIds } })
-    .select("name email avatar tasksAlloted issuesParticipated")
-    .lean();
-
-  const userMap = new Map(users.map((u) => [String(u._id), u]));
-
-  // Calculate taskCompletionRate and score for each candidate
-  const WEIGHT_SOLVED = 0.65;
-  const WEIGHT_TASK = 0.35;
-
-  const candidates = await Promise.all(
-    staffStats.map(async (s) => {
-      const uid = String(s.userId);
-      const u = userMap.get(uid) || { name: "Unknown", email: "" };
-
-      // Task completion: count tasks assigned to this user and completed
-      const totalTasks = await Task.countDocuments({ assignedTo: uid });
-      const completedTasks = await Task.countDocuments({
-        assignedTo: uid,
-        $or: [{ status: "Completed" }, { status: "Done" }, { taskProofSubmitted: true }],
-      });
-
-      const taskCompletionRate = totalTasks > 0 ? completedTasks / totalTasks : 0;
-      const solvedRate = s.solvedRate || 0;
-
-      const score = WEIGHT_SOLVED * solvedRate + WEIGHT_TASK * taskCompletionRate;
-
-      return {
-        userId: uid,
-        name: u.name,
-        email: u.email,
-        avatar: u.avatar || null,
-        assignedCount: s.assignedCount,
-        resolvedCount: s.resolvedCount,
-        solvedRate,
-        taskCompletionRate,
-        score,
-      };
-    })
-  );
-
-  // Sort by score desc, tie-breaker by assignedCount desc
-  candidates.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    return b.assignedCount - a.assignedCount;
+  // Map staffStats by userId
+  const statsMap = new Map();
+  (staffStats || []).forEach(s => {
+    const uid = String(s.userId);
+    if (alreadyAssignedSet.has(uid)) return;
+    statsMap.set(uid, {
+      assignedCount: s.assignedCount || 0,
+      resolvedCount: s.resolvedCount || 0,
+      solvedRate: typeof s.solvedRate === "number" ? s.solvedRate : (s.assignedCount ? (s.resolvedCount / s.assignedCount) : 0)
+    });
   });
 
-  const top5 = candidates.slice(0, 5);
+  const assignedCounts = Array.from(statsMap.values()).map(s => s.assignedCount || 0);
+  const maxAssignedCount = assignedCounts.length ? Math.max(...assignedCounts) : 0;
 
-  return res.json({ suggested: top5 });
+  const WEIGHT_SOLVED = 0.50;
+  const WEIGHT_TASK = 0.25;
+  const WEIGHT_PARTICIPATION = 0.15;
+  const WEIGHT_EXPERTISE = 0.10;
+
+  const candidates = await Promise.all(users.map(async (u) => {
+    const uid = String(u._id);
+    if (alreadyAssignedSet.has(uid)) return null;
+
+    const s = statsMap.get(uid) || { assignedCount: 0, resolvedCount: 0, solvedRate: 0 };
+    const assignedCount = s.assignedCount;
+    const resolvedCount = s.resolvedCount;
+    const solvedRate = s.solvedRate;
+
+    const totalTasks = await Task.countDocuments({ assignedTo: uid });
+    const completedTasks = await Task.countDocuments({
+      assignedTo: uid,
+      $or: [{ status: "Completed" }, { status: "Done" }, { taskProofSubmitted: true }]
+    });
+    const taskCompletionRate = totalTasks > 0 ? (completedTasks / totalTasks) : 0;
+
+    const participationScore = maxAssignedCount > 0 ? (assignedCount / maxAssignedCount) : 0;
+    const hasExpertise = Array.isArray(u.expertises) && u.expertises.includes(category) ? 1 : 0;
+
+    const score =
+      (solvedRate * WEIGHT_SOLVED) +
+      (taskCompletionRate * WEIGHT_TASK) +
+      (participationScore * WEIGHT_PARTICIPATION) +
+      (hasExpertise * WEIGHT_EXPERTISE);
+
+    return {
+      userId: uid,
+      name: u.name,
+      email: u.email,
+      avatar: u.avatar || null,
+      assignedCount,
+      resolvedCount,
+      solvedRate,
+      totalTasks,
+      completedTasks,
+      taskCompletionRate,
+      participationScore,
+      hasExpertise: Boolean(hasExpertise),
+      score
+    };
+  }));
+
+  const filteredCandidates = candidates.filter(Boolean);
+
+  // Sort by score descending
+  filteredCandidates.sort((a, b) => b.score - a.score || b.solvedRate - a.solvedRate || b.assignedCount - a.assignedCount);
+
+  const topCandidates = filteredCandidates.slice(0, 5);
+
+  // Compute suggested role for each candidate
+  const hasSupervisor = !!(issue.staffsAssigned || []).some(s => String(s.role) === "Supervisor");
+  const n = topCandidates.length;
+  topCandidates.forEach((c, idx) => {
+    let role = "Worker";
+
+    if (hasSupervisor) {
+      if (n < 3) {
+        role = "Worker";
+      } else if (n === 3 || n === 4) {
+        role = idx === 0 ? "Coordinator" : "Worker";
+      } else {
+        role = idx <= 1 ? "Coordinator" : "Worker";
+      }
+    } else {
+      if (n === 1) {
+        role = "Supervisor";
+      } else if (n === 2) {
+        role = idx === 0 ? "Supervisor" : "Worker";
+      } else if (n === 3 || n === 4) {
+        role = idx === 0 ? "Supervisor" : idx === 1 ? "Coordinator" : "Worker";
+      } else {
+        role = idx === 0 ? "Supervisor" : (idx === 1 || idx === 2) ? "Coordinator" : "Worker";
+      }
+    }
+
+    c.suggestedRole = role;
+  });
+
+  return res.json({ suggested: topCandidates });
 });
 
 /**
@@ -2330,112 +2403,47 @@ export const getSuggestedStaff = asyncHandler(async (req, res) => {
  * Creates AssignedStaff entries in `issue.staffsAssigned` (avoiding duplicates),
  * and creates Task documents for each newly assigned staff.
  */
-export const assignSuggestedStaff = asyncHandler(async (req, res) => {
-  const { issueId } = req.params;
-  if (!issueId || !mongoose.Types.ObjectId.isValid(issueId)) {
-    return res.status(400).json({ message: "Invalid issueId" });
+export const assignMultipleSuggestedStaff = async (req, res) => {
+  try {
+    const { staffList } = req.body; // [{ email, role, issueId }, ...]
+
+    if (!staffList || !Array.isArray(staffList) || staffList.length === 0) {
+      return res.status(400).json({ message: "No staff provided" });
+    }
+    console.log('====================================');
+    console.log(staffList);
+    console.log('====================================');
+
+    for (const staffData of staffList) {
+      const { email, role, issueId } = staffData;
+
+      if (!email || !role || !issueId) continue;
+
+      // Find the issue
+      const issue = await Issue.findById(issueId);
+      if (!issue) continue;
+
+      // Find the staff user by email
+      const user = await User.findOne({ email });
+      if (!user) continue;
+
+      // Check if already assigned
+      const alreadyAssigned = issue.staffsAssigned?.some(
+        (s) => s.user.toString() === user._id.toString()
+      );
+      if (alreadyAssigned) continue;
+
+      // Assign staff
+      issue.staffsAssigned.push({ user: user._id, role });
+      await issue.save();
+    }
+
+    res.status(200).json({ message: "Staff assigned successfully" });
+  } catch (err) {
+    console.error("assignMultipleSuggestedStaff", err);
+    res.status(500).json({ message: "Failed to assign staff" });
   }
-
-  const issue = await Issue.findById(issueId);
-  if (!issue) return res.status(404).json({ message: "Issue not found" });
-
-  // Authorization: only the municipality that took up the issue (or Admin) can assign
-  if (!req.user) return res.status(401).json({ message: "Unauthorized" });
-
-  const userIdStr = String(req.user._id);
-  const takenByStr = String(issue.issueTakenUpBy);
-  const isAdmin = req.user.role === "Admin";
-
-  if (!isAdmin && userIdStr !== takenByStr) {
-    return res.status(403).json({ message: "Not authorized to assign staff for this issue" });
-  }
-
-  // compute candidate stats (reuse same logic as getSuggestedStaff)
-  const category = issue.category;
-  const staffStats = await computeStaffStatsForCategory(category);
-  if (!staffStats || staffStats.length === 0) {
-    return res.status(400).json({ message: "No historical staff data to suggest." });
-  }
-
-  const userIds = staffStats.map((s) => s.userId);
-  const users = await User.find({ _id: { $in: userIds } })
-    .select("name email avatar")
-    .lean();
-  const userMap = new Map(users.map((u) => [String(u._id), u]));
-
-  const WEIGHT_SOLVED = 0.65;
-  const WEIGHT_TASK = 0.35;
-
-  const candidates = await Promise.all(
-    staffStats.map(async (s) => {
-      const uid = String(s.userId);
-      const u = userMap.get(uid) || { name: "Unknown", email: "" };
-
-      const totalTasks = await Task.countDocuments({ assignedTo: uid });
-      const completedTasks = await Task.countDocuments({
-        assignedTo: uid,
-        $or: [{ status: "Completed" }, { status: "Done" }, { taskProofSubmitted: true }],
-      });
-
-      const taskCompletionRate = totalTasks > 0 ? completedTasks / totalTasks : 0;
-      const solvedRate = s.solvedRate || 0;
-      const score = WEIGHT_SOLVED * solvedRate + WEIGHT_TASK * taskCompletionRate;
-
-      return {
-        userId: uid,
-        name: u.name,
-        email: u.email,
-        assignedCount: s.assignedCount,
-        resolvedCount: s.resolvedCount,
-        solvedRate,
-        taskCompletionRate,
-        score,
-      };
-    })
-  );
-
-  candidates.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    return b.assignedCount - a.assignedCount;
-  });
-
-  const top5 = candidates.slice(0, 5);
-
-  // derive assignments: 0->Supervisor,1->Coordinator,rest Worker
-  const newAssignments = [];
-  const rolesForTop = ["Supervisor", "Coordinator"]; // fallback
-top5.forEach((c, idx) => {
-  const role = idx === 0 ? "Supervisor" : idx === 1 ? "Coordinator" : "Worker";
-  // push the ID as-is (string or ObjectId). Mongoose will cast when saving.
-  newAssignments.push({ role, user: c.userId });
-});
-
-
-  // Avoid duplicates: only add those not already present in issue.staffsAssigned
-  const existingUserIds = new Set((issue.staffsAssigned || []).map((s) => String(s.user)));
-  const assignmentsToAdd = newAssignments.filter((a) => !existingUserIds.has(String(a.user)));
-
-  // push to issue.staffsAssigned
-  assignmentsToAdd.forEach((a) => issue.staffsAssigned.push(a));
-  await issue.save();
-
-  
-
-  // Return updated issue (populate minimal fields to show)
-  const updatedIssue = await Issue.findById(issue._id)
-    .populate({ path: "staffsAssigned.user", select: "name email avatar" })
-    .lean();
-
-  return res.json({
-    message: "Suggested staff assigned",
-    assigned: assignmentsToAdd.map((a) => ({
-      user: String(a.user),
-      role: a.role,
-    })),
-    issue: updatedIssue,
-  });
-});
-
+};
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

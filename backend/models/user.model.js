@@ -2,6 +2,19 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
+const issueCategories = [
+  "Road damage",
+  "Waterlogging / Drainage Issues",
+  "Improper Waste Management",
+  "Street lights/Exposed Wires",
+  "Unauthorized loudspeakers",
+  "Burning of garbage",
+  "Encroachment / Illegal Construction",
+  "Damaged Public Property",
+  "Stray Animal Menace",
+  "General Issue"
+];
+
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
@@ -32,6 +45,18 @@ const userSchema = new mongoose.Schema({
   availability: {
     weekdays: { type: Boolean, default: false },
     weekends: { type: Boolean, default: false }
+  },
+
+  // Expertises: only values from issueCategories, can be multiple,
+  // and only allowed when role is "Municipality Staff".
+  expertises: {
+    type: [
+      {
+        type: String,
+        enum: issueCategories
+      }
+    ],
+    default: []
   },
 
   verificationCode: Number,

@@ -360,6 +360,9 @@ function IssueDetailsMunicipality() {
         { withCredentials: true }
       );
       const data = res.data || {};
+      console.log('====================================');
+      console.log(data);
+      console.log('====================================');
       const suggested = data.suggested || data.suggestions || data.top || [];
       setSuggestedStaff(suggested);
     } catch (err) {
@@ -620,42 +623,47 @@ useEffect(() => {
   // Suggested staff assignment - assign all unassigned suggested in bulk
   // Note: backend endpoint assigns top-5; frontend limits the UI to unassigned ones.
   const handleAssignAllSuggested = async () => {
-    if (assigningAllSuggested) return;
-    // If there are no unassigned suggested, no-op
-    if (!unassignedSuggested || unassignedSuggested.length === 0) {
-      toast.info("No suggested staff to assign.");
-      return;
-    }
+  if (assigningAllSuggested) return;
 
-    setAssigningAllSuggested(true);
-    try {
-      // If you have a backend bulk endpoint that assigns only top5,
-      // but you want to only assign the unassigned ones, you might need a custom backend.
-      // Here we'll call the existing bulk endpoint (which assigns top5) — but it's fine because
-      // duplicates are avoided server-side; frontend just uses it for convenience.
-      const res = await fetch(
-        `http://localhost:3000/api/v1/issues/${issue._id}/assign-suggested`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
-      if (res.ok) {
-        toast.success("Top suggested staff assigned");
-        await fetchIssue();
-        await fetchSuggestedStaff(issue._id);
-      } else {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.message || "Failed to assign suggested staff.");
+  if (!unassignedSuggested || unassignedSuggested.length === 0) {
+    toast.info("No suggested staff to assign.");
+    return;
+  }
+
+  setAssigningAllSuggested(true);
+  try {
+    // Prepare payload
+    const payload = suggestedStaff.map((staff) => ({
+      email: staff.email,
+      role: staff.suggestedRole,
+      issueId: issue._id,
+    }));
+
+    const res = await fetch(
+      `http://localhost:3000/api/v1/issues/assign-suggested`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ staffList: payload }),
       }
-    } catch (err) {
-      console.error("handleAssignAllSuggested", err);
-      toast.error("Something went wrong while assigning all suggested staff.");
-    } finally {
-      setAssigningAllSuggested(false);
+    );
+
+    if (res.ok) {
+      toast.success("All suggested staff assigned");
+      await fetchIssue();
+      await fetchSuggestedStaff(issue._id);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err.message || "Failed to assign suggested staff.");
     }
-  };
+  } catch (err) {
+    console.error("handleAssignAllSuggested", err);
+    toast.error("Something went wrong while assigning all suggested staff.");
+  } finally {
+    setAssigningAllSuggested(false);
+  }
+};
 
   const handleNextImage = () =>
     setCurrentImageIdx((prev) => (prev + 1) % issue.images.length);
@@ -906,7 +914,7 @@ useEffect(() => {
                     ) : unassignedSuggested && unassignedSuggested.length > 0 ? (
                       <div className="mt-4 space-y-3">
                         {unassignedSuggested.map((c, idx) => {
-                          const suggestedRole = idx === 0 ? "Supervisor" : idx === 1 ? "Coordinator" : "Worker";
+                          const suggestedRole= c.suggestedRole || "Worker";
                           const userId = c.userId || c.user || c._id;
                           const isAssigning = assigningSuggestedId === userId;
                           return (
