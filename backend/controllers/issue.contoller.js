@@ -388,6 +388,7 @@ export const getIssueBySlug = async (req, res) => {
             issueTakenUpBy: issue.issueTakenUpBy,
             createdAt: issue.createdAt,
             updatedAt: issue.updatedAt,
+            whatsappLink: issue.whatsappLink,
         };
 
         return res.status(200).json({ success: true, issue: issueData });

@@ -254,6 +254,9 @@ export default function IssueDetailsStaff() {
       if (!res.ok) throw new Error("Failed to fetch issue");
       const data = await res.json();
       const issueData = data.issue;
+      console.log('====================================');
+      console.log(issueData);
+      console.log('====================================');
       setIssue(issueData); // find assigned staff entry for current user
 
       const assignedStaff = (issueData.staffsAssigned || []).find((s) => {
