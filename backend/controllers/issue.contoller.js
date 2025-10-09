@@ -101,11 +101,13 @@ export const getIssues = async (req, res) => {
         }
 
         if (status) {
-            filter.status = status;
+            filter.status = status; // if user specifies status, use it
+        } else {
+            // Otherwise, exclude "Not Resolved"
+            filter.status = { $ne: "Not Resolved" };
         }
 
         if (location) {
-            // Support searching by district/state/country or legacy location string
             filter.$or = [
                 { issueDistrict: { $regex: location, $options: "i" } },
                 { issueState: { $regex: location, $options: "i" } },
@@ -118,7 +120,7 @@ export const getIssues = async (req, res) => {
         let sortOption = { createdAt: -1 }; // default newest first
         if (recency === "newest") sortOption = { createdAt: -1 };
         else if (recency === "oldest") sortOption = { createdAt: 1 };
-      
+
         if (votes === "upvoted") sortOption = { upvotes: -1 };
         else if (votes === "downvoted") sortOption = { downvotes: -1 };
 
@@ -133,6 +135,7 @@ export const getIssues = async (req, res) => {
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
+
 
 
 export const upvoteIssue = async (req, res) => {
@@ -413,12 +416,12 @@ export const getCompletedIssues = async (req, res) => {
         });
     }
 };
-export const getCompletedIssuesByDistrict = async (req, res) => {
+export const getCompletedIssuesByMuni = async (req, res) => {
     try {
         const user=req.user
         const issues = await Issue.find({ 
                 status: 'Resolved', 
-                issueDistrict: user.district 
+                issueTakenUpBy: user._id 
                 });
         res.status(200).json({
             success: true,
@@ -451,7 +454,9 @@ export const getIssueDetails = async (req, res) => {
 };
 
 export const getMonthlyAnalysis = async (req, res) => {
-    const { userId, month } = req.query;
+    const { month } = req.query;
+    const userId=req.user._id;
+ 
     if (!userId) return res.status(400).json({ error: 'Missing userId' });
     if (!month) return res.status(400).json({ error: 'Missing month' });
 
@@ -462,13 +467,13 @@ export const getMonthlyAnalysis = async (req, res) => {
         // Start and end dates for the month
         const startDate = new Date(year, monthIndex - 1, 1);
         const endDate = new Date(year, monthIndex, 0, 23, 59, 59, 999);
-
+        console.log(userId);
         // Get assigned issues in that month
         const assignedIssues = await Issue.find({
             issueTakenUpBy: userId,
             issuePublishDate: { $gte: startDate, $lte: endDate }
         });
-
+       console.log(assignedIssues);
         const completedIssues = assignedIssues.filter(issue => issue.status === 'Resolved');
         const totalAssigned = assignedIssues.length;
         const totalCompleted = completedIssues.length;
@@ -506,7 +511,7 @@ export const getMonthlyAnalysis = async (req, res) => {
             }))
             .sort((a, b) => b.upvotes - a.upvotes)
             .slice(0, 5);
-
+          
         res.json({
             assignedIssues: totalAssigned,
             completedIssues: totalCompleted,
@@ -2011,7 +2016,7 @@ export const getMyIssues = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    const issues = await Issue.find({ reportedBy: userId })
+    const issues = await Issue.find({ reportedBy: userId, status: { $ne: "Not Resolved" } })
       .sort({ createdAt: -1 }); // Most recent first
 
     res.status(200).json({
@@ -2456,17 +2461,21 @@ function escapeRegExp(string) {
 export const reopenUnresolvedIssues = async () => {
   try {
     const now = new Date();
-
+    
     const overdueIssues = await Issue.find({
-      deadline: { $lt: now },
-      resolvedAt: { $exists: false },
-      status: { $ne: 'Resolved' }
-    });
+  $and: [
+    { deadline: { $exists: true } },
+    { deadline: { $lt: now } },
+    { resolvedAt: { $exists: false } },
+     { status: { $nin: ['Resolved', 'Not Resolved'] } }
+  ]
+});
 
+   
     for (const issue of overdueIssues) {
+      console.log(issue);
   if (!issue) continue;
 
-  console.log('Now processing:', issue._id, '| status:', issue.status);
 
   await Task.deleteMany({ issueId: issue._id });
 

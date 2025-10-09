@@ -1,16 +1,16 @@
 import express from "express";
-import { addComment, createIssue,getMunicipalityIssues, deleteComment,getMyIssues,getCompletedIssuesByDistrict, downvoteIssue, getTopIssues,getSummary,getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback, getFeedbackForIssue, getReportForIssue, analyzeFeedback, reassignTaskToCoordinator, completeTaskBySupervisor, getIssueTimeline,  getStaffDashboardDetails, classifyIssueImage, generateIssueFromImage, getSuggestedStaff, assignMultipleSuggestedStaff } from "../controllers/issue.contoller.js";
+import { addComment, createIssue,getMunicipalityIssues, deleteComment,getMyIssues,getCompletedIssuesByMuni, downvoteIssue, getTopIssues,getSummary,getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback, getFeedbackForIssue, getReportForIssue, analyzeFeedback, reassignTaskToCoordinator, completeTaskBySupervisor, getIssueTimeline,  getStaffDashboardDetails, classifyIssueImage, generateIssueFromImage, getSuggestedStaff, assignMultipleSuggestedStaff } from "../controllers/issue.contoller.js";
 import { isAuthenticated, protectMunicipality } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
 router.post("/create", isAuthenticated, createIssue);
 router.get("/completed-issues",isAuthenticated, getCompletedIssues);
-router.get("/completed-issuesbydistrict",isAuthenticated, getCompletedIssuesByDistrict);
+router.get("/completed-issuesbymuni",isAuthenticated, getCompletedIssuesByMuni);
 router.get("/issue-details/:id",isAuthenticated,getIssueDetails)
 router.get("/all",isAuthenticated, getIssues);
 router.get("/pending",isAuthenticated, getPendingIssues);
-router.get("/monthly-analysis",getMonthlyAnalysis)
+router.get("/monthly-analysis",isAuthenticated,getMonthlyAnalysis)
 router.get("/municipality/:slug",isAuthenticated,getMunicipalityIssues)
 router.post("/upvote", isAuthenticated, upvoteIssue);
 router.post("/downvote", isAuthenticated, downvoteIssue);

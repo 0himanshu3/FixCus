@@ -75,7 +75,7 @@ export default function MunicipalityMain() {
     if (!issues.length) return 0
     const totalHours = issues.reduce((sum, it) => {
       const created = new Date(it.createdAt)
-      const now = new Date(it.resolvedAt)
+      const now = new Date(it.resolvedAt || Date.now())
       return sum + (now - created) / (1000 * 60 * 60)
     }, 0)
     return Math.round(totalHours / issues.length)
@@ -114,7 +114,7 @@ export default function MunicipalityMain() {
   async function fetchResolvedIssues() {
     try {
       setLoadingResolved(true)
-      const res = await axios.get(`http://localhost:3000/api/v1/issues/completed-issuesbydistrict`, {
+      const res = await axios.get(`http://localhost:3000/api/v1/issues/completed-issuesbymuni`, {
         withCredentials: true
       })
       const arr = res.data.completedIssues ?? res.data.issues ?? res.data ?? []
@@ -216,6 +216,8 @@ export default function MunicipalityMain() {
       return (i.title || '').toLowerCase().includes(q) || (i.location || i.issueDistrict || '').toLowerCase().includes(q)
     })
 
+  const notResolvedIssues = issues.filter(i => (i.status || '').toLowerCase() === 'not resolved')
+
   const StaffOverview = () => {
     const total = staff.length
     return (
@@ -249,12 +251,6 @@ export default function MunicipalityMain() {
                   <div>
                     <div className="font-semibold text-gray-900">{s.name}</div>
                     <div className="text-xs text-purple-600 font-medium">{s.role || 'Staff'}</div>
-                    {/* {Array.isArray(s.expertises) && s.expertises.length > 0 && (
-                      <div className="text-xs text-gray-600 mt-1">
-                        <span className="font-semibold text-gray-700 mr-1">Expertises:</span>
-                        {s.expertises.join(', ')}
-                      </div>
-                    )} */}
                   </div>
                 </div>
 
@@ -265,13 +261,6 @@ export default function MunicipalityMain() {
                   >
                     Details
                   </button>
-
-                  {/* <button
-                    onClick={() => openEditExpertisesModal(s)}
-                    className="px-3 py-1 text-xs font-bold bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition shadow-sm"
-                  >
-                    Edit Expertises
-                  </button> */}
                 </div>
               </div>
             ))
@@ -526,6 +515,47 @@ export default function MunicipalityMain() {
               </div>
             </div>
           </div>
+
+          {/* NEW: Not Resolved Issues Section */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900">❗ Not Resolved Issues</h3>
+                <p className="text-sm text-purple-600">Issues flagged as "Not Resolved" </p>
+              </div>
+              <div className="text-sm text-red-600 font-medium">{notResolvedIssues.length} not resolved</div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg border-2 border-red-100 overflow-hidden">
+              <div className="max-h-[260px] overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: 'thin' }}>
+                {loadingIssues ? (
+                  <div className="text-purple-600 text-sm">Loading issues...</div>
+                ) : notResolvedIssues.length === 0 ? (
+                  <div className="text-purple-600 text-sm">No "Not Resolved" issues found.</div>
+                ) : (
+                  notResolvedIssues.map(nr => (
+                    <div key={nr._id} className="flex items-center justify-between bg-white rounded-lg p-3 border border-red-50">
+                      <div className="flex-1 pr-3">
+                        <div className="font-semibold text-gray-900 text-sm truncate">{nr.title}</div>
+                        <div className="text-xs text-gray-500 mt-1">Reported: {new Date(nr.createdAt).toLocaleDateString()}</div>
+                        <div className="text-xs text-purple-600 mt-1">{nr.issueDistrict || nr.location || '—'}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-200">
+                          {nr.status || 'Not Resolved'}
+                        </span>
+                        <button onClick={() => navigate(`/issue/${nr.slug}`)} className="px-3 py-1 rounded bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition">
+                          View
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+          {/* END Not Resolved Section */}
+
         </div>
 
         {/* Right column */}

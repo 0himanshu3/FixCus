@@ -161,9 +161,12 @@ export default function MunicipalityView() {
                       <p className="text-sm text-gray-500 mt-1">{m.email}</p>
                     </div>
                     <div className="text-right">
-                      <div className="text-xs text-gray-400">District</div>
-                      <div className="text-sm font-medium text-gray-700">{m.district || '—'}</div>
-                    </div>
+  <div className="text-xs text-gray-400">District</div>
+   <div className="text-sm font-medium text-gray-700">{m.district || '—'}</div>
+  
+  <div className="text-xs text-gray-400 mt-2">Division</div>
+  <div className="text-sm font-medium text-gray-700">{m.division || 'N/A'}</div>
+</div>
                   </div>
 
                   <div className="mt-4 flex gap-4 text-sm text-gray-600">

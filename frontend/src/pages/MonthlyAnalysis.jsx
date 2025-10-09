@@ -61,8 +61,10 @@ const MonthlyAnalysis = () => {
     const fetchAnalysis = async () => {
       try {
         const res = await axios.get(`http://localhost:3000/api/v1/issues/monthly-analysis`, {
-          params: { userId, month: selectedMonth }
+          params: { month: selectedMonth },
+          withCredentials: true
         }); 
+        console.log(res);
         setData(res.data);
         setLoading(false);
       } catch (err) {

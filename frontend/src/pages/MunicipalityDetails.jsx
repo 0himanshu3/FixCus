@@ -177,9 +177,9 @@ export default function MunicipalityDetails() {
   const COLORS = ['#22c55e', '#f97316'];
   const total = stats.pending+stats.resolved||1;
   const pieData = [
-   { name: 'Resolved', value: total === 0 ? 0 : (stats.resolved / total) * 100 },
-  { name: 'Pending', value: total === 0 ? 0 : (stats.pending / total) * 100 },
-  ]
+  { name: 'Resolved', value: total === 0 ? 0 : Math.round((stats.resolved / total) * 10000) / 100 },
+  { name: 'Pending', value: total === 0 ? 0 : Math.round((stats.pending / total) * 10000) / 100 },
+];
 
   /* ---------- UI ---------- */
   return (
@@ -234,7 +234,17 @@ export default function MunicipalityDetails() {
                           <div className="flex items-center gap-2"><FaMapMarkerAlt className="text-purple-400" /> {issue.issueDistrict || '—'}</div>
                           <div className="flex items-center gap-2"><FaCalendarAlt className="text-purple-400" /> {formatDate(issue.issuePublishDate || issue.createdAt)}</div>
                           <div className="flex items-center gap-2">Status:
-                            <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${isResolvedStatus(issue.status) ? 'bg-green-100 text-green-800' : 'bg-yellow-50 text-yellow-800'}`}>{issue.status || '—'}</span>
+<span
+  className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+    issue.status === 'Not Resolved'
+      ? 'bg-red-100 text-red-800'
+      : isResolvedStatus(issue.status)
+      ? 'bg-green-100 text-green-800'
+      : 'bg-yellow-50 text-yellow-800'
+  }`}
+>
+  {issue.status || '—'}
+</span>
                           </div>
                         </div>
 
