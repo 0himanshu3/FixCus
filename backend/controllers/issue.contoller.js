@@ -2184,7 +2184,7 @@ export const generateIssueFromImage = async (req, res) => {
     }
 
     // Using the model name confirmed to be available to your key
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro" });
 
     const prompt = `
       Analyze the attached image of a civic issue. 
@@ -2419,24 +2419,7 @@ top5.forEach((c, idx) => {
   assignmentsToAdd.forEach((a) => issue.staffsAssigned.push(a));
   await issue.save();
 
-  // create tasks for new assignments
-  const createdTasks = [];
-  const defaultDeadline = issue.deadline || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  for (const a of assignmentsToAdd) {
-    const assignedToStr = String(a.user);
-    const taskDoc = {
-      title: `${issue.title} — ${a.role}`,
-      description: `Auto-generated task for issue "${issue.title}" as ${a.role}`,
-      issueId: issue._id,
-      assignedBy: req.user._id,
-      assignedTo: a.user,
-      roleOfAssignee: a.role,
-      status: "Pending",
-      deadline: defaultDeadline,
-    };
-    const created = await Task.create(taskDoc);
-    createdTasks.push(created);
-  }
+  
 
   // Return updated issue (populate minimal fields to show)
   const updatedIssue = await Issue.findById(issue._id)
@@ -2449,7 +2432,6 @@ top5.forEach((c, idx) => {
       user: String(a.user),
       role: a.role,
     })),
-    tasksCreated: createdTasks.length,
     issue: updatedIssue,
   });
 });

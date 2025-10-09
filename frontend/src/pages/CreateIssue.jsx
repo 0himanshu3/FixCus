@@ -23,79 +23,63 @@ export default function CreateIssue() {
     "Street lights/Exposed Wires", "Unauthorized loudspeakers", "Burning of garbage",
     "Encroachment / Illegal Construction", "Damaged Public Property", "Stray Animal Menace", "General Issue"
   ];
-const uploadFiles = async (filesArray, type) => {
-  if (!filesArray || filesArray.length === 0) return [];
 
-  const storage = getStorage(app);
-  const progressArr = Array(filesArray.length).fill(0);
-  setUploadProgress(prev => ({ ...prev, [type]: progressArr }));
-
-  const results = await Promise.all(filesArray.map((file, idx) => {
-    return new Promise((resolve) => {
-      try {
-        // Use a folder to keep paths tidy (optional)
-        const path = `${type}/${Date.now()}-${file.name}`;
-        const fileRef = ref(storage, path);
-
-        // Set contentType metadata explicitly (helps for videos)
-        const metadata = { contentType: file.type || (file.name.match(/\.(mp4|mov|webm)$/i) ? 'video/mp4' : 'application/octet-stream') };
-
-        const uploadTask = uploadBytesResumable(fileRef, file, metadata);
-
-        uploadTask.on(
-          "state_changed",
-          (snapshot) => {
-            const percent = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-            progressArr[idx] = percent;
-            setUploadProgress(prev => ({ ...prev, [type]: [...progressArr] }));
-            // Helpful debug:
-            console.log(`[upload ${type}] ${file.name} progress: ${percent}%`);
-          },
-          (err) => {
-            // Log and resolve with error object so Promise.all continues
-            console.error(`[upload ${type}] ERROR uploading ${file.name}:`, err);
-            resolve({ success: false, name: file.name, error: err.message || err.code || String(err) });
-          },
-          async () => {
-            try {
-              // Snapshot ref should be available; log its fullPath for debugging
-              console.log(`[upload ${type}] completed: snapshot ref path:`, uploadTask.snapshot.ref.fullPath);
-
+  const uploadFiles = async (filesArray) => {
+    if (!filesArray || filesArray.length === 0) return [];
+    const storage = getStorage(app);
+    const urls = [];
+    await Promise.all(
+      filesArray.map((file) => {
+        const fileRef = ref(storage, `${Date.now()}-${file.name}`);
+        const uploadTask = uploadBytesResumable(fileRef, file);
+        return new Promise((resolve, reject) => {
+          uploadTask.on("state_changed", null, 
+            (err) => reject(err),
+            async () => {
               const url = await getDownloadURL(uploadTask.snapshot.ref);
-              console.log(`[upload ${type}] got downloadURL for ${file.name}:`, url);
-              resolve({ success: true, name: file.name, url });
-            } catch (e) {
-              console.error(`[upload ${type}] ERROR getting downloadURL for ${file.name}:`, e);
-              resolve({ success: false, name: file.name, error: e.message || e.code || String(e) });
+              urls.push(url);
+              resolve();
             }
-          }
-        );
-      } catch (outerErr) {
-        console.error(`[upload ${type}] unexpected error for ${file.name}:`, outerErr);
-        resolve({ success: false, name: file.name, error: outerErr.message || String(outerErr) });
+          );
+        });
+      })
+    );
+    return urls;
+  };
+
+  const handleAIGenerate = async () => {
+    if (imageFiles.length === 0 || !location) {
+      toast.error("Please select at least one image and set a location.");
+      return;
+    }
+    setIsGenerating(true);
+    setAiGeneratedData(null);
+    setError("");
+    try {
+      const imageUrls = await uploadFiles([imageFiles[0]]);
+      if (imageUrls.length === 0) throw new Error("Image could not be uploaded.");
+
+      const res = await fetch("http://localhost:3000/api/v1/issues/generate-from-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageUrl: imageUrls[0] }),
+      });
+      
+      const result = await res.json();
+      if (result.success) {
+        setAiGeneratedData(result.data);
+        toast.success("AI has generated a draft for your issue!");
+      } else {
+        throw new Error(result.message || "AI failed to generate details.");
       }
-    });
-  }));
-
-  // build urls array of successful uploads
-  const urls = results.filter(r => r.success).map(r => r.url);
-  // log failed ones
-  const failed = results.filter(r => !r.success);
-  if (failed.length > 0) {
-    console.warn(`[upload ${type}] some files failed:`, failed);
-    // optionally show toast for failures
-    failed.forEach(f => toast.error(`Failed to upload ${f.name}: ${f.error}`));
-  }
-
-  // Update formData only with successful urls
-  setFormData(prev => ({ ...prev, [type]: [...prev[type], ...urls] }));
-
-  if (type === "images") setImageFiles([]);
-  else setVideoFiles([]);
-
-  return results; // returns full results so caller can inspect per-file outcome
-};
-
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+      toast.error(err.message);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const handleAcceptAI = () => {
     const finalFormData = {
@@ -298,76 +282,37 @@ const uploadFiles = async (filesArray, type) => {
                       </label>
                     </div>
 
-            {/* --- NEW: Image Preview Grid --- */}
-            {imageFiles.length > 0 && (
-              <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-                {imageFiles.map((file, index) => (
-                  <div key={index} className="relative group aspect-square">
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt={`preview ${index}`}
-                      className="w-full h-full object-cover rounded-md border-2 border-gray-200"
-                      // Revoke the object URL on load to prevent memory leaks
-                      onLoad={(e) => URL.revokeObjectURL(e.target.src)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(index)} // A new handler to remove the image
-                      className="absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      &times;
-                    </button>
+                    {/* Image Previews */}
+                      {imageFiles.length > 0 && (
+                        <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                          {imageFiles.map((file, index) => (
+                            <div key={index} className="relative group aspect-square">
+                              <img 
+                                src={URL.createObjectURL(file)} 
+                                alt={`preview ${index}`} 
+                                className="w-full h-full object-cover rounded-md border" 
+                              />
+                              <button 
+                                type="button" 
+                                onClick={() => handleRemoveImage(index)} 
+                                className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                &times;
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                   </div>
-                ))}
               </div>
-            )}
-
-            {/* Upload Progress Section (unchanged) */}
-            <div className="mt-2 space-y-1">
-              {uploadProgress.images.map((p, i) => (
-                <div key={i} className="text-sm text-gray-600">Image {i + 1}: {p}% uploaded</div>
-              ))}
-            </div>
-          </div>
-          <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Videos</label>
-              <div className="flex gap-3 items-center">
-                <input type="file" multiple accept="video/*" onChange={e => setVideoFiles([...e.target.files])} />
-                <button
-                  type="button"
-                  onClick={() => uploadFiles(videoFiles, "videos")}
-                  className="px-4 py-2 rounded-md bg-purple-600 text-white hover:bg-purple-700"
-                >
-                  Upload
-                </button>
+              <div className="mt-8 flex justify-end">
+                <button type="submit" disabled={isSubmitting} className="px-5 py-3 rounded-md bg-purple-600 text-white font-medium hover:bg-purple-700 disabled:opacity-60">{isSubmitting ? "Creating..." : "Create Issue"}</button>
               </div>
-              <div className="mt-2 space-y-1">
-                {uploadProgress.videos.map((p, i) => (
-                  <div key={i} className="text-sm text-gray-600">Video {i + 1}: {p}%</div>
-                ))}
-              </div>
-            </div>
-
-            {error && <div className="md:col-span-2 text-red-600">{error}</div>}
-
-        
-
-          </div>
-
-          {/* Submit Button */}
-          <div className="mt-8 flex justify-end">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="inline-flex items-center px-5 py-3 rounded-md bg-purple-600 text-white font-medium hover:bg-purple-700 disabled:opacity-60"
-            >
-              {isSubmitting ? "Submitting..." : "Create Issue"}
-            </button>
-          </div>
-        </form>
+            </form>
+          )}
+          {error && <div className="mt-4 text-red-600 bg-red-50 p-3 rounded-md">{error}</div>}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
 }
-
