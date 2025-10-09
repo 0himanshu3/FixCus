@@ -5,18 +5,6 @@ import { useSelector } from "react-redux";
 import IssuesHeatmap from "./IssuesHeatmap";
 
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
-const issueCategories = [
-    "Road damage",
-    "Waterlogging / Drainage Issues",
-    "Improper Waste Management",
-    "Street lights/Exposed Wires",
-    "Unauthorized loudspeakers",
-    "Burning of garbage",
-    "Encroachment / Illegal Construction",
-    "Damaged Public Property",
-    "Stray Animal Menace",
-    "General Issue"
-  ];
 const statusOptions = ["Open", "In Progress", "Resolved"];
 
 function IssuesMunicipality() {
@@ -29,10 +17,10 @@ function IssuesMunicipality() {
 
   const user = useSelector((state) => state.auth.user);
   const adminDistrict = user?.district || null;
+  const municipalityDivision = user?.division || null;
 
   const [filters, setFilters] = useState({
     title: searchParams.get("title") || "",
-    category: searchParams.get("category") || "",
     priority: searchParams.get("priority") || "",
     status: searchParams.get("status") || "",
     votes: searchParams.get("votes") || "",
@@ -57,6 +45,7 @@ function IssuesMunicipality() {
 
       if (adminDistrict) {
         query.append("district", adminDistrict);
+        
       }
 
       const res = await fetch(
@@ -73,6 +62,7 @@ function IssuesMunicipality() {
 
         const validIssues = (data.issues || []).filter(
           (issue) =>
+            issue.category === municipalityDivision &&
             issue.issueDistrict &&
             issue.issueDistrict.trim() !== "" &&
             issue.issueDistrict === adminDistrict
@@ -122,7 +112,6 @@ function IssuesMunicipality() {
   const handleResetFilters = () => {
     const resetFilters = {
       title: "",
-      category: "",
       priority: "",
       status: "",
       votes: "",
@@ -133,6 +122,7 @@ function IssuesMunicipality() {
     fetchFilteredIssues(resetFilters);
     setIsFilterOpen(false);
   };
+
 const fetchAllIssuesForHeatmap = async () => {
     try {
       const res = await fetch(
@@ -314,7 +304,7 @@ const fetchAllIssuesForHeatmap = async () => {
               className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
             />
 
-            <select
+            {/* <select
               value={filters.category}
               onChange={(e) =>
                 setFilters({ ...filters, category: e.target.value })
@@ -327,7 +317,7 @@ const fetchAllIssuesForHeatmap = async () => {
                   {cat}
                 </option>
               ))}
-            </select>
+            </select> */}
 
             <select
               value={filters.priority}

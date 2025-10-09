@@ -711,7 +711,7 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* NEW: Description Section */}
+        {/* Description Section */}
         <div className="bg-white/80 border-4 border-yellow-200 rounded-xl shadow-lg p-6 text-lg text-purple-900 leading-relaxed">
           <h2 className="font-bold text-2xl mb-3 text-pink-700 flex items-center gap-2">
             📝 Description

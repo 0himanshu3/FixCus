@@ -95,7 +95,7 @@ export default function MunicipalityMain() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
-  // ----------------- Fetchers -----------------
+  // Fetchers
   async function fetchIssues() {
     try {
       setLoadingIssues(true)
@@ -142,7 +142,7 @@ export default function MunicipalityMain() {
     }
   }
 
-  // ----------------- Feedback / AI -----------------
+  // Feedback / AI
   const openFeedbackModal = async (issueId) => {
     try {
       const res = await axios.get(`http://localhost:3000/api/v1/issues/feedback/${issueId}`, { withCredentials: true })
@@ -180,7 +180,7 @@ export default function MunicipalityMain() {
     setLoadingAIAnalysis(false)
   }
 
-  // ----------------- Staff details modal -----------------
+  // Staff details modal
   const handleViewStaffDetails = async (staffMember) => {
     if (!staffMember?._id) return
     try {
@@ -205,7 +205,7 @@ export default function MunicipalityMain() {
     setSelectedStaffDetails(null)
   }
 
-  // ----------------- Search & filters -----------------
+  // Search & filters
   const handleSearchChange = (e) => setQuery(e.target.value)
 
   const filteredIssues = issues
@@ -216,7 +216,6 @@ export default function MunicipalityMain() {
       return (i.title || '').toLowerCase().includes(q) || (i.location || i.issueDistrict || '').toLowerCase().includes(q)
     })
 
-  // ----------------- StaffOverview component -----------------
   const StaffOverview = () => {
     const total = staff.length
     return (
@@ -250,12 +249,12 @@ export default function MunicipalityMain() {
                   <div>
                     <div className="font-semibold text-gray-900">{s.name}</div>
                     <div className="text-xs text-purple-600 font-medium">{s.role || 'Staff'}</div>
-                    {Array.isArray(s.expertises) && s.expertises.length > 0 && (
+                    {/* {Array.isArray(s.expertises) && s.expertises.length > 0 && (
                       <div className="text-xs text-gray-600 mt-1">
                         <span className="font-semibold text-gray-700 mr-1">Expertises:</span>
                         {s.expertises.join(', ')}
                       </div>
-                    )}
+                    )} */}
                   </div>
                 </div>
 
@@ -267,12 +266,12 @@ export default function MunicipalityMain() {
                     Details
                   </button>
 
-                  <button
+                  {/* <button
                     onClick={() => openEditExpertisesModal(s)}
                     className="px-3 py-1 text-xs font-bold bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition shadow-sm"
                   >
                     Edit Expertises
-                  </button>
+                  </button> */}
                 </div>
               </div>
             ))
@@ -284,7 +283,7 @@ export default function MunicipalityMain() {
 
   const count = (a) => (Array.isArray(a) ? a.length : typeof a === 'number' ? a : 0)
 
-  // ----------------- Assign New Municipality Staff handlers -----------------
+  //Assign New Municipality Staff handlers
   const openAssignModal = () => {
     setAssignEmail('')
     setAssignExpertises([])
@@ -347,8 +346,9 @@ export default function MunicipalityMain() {
     }
   }
 
-  // ----------------- Edit Expertises handlers (per staff) -----------------
+  // Edit Expertises handlers (per staff)
   const openEditExpertisesModal = (staffMember) => {
+    setIsStaffModalOpen(false)
     setEditStaff(staffMember)
     setEditExpertises(Array.isArray(staffMember?.expertises) ? [...staffMember.expertises] : [])
     setEditingError('')
@@ -408,9 +408,9 @@ export default function MunicipalityMain() {
     }
   }
 
-  // ----------------- Render -----------------
+  // Render
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50">
+    <div className="min-h-screen p-6 bg-gradient-to-br from-purple-200 via-pink-200 to-purple-200">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Left — Pending issues list and Resolved issues below */}
@@ -592,8 +592,7 @@ export default function MunicipalityMain() {
         </div>
       </div>
 
-      {/* ---------------- Modals ---------------- */}
-
+      
       {/* Assign New Municipality Staff Modal */}
       {isAssignModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
@@ -654,7 +653,7 @@ export default function MunicipalityMain() {
       {/* Edit Expertises Modal (per staff) */}
       {isEditModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm pointer-events-auto" onClick={closeEditModal} />
+          <div className="absolute inset-0 backdrop-blur-sm pointer-events-auto" onClick={closeEditModal} />
           <form onSubmit={saveExpertisesForStaff} className="relative pointer-events-auto bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6 shadow-2xl border-2 border-yellow-300">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -733,6 +732,28 @@ export default function MunicipalityMain() {
                     <StatCard icon={<FaHourglassHalf />} label="Pending" value={selectedStaffDetails.taskStats.pending} color="yellow" />
                   </div>
                   <ProgressBar label="Task Completion" percentage={selectedStaffDetails.taskStats.completionPercentage} color="pink" />
+                  </div>
+                  <div className="bg-blue-50 p-4 rounded-lg border-2 border-blue-200">
+                    <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-bold text-gray-900 flex items-center gap-2"><FaStar /> Areas of Expertise</h4>
+                        <button 
+                            onClick={() => openEditExpertisesModal(selectedStaff)}
+                            className="px-3 py-1 text-xs font-bold bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition shadow-sm"
+                        >
+                            Edit
+                        </button>
+                    </div>
+                    {selectedStaff?.expertises && selectedStaff.expertises.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                            {selectedStaff.expertises.map(exp => (
+                                <span key={exp} className="px-3 py-1 bg-white text-blue-800 text-xs font-semibold rounded-full border-2 border-blue-200">
+                                    {exp}
+                                </span>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-gray-500">No expertises listed for this staff member.</p>
+                    )}
                 </div>
               </div>
             ) : (
@@ -805,7 +826,7 @@ export default function MunicipalityMain() {
   )
 }
 
-/* ---------------- Helper UI components ---------------- */
+/* Helper UI components */
 
 const StarRating = ({ rating = 0 }) => (
   <div className="flex items-center text-yellow-500 mt-1">
