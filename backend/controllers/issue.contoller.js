@@ -391,6 +391,7 @@ export const getIssueBySlug = async (req, res) => {
             issueTakenUpBy: issue.issueTakenUpBy,
             createdAt: issue.createdAt,
             updatedAt: issue.updatedAt,
+            whatsappLink: issue.whatsappLink,
         };
 
         return res.status(200).json({ success: true, issue: issueData });
@@ -2291,7 +2292,7 @@ export const getSuggestedStaff = asyncHandler(async (req, res) => {
   const users = await User.find({
     role: "Municipality Staff",
     $or: [
-      { _id: { $in: workedUserIds.map(id => mongoose.Types.ObjectId(id)) } },
+      { _id: { $in: workedUserIds.map(id => new mongoose.Types.ObjectId(id)) } },
       { expertises: category }
     ]
   })
@@ -2513,5 +2514,35 @@ export const reopenUnresolvedIssues = async () => {
   } catch (err) {
     console.error('Reopen Issues Error:', err);
     return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const updateWhatsappLink = async (req, res) => {
+  try {
+    const { issueId } = req.params;
+    const { whatsappLink } = req.body;
+
+    const issue = await Issue.findById(issueId);
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found.' });
+    }
+
+    // This is a crucial security check on the backend.
+    if (issue.whatsappLink) {
+      return res.status(400).json({ success: false, message: 'A WhatsApp link has already been added to this issue.' });
+    }
+
+    issue.whatsappLink = whatsappLink;
+    const updatedIssue = await issue.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'WhatsApp link added successfully.',
+      issue: updatedIssue,
+    });
+
+  } catch (error) {
+    console.error("Error adding WhatsApp link:", error);
+    res.status(500).json({ success: false, message: 'Server error while adding the link.' });
   }
 };

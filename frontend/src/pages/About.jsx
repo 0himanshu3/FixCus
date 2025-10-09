@@ -1,10 +1,9 @@
 import React from "react";
 
 const teamRoles = [
-  { label: "Project Lead", color: "from-amber-500 to-pink-600", emoji: "🎩" },
-  { label: "Frontend Developer", color: "from-pink-500 to-purple-600", emoji: "💻" },
-  { label: "Backend Developer", color: "from-purple-500 to-violet-600", emoji: "🛠️" },
-  { label: "UI/UX Designer", color: "from-yellow-400 to-pink-400", emoji: "🎨" }
+  { label: "Project Lead", color: "from-amber-500 to-pink-600", emoji: "🎩",user:"Himanshu Kumar" },
+  { label: "Frontend Developer", color: "from-pink-500 to-purple-600", emoji: "💻",user:"Satyam Jha" },
+  { label: "Backend Developer", color: "from-purple-500 to-violet-600", emoji: "🛠️",user:"Debopriyo Sen" }
 ];
 
 const About = () => {
@@ -99,7 +98,7 @@ const About = () => {
                   {role.emoji}
                 </div>
                 <h3 className="font-semibold text-purple-900">{role.label}</h3>
-                <p className="text-xs text-gray-500 mt-1">FixCus Crew</p>
+                <p className="text-xs text-gray-500 mt-1">{role.user}</p>
               </div>
             ))}
           </div>
