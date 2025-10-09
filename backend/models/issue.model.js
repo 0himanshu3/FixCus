@@ -58,7 +58,7 @@ const IssueSchema = new mongoose.Schema(
     staffsAssigned: [AssignedStaffSchema],
 
     reportedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    status: { type: String, enum: ["Open", "In Progress", "Resolved"], default: "Open" },
+    status: { type: String, enum: ["Open", "In Progress", "Resolved","Not Resolved"], default: "Open" },
 
     upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     downvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
