@@ -1,5 +1,5 @@
 import express from "express";
-import { addComment, createIssue,getMunicipalityIssues, deleteComment,getMyIssues,getCompletedIssuesByDistrict, downvoteIssue, getTopIssues,getSummary,getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback, getFeedbackForIssue, getReportForIssue, analyzeFeedback, reassignTaskToCoordinator, completeTaskBySupervisor, getIssueTimeline,  getStaffDashboardDetails, classifyIssueImage, generateIssueFromImage, getSuggestedStaff, assignMultipleSuggestedStaff } from "../controllers/issue.contoller.js";
+import { addComment, createIssue,getMunicipalityIssues, deleteComment,getMyIssues,getCompletedIssuesByDistrict, downvoteIssue, getTopIssues,getSummary,getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff, assignTask, getTasksForUser, updateTask, submitTaskProof, approveRejectTaskProof, resolveIssue, getMonthlyAnalysis, submitFeedback, getFeedbackForIssue, getReportForIssue, analyzeFeedback, reassignTaskToCoordinator, completeTaskBySupervisor, getIssueTimeline,  getStaffDashboardDetails, classifyIssueImage, generateIssueFromImage, getSuggestedStaff, assignMultipleSuggestedStaff, updateWhatsappLink } from "../controllers/issue.contoller.js";
 import { isAuthenticated, protectMunicipality } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
@@ -84,3 +84,4 @@ export default router;
 router.post("/classify", classifyIssueImage);
 
 router.post("/generate-from-image", generateIssueFromImage);
+router.post("/:issueId/whatsapp", updateWhatsappLink)

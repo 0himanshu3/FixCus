@@ -12,6 +12,7 @@ import {
 import { app } from "../firebase";
 import Timeline from "./Timeline";
 import { toast } from "react-toastify";
+import {FaWhatsapp} from "react-icons/fa"
 
 /**
  IssueDetailsStaff
@@ -862,6 +863,30 @@ export default function IssueDetailsStaff() {
             )}
           </div>
         </div>
+
+        {(assignedRole === "Worker" || assignedRole === "Coordinator" || assignedRole === "Supervisor") && (
+          <div className="bg-pink-200 rounded-xl p-5 shadow-xl border-4 border-purple-600">
+          <h2 className="text-2xl font-black text-purple-900 mb-4 flex items-center gap-3">
+            <FaWhatsapp className="text-green-500" />
+            <span>WhatsApp Group Link</span>
+          </h2>
+          <div className="space-y-3">
+            {issue.whatsappLink ? (
+              <a
+                href={issue.whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-900 font-medium underline hover:text-pink-700 transition-colors"
+              >
+                Join the WhatsApp Group
+              </a>
+            ) : (
+              <p className="text-purple-700 font-semibold">No WhatsApp link available.</p>
+            )}
+          </div>
+        </div>)}
+
+
 
         {/* Worker / Coordinator: Your Assigned Tasks */}
         {(assignedRole === "Worker" || assignedRole === "Coordinator") && (

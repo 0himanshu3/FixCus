@@ -67,8 +67,8 @@ const IssueSchema = new mongoose.Schema(
     issueTakenUpBy: { type: mongoose.Schema.Types.ObjectId, ref: "Municipality" },
     issueTakenUpTime:{type: Date},
     deadline: { type: Date },
+    whatsappLink: { type: String },
 
-    // ✅ Newly added fields
     resolvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     resolvedAt: { type: Date },
     resolutionReport: { type: mongoose.Schema.Types.ObjectId, ref: "ResolutionReport" },
