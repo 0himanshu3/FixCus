@@ -36,6 +36,7 @@ import IssuesHeatmapPage from "./pages/IssuesHeatmapPage";
 import DashboardStaff from "./pages/dashboard/DashboardStaff";
 import Dashboard from "./pages/dashboard/Dashboard";
 import FillApplicationPage from "./components/FillApplicationPage";
+import MunicipalityMain from "./pages/dashboard/MuncipalityMain";
 const App = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
@@ -52,8 +53,9 @@ const App = () => {
       case "Municipality Admin":
         return <IssuesMunicipality />;
       case "Municipality Staff":
-      case "Admin":
         return <IssuesStaff />;
+      case "Admin":
+        return <IssuesAdmin />;
       default:
         return <Issues />; // fallback
     }
@@ -64,9 +66,11 @@ const App = () => {
       case "User":
         return <Dashboard />;
       case "Municipality Admin":
-        return <AdminDashboard />;
+        return <MunicipalityMain />;
       case "Municipality Staff":
         return <DashboardStaff />;
+      case "Admin":
+        return <AdminDashboard />; // fallback
       default:
         return <Dashboard />; // fallback
     }
@@ -164,12 +168,15 @@ const App = () => {
           <Route path="/issue/:slug" element={getIssueDetailsComponent()} />
           <Route path="/dashboard" element={getDashboardComponent()} />
           <Route path="/create" element={<CreateIssue />} />
-          <Route path="/municipality" element={<MuncipalityMain />} />
           <Route path="/monthly-analysis" element={<MonthlyAnalysis />} />
           <Route path="/municipality-view" element={<MunicipalityView />} />
+         {user?.role === "Admin" && (
+        <>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/requests" element={<ApplicationRequest />} />
           <Route path="/admin/issues" element={<IssuesAdmin />} />
+        </>
+      )}
           <Route path="/issues-heatmap" element={<IssuesHeatmapPage />} />
           <Route path="/fill-application-page" element={<FillApplicationPage />} />
           <Route path="/municipality/:slug" element={<MunicipalityDetails />} />
