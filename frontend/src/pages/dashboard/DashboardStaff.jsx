@@ -95,7 +95,7 @@ const DashboardStaff = () => {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const res = await fetch('/api/v1/issues/staff/dashboard', {
+        const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/staff/dashboard`, {
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
         })
