@@ -1,13 +1,13 @@
 import express from "express";
 import { addComment, createIssue,getMunicipalityIssues, deleteComment,getMyIssues,getCompletedIssuesByMuni, downvoteIssue, getTopIssues,getSummary,getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff,  resolveIssue, getMonthlyAnalysis, getReportForIssue,  getIssueTimeline,  getStaffDashboardDetails, generateIssueFromImage, getSuggestedStaff, assignMultipleSuggestedStaff, updateWhatsappLink } from "../controllers/issue.contoller.js";
-import { isAuthenticated, protectMunicipality } from "../middlewares/auth.middleware.js";
+import { isAuthenticated, isAdminOrOrganiser,protectMunicipality } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
 router.post("/create", isAuthenticated, createIssue);
-router.get("/completed-issues",isAuthenticated, getCompletedIssues);
+router.get("/completed-issues",isAdminOrOrganiser, getCompletedIssues);
 router.get("/completed-issuesbymuni",isAuthenticated, getCompletedIssuesByMuni);
-router.get("/issue-details/:id",isAuthenticated,getIssueDetails)
+router.get("/issue-details/:id",isAdminOrOrganiser,getIssueDetails)
 router.get("/all",isAuthenticated, getIssues);
 router.get("/pending",isAuthenticated, getPendingIssues);
 router.get("/monthly-analysis",isAuthenticated,getMonthlyAnalysis)

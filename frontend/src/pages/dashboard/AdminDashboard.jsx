@@ -110,7 +110,7 @@ const fetchMunicipalities = async () => {
 
   const fetchIssueFeedback = async (issueId) => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/feedback/${issueId}`, { withCredentials: true });
+      const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/feedbacks/feedback/${issueId}`, { withCredentials: true });
       setFeedbackList(res.data.feedbacks || []);
       setShowFeedbackModal(true);
     } catch (err) {
