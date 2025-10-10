@@ -2177,6 +2177,8 @@ export const generateIssueFromImage = async (req, res) => {
       2. A detailed "description" of the problem, explaining what is wrong and why it is a concern. Do not make it sound like telling whats in the image like "This image shows...". Instead, describe the issue as a citizen would when reporting it.
       3. A suggested "category" from this exact list: ["Road damage", "Waterlogging / Drainage Issues", "Improper Waste Management", "Street lights/Exposed Wires", "Burning of garbage", "Damaged Public Property", "Encroachment / Illegal Construction", "Unauthorized loudspeakers", "Stray Animal Menace", "General Issue"].
       4. The issues are in indian context so consider that while generating the response.
+      5. If the image is unclear or does not depict a civic issue, respond with "title", "description" as "Unclear image, unable to determine issue" and "category" as "General Issue".
+      6. Provide the response ONLY as a JSON object with no extra text or formatting.
 
       Your entire response must be ONLY the raw JSON object, with no extra text or markdown formatting.
     `;
@@ -2186,14 +2188,19 @@ export const generateIssueFromImage = async (req, res) => {
     const result = await model.generateContent([prompt, imagePart]);
     const responseText = result.response.text();
     
-    const jsonString = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
-    const data = JSON.parse(jsonString);
+    let data;
+    try {
+        const jsonString = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+        data = JSON.parse(jsonString);
+    } catch (e) {
+        console.error("Failed to parse JSON from AI response:", responseText);
+        throw new Error("AI returned a response in an unexpected format.");
+    }
 
     res.json({ success: true, data });
 
   } catch (error) {
     console.error("Error with Gemini API:", error); 
-    // Provide a more specific error message back to the frontend if possible
     const errorMessage = error.message || "Failed to generate issue details from image.";
     res.status(500).json({ success: false, message: errorMessage });
   }

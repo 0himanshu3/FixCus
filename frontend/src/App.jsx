@@ -22,6 +22,7 @@ import IssueDetailsStaff from "./components/IssueDetailsStaff";
 import MuncipalityMain from "./pages/MuncipalityMain";
 import AdminDashboard from "./pages/AdminDashboard";
 import ApplicationRequest from "./pages/ApplicationRequest";
+import IssuesAdmin from "./components/IssuesAdmin";
 import IssueDetailsMunicipality from "./components/IssueDetailsMunicipality"; // If you have this component
 import IssuesMunicipality from "./components/IssuesMunicipality"; // If you have this component
 import CreateIssue from "./pages/CreateIssue";
@@ -168,6 +169,7 @@ const App = () => {
           <Route path="/municipality-view" element={<MunicipalityView />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/requests" element={<ApplicationRequest />} />
+          <Route path="/admin/issues" element={<IssuesAdmin />} />
           <Route path="/issues-heatmap" element={<IssuesHeatmapPage />} />
           <Route path="/fill-application-page" element={<FillApplicationPage />} />
           <Route path="/municipality/:slug" element={<MunicipalityDetails />} />

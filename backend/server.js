@@ -5,6 +5,7 @@ import { Server } from "socket.io";
 import cron from "node-cron";
 import { escalateIssuePriority, escalateOverdueTasksService,reopenUnresolvedIssues} from "./controllers/issue.contoller.js";
 import { sendDeadlineRemindersService } from "./controllers/notification.controller.js";
+import { processJobQueue } from "./worker.js";
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -64,8 +65,14 @@ cron.schedule("0 0,12 * * *", async () => {
   }
 });
 
-server.listen(process.env.PORT, () => {
-    
+cron.schedule('* * * * *', () => {
+  console.log('[CRON] Checking for pending jobs in the queue...');
+  processJobQueue();
+});
+
+server.listen(process.env.PORT || 3000, () => {
+    console.log(`Server is running on port ${process.env.PORT || 3000}`);
+    console.log(`Socket.IO server is ready`);
 });
 
 // (async () => {

@@ -45,6 +45,7 @@ const Header = ({ notifications }) => {
   const adminLinks = [
     { path: "/admin/dashboard", label: "Dashboard" },
     { path: "/admin/requests", label: "Requests" },
+    { path: "/admin/issues", label: "Issues" },
   ];
 
   const messageLinks = [
