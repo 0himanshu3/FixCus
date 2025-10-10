@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import IssuesHeatmap from "../IssuesHeatmap";
 import { useSelector } from "react-redux";
-
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
 const issueCategories = [
     "Road damage",
