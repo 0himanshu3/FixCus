@@ -45,7 +45,6 @@ function IssuesMunicipality() {
 
       if (adminDistrict) {
         query.append("district", adminDistrict);
-        
       }
 
       const res = await fetch(

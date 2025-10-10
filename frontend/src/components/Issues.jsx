@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import IssuesHeatmap from "./IssuesHeatmap";
+import { useSelector } from "react-redux";
 
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
 const issueCategories = [
@@ -25,6 +26,8 @@ function Issues() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isHeatmapOpen, setIsHeatmapOpen] = useState(false);
+  const user = useSelector((state) => state.auth.user);
+  const userDistrict = user?.district || null;
 
   // Initialize filters from URL query params
   const [filters, setFilters] = useState({
@@ -32,10 +35,11 @@ function Issues() {
     category: searchParams.get("category") || "",
     priority: searchParams.get("priority") || "",
     status: searchParams.get("status") || "",
-    location: searchParams.get("location") || "",
+    // location: searchParams.get("location") || "",
     votes: searchParams.get("votes") || "",
     recency: searchParams.get("recency") || "",
   });
+
 
   // Fetch filtered issues from API
   const fetchFilteredIssues = async (appliedFilters) => {
@@ -46,6 +50,10 @@ function Issues() {
       Object.entries(appliedFilters).forEach(([key, value]) => {
         if (value) query.append(key, value);
       });
+
+      if (userDistrict) {
+        query.append("location", userDistrict);
+      }
 
       const res = await fetch(
         `http://localhost:3000/api/v1/issues/all?${query.toString()}`,
@@ -95,7 +103,7 @@ function Issues() {
       category: "",
       priority: "",
       status: "",
-      location: "",
+      // location: "",
       votes: "",
       recency: "",
     };
@@ -309,7 +317,7 @@ function Issues() {
               ))}
             </select>
 
-            <input
+            {/* <input
               type="text"
               placeholder="Location"
               value={filters.location}
@@ -317,7 +325,7 @@ function Issues() {
                 setFilters({ ...filters, location: e.target.value })
               }
               className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
-            />
+            /> */}
 
             <select
               value={filters.votes}
