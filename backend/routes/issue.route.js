@@ -5,9 +5,9 @@ import { isAuthenticated, isAdminOrOrganiser,protectMunicipality } from "../midd
 const router = express.Router();
 
 router.post("/create", isAuthenticated, createIssue);
-router.get("/completed-issues",isAdminOrOrganiser, getCompletedIssues);
+router.get("/completed-issues",isAuthenticated, getCompletedIssues);
 router.get("/completed-issuesbymuni",isAuthenticated, getCompletedIssuesByMuni);
-router.get("/issue-details/:id",isAdminOrOrganiser,getIssueDetails)
+router.get("/issue-details/:id",isAuthenticated,getIssueDetails)
 router.get("/all",isAuthenticated, getIssues);
 router.get("/pending",isAuthenticated, getPendingIssues);
 router.get("/monthly-analysis",isAuthenticated,getMonthlyAnalysis)
