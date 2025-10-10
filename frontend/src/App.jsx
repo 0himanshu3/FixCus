@@ -170,13 +170,13 @@ const App = () => {
           <Route path="/create" element={<CreateIssue />} />
           <Route path="/monthly-analysis" element={<MonthlyAnalysis />} />
           <Route path="/municipality-view" element={<MunicipalityView />} />
-         {user?.role === "Admin" && (
-        <>
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/requests" element={<ApplicationRequest />} />
-          <Route path="/admin/issues" element={<IssuesAdmin />} />
-        </>
-      )}
+          {user?.role === "Admin" && (
+            <>
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/requests" element={<ApplicationRequest />} />
+              <Route path="/admin/issues" element={<IssuesAdmin />} />
+            </>
+          )}
           <Route path="/issues-heatmap" element={<IssuesHeatmapPage />} />
           <Route path="/fill-application-page" element={<FillApplicationPage />} />
           <Route path="/municipality/:slug" element={<MunicipalityDetails />} />

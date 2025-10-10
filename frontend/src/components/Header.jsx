@@ -54,7 +54,7 @@ const Header = ({ notifications }) => {
 
   return (
     <>
-      <header className="bg-gradient-to-r from-purple-800 via-purple-700 to-pink-700 shadow-2xl py-4 px-6 flex justify-between items-center relative border-b-4 border-pink-400">
+      <header className="bg-gradient-to-r from-purple-800 via-purple-700 to-pink-700 shadow-2xl py-4 px-4 sm:px-6 flex justify-between items-center sticky top-0 z-40 border-b-4 border-pink-400 w-full">
         {/* Logo */}
         <Link to="/" className="flex items-center">
           <img src="logo-fixcus.png" alt="FixCus Logo" className="h-10 w-auto" />
@@ -67,95 +67,45 @@ const Header = ({ notifications }) => {
               key={item.path}
               to={item.path}
               className={`${isActive(item.path)
-                ? "text-yellow-300 font-black border-b-2 border-yellow-300"
-                : "hover:text-white transition duration-200"
-              }`}
+                  ? "text-yellow-300 font-black border-b-2 border-yellow-300"
+                  : "hover:text-white transition duration-200"
+                }`}
             >
               {item.label}
             </Link>
           ))}
-
-          {/* Municipality Admin links (filtered by accountApproved) */}
           {isAuthenticated && user?.role === "Municipality Admin" &&
             municipalityLinks
               .filter(link => !link.requiresApproval || user.accountApproved)
               .map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`${isActive(item.path)
-                    ? "text-yellow-300 font-black border-b-2 border-yellow-300"
-                    : "hover:text-white transition duration-200"
-                  }`}
-                >
+                <Link key={item.path} to={item.path} className={`${isActive(item.path) ? "text-yellow-300 font-black border-b-2 border-yellow-300" : "hover:text-white transition duration-200"}`}>
                   {item.label}
                 </Link>
-              ))
-          }
-
-          {/* Staff links */}
+              ))}
           {isAuthenticated && user?.role === "Municipality Staff" &&
             staffLinks.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`${isActive(item.path)
-                  ? "text-yellow-300 font-black border-b-2 border-yellow-300"
-                  : "hover:text-white transition duration-200"
-                }`}
-              >
+              <Link key={item.path} to={item.path} className={`${isActive(item.path) ? "text-yellow-300 font-black border-b-2 border-yellow-300" : "hover:text-white transition duration-200"}`}>
                 {item.label}
               </Link>
-            ))
-          }
-
-          {/* Admin links */}
+            ))}
           {isAuthenticated && user?.role === "Admin" &&
             adminLinks.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`${isActive(item.path)
-                  ? "text-yellow-300 font-black border-b-2 border-yellow-300"
-                  : "hover:text-white transition duration-200"
-                }`}
-              >
+              <Link key={item.path} to={item.path} className={`${isActive(item.path) ? "text-yellow-300 font-black border-b-2 border-yellow-300" : "hover:text-white transition duration-200"}`}>
                 {item.label}
               </Link>
-            ))
-          }
-
-          {/* Regular User links */}
+            ))}
           {isAuthenticated && user?.role === "User" &&
             authLinks.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`${isActive(item.path)
-                  ? "text-yellow-300 font-black border-b-2 border-yellow-300"
-                  : "hover:text-white transition duration-200"
-                }`}
-              >
+              <Link key={item.path} to={item.path} className={`${isActive(item.path) ? "text-yellow-300 font-black border-b-2 border-yellow-300" : "hover:text-white transition duration-200"}`}>
                 {item.label}
               </Link>
-            ))
-          }
-
-          {/* Event Organiser links */}
+            ))}
           {isAuthenticated && user?.role === "Event Organiser" &&
             messageLinks.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`${isActive(item.path)
-                  ? "text-yellow-300 font-black border-b-2 border-yellow-300"
-                  : "hover:text-white transition duration-200"
-                }`}
-              >
+              <Link key={item.path} to={item.path} className={`${isActive(item.path) ? "text-yellow-300 font-black border-b-2 border-yellow-300" : "hover:text-white transition duration-200"}`}>
                 {item.label}
               </Link>
-            ))
-          }
+            ))}
         </nav>
 
         {/* Right side: Account / Logout / Notifications / Hamburger */}
@@ -190,150 +140,103 @@ const Header = ({ notifications }) => {
           )}
 
           <button
-            className="md:hidden text-pink-100 text-2xl hover:text-white transition duration-200"
-            onClick={() => setMenuModalOpen(true)}
+            className="md:hidden text-pink-100 text-2xl hover:text-white transition duration-200 z-50"
+            onClick={() => setMenuModalOpen(!menuModalOpen)}
           >
-            <FaBars />
+            {menuModalOpen ? <FaTimes /> : <FaBars />}
           </button>
         </div>
       </header>
 
-      {/* Mobile Menu Modal */}
-      {menuModalOpen && (
-        <div
-          className="fixed inset-0 bg-purple-900 bg-opacity-95 flex items-center justify-center z-50"
-          onClick={() => setMenuModalOpen(false)}
-        >
-          <div
-            className="bg-gradient-to-br from-pink-200 to-pink-300 w-80 p-6 rounded-2xl shadow-2xl relative border-4 border-purple-600"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="absolute top-2 right-3 text-purple-900 hover:text-purple-700 text-3xl font-black"
-              onClick={() => setMenuModalOpen(false)}
-            >
-              <FaTimes />
-            </button>
+      {/* --- REFACTORED MOBILE MENU PANEL --- */}
 
-            <nav className="flex flex-col space-y-4 text-purple-900 font-bold">
-              {commonLinks.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className="hover:text-purple-700 transition duration-200 text-lg"
-                  onClick={() => setMenuModalOpen(false)}
-                >
-                  🎪 {item.label}
+      {/* 1. Overlay */}
+      <div
+        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 ease-in-out
+          ${menuModalOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        onClick={() => setMenuModalOpen(false)}
+      ></div>
+
+      {/* 2. Slide-in Panel */}
+      <div
+        className={`fixed top-0 right-0 h-full w-80 max-w-[85vw] bg-gradient-to-b from-purple-900 to-purple-800 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out
+          ${menuModalOpen ? "translate-x-0" : "translate-x-full"}`}
+      >
+        <div className="flex flex-col h-full">
+          {/* Menu Header */}
+          <div className="p-6 border-b border-purple-700">
+            <h2 className="text-xl font-black text-pink-200">Menu</h2>
+            {isAuthenticated && <p className="text-sm text-purple-300">Welcome!</p>}
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="flex-grow p-6 flex flex-col gap-y-4 overflow-y-auto">
+            {commonLinks.map((item) => (
+              <Link key={item.path} to={item.path} onClick={() => setMenuModalOpen(false)} className={`text-lg font-bold transition duration-200 p-2 rounded-md ${isActive(item.path) ? "text-purple-900 bg-yellow-300" : "text-pink-100 hover:bg-purple-700 hover:text-white"}`}>
+                {item.label}
+              </Link>
+            ))}
+            {isAuthenticated && user?.role === "Municipality Admin" &&
+              municipalityLinks.filter(link => !link.requiresApproval || user.accountApproved).map((item) => (
+                <Link key={item.path} to={item.path} onClick={() => setMenuModalOpen(false)} className={`text-lg font-bold transition duration-200 p-2 rounded-md ${isActive(item.path) ? "text-purple-900 bg-yellow-300" : "text-pink-100 hover:bg-purple-700 hover:text-white"}`}>
+                  {item.label}
                 </Link>
               ))}
-
-              {/* Municipality Admin (filtered by accountApproved) */}
-              {isAuthenticated && user?.role === "Municipality Admin" &&
-                municipalityLinks
-                  .filter(link => !link.requiresApproval || user.accountApproved)
-                  .map((item) => (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className="hover:text-purple-700 transition duration-200 text-lg"
-                      onClick={() => setMenuModalOpen(false)}
-                    >
-                      🎪 {item.label}
-                    </Link>
-                  ))
-              }
-
-              {/* Staff */}
-              {isAuthenticated && user?.role === "Municipality Staff" &&
-                staffLinks.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className="hover:text-purple-700 transition duration-200 text-lg"
-                    onClick={() => setMenuModalOpen(false)}
-                  >
-                    🎪 {item.label}
-                  </Link>
-                ))
-              }
-
-              {/* Admin */}
-              {isAuthenticated && user?.role === "Admin" &&
-                adminLinks.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className="hover:text-purple-700 transition duration-200 text-lg"
-                    onClick={() => setMenuModalOpen(false)}
-                  >
-                    🎪 {item.label}
-                  </Link>
-                ))
-              }
-
-              {/* User */}
-              {isAuthenticated && user?.role === "User" &&
-                authLinks.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className="hover:text-purple-700 transition duration-200 text-lg"
-                    onClick={() => setMenuModalOpen(false)}
-                  >
-                    🎪 {item.label}
-                  </Link>
-                ))
-              }
-
-              {/* Event Organiser */}
-              {isAuthenticated && user?.role === "Event Organiser" &&
-                messageLinks.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className="hover:text-purple-700 transition duration-200 text-lg"
-                    onClick={() => setMenuModalOpen(false)}
-                  >
-                    🎪 {item.label}
-                  </Link>
-                ))
-              }
-
-              {/* Account / Logout / Sign In buttons */}
-              {isAuthenticated ? (
-                <div className="flex flex-col space-y-2 mt-4">
-                  <button
-                    onClick={() => {
-                      navigate("/change-details");
-                      setMenuModalOpen(false);
-                    }}
-                    className="bg-green-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-green-600 border-2 border-purple-500 transform hover:scale-105 transition duration-200"
-                  >
-                    👤 Account
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setMenuModalOpen(false);
-                    }}
-                    className="bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-red-600 border-2 border-purple-500 transform hover:scale-105 transition duration-200"
-                  >
-                    🚪 Logout
-                  </button>
-                </div>
-              ) : (
-                <Link
-                  to="/login"
-                  onClick={() => setMenuModalOpen(false)}
-                  className="mt-4 bg-pink-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-pink-600 border-2 border-purple-500 block text-center transform hover:scale-105 transition duration-200"
-                >
-                  🎪 Sign In
+            {isAuthenticated && user?.role === "Municipality Staff" &&
+              staffLinks.map((item) => (
+                <Link key={item.path} to={item.path} onClick={() => setMenuModalOpen(false)} className={`text-lg font-bold transition duration-200 p-2 rounded-md ${isActive(item.path) ? "text-purple-900 bg-yellow-300" : "text-pink-100 hover:bg-purple-700 hover:text-white"}`}>
+                  {item.label}
                 </Link>
-              )}
-            </nav>
+              ))}
+            {isAuthenticated && user?.role === "Admin" &&
+              adminLinks.map((item) => (
+                <Link key={item.path} to={item.path} onClick={() => setMenuModalOpen(false)} className={`text-lg font-bold transition duration-200 p-2 rounded-md ${isActive(item.path) ? "text-purple-900 bg-yellow-300" : "text-pink-100 hover:bg-purple-700 hover:text-white"}`}>
+                  {item.label}
+                </Link>
+              ))}
+            {isAuthenticated && user?.role === "User" &&
+              authLinks.map((item) => (
+                <Link key={item.path} to={item.path} onClick={() => setMenuModalOpen(false)} className={`text-lg font-bold transition duration-200 p-2 rounded-md ${isActive(item.path) ? "text-purple-900 bg-yellow-300" : "text-pink-100 hover:bg-purple-700 hover:text-white"}`}>
+                  {item.label}
+                </Link>
+              ))}
+            {isAuthenticated && user?.role === "Event Organiser" &&
+              messageLinks.map((item) => (
+                <Link key={item.path} to={item.path} onClick={() => setMenuModalOpen(false)} className={`text-lg font-bold transition duration-200 p-2 rounded-md ${isActive(item.path) ? "text-purple-900 bg-yellow-300" : "text-pink-100 hover:bg-purple-700 hover:text-white"}`}>
+                  {item.label}
+                </Link>
+              ))}
+          </nav>
+
+          {/* Menu Footer (Action Buttons) */}
+          <div className="p-6 border-t border-purple-700">
+            {isAuthenticated ? (
+              <div className="flex flex-col space-y-3">
+                <button
+                  onClick={() => { navigate("/change-details"); setMenuModalOpen(false); }}
+                  className="w-full text-center bg-green-500 text-white px-4 py-3 rounded-full font-bold shadow-lg hover:bg-green-600 border-2 border-purple-500 transform hover:scale-105 transition duration-200"
+                >
+                  👤 Account
+                </button>
+                <button
+                  onClick={() => { handleLogout(); setMenuModalOpen(false); }}
+                  className="w-full text-center bg-red-500 text-white px-4 py-3 rounded-full font-bold shadow-lg hover:bg-red-600 border-2 border-purple-500 transform hover:scale-105 transition duration-200"
+                >
+                  🚪 Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setMenuModalOpen(false)}
+                className="w-full block text-center bg-pink-500 text-white px-4 py-3 rounded-full font-bold shadow-lg hover:bg-pink-600 border-2 border-purple-500 transform hover:scale-105 transition duration-200"
+              >
+                🎪 Sign In
+              </Link>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </>
   );
 };

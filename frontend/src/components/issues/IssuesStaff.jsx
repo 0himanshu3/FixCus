@@ -118,25 +118,27 @@ function IssuesStaff() {
   return (
   <div className="relative min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-gradient-to-r from-pink-400 to-pink-300 rounded-2xl p-6 shadow-2xl border-4 border-purple-600 mb-8">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <h1 className="text-4xl font-black text-purple-900 overflow-hidden">🎪 All Issues</h1>
-          <div className="flex gap-3 overflow-hidden">
+      <div className="bg-gradient-to-r from-pink-400 to-pink-300 rounded-2xl p-4 sm:p-6 shadow-2xl border-4 border-purple-600 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <h1 className="text-3xl sm:text-4xl font-black text-purple-900 text-center md:text-left">
+            🎪 All Issues
+          </h1>
+          <div className="flex flex-col sm:flex-row sm:justify-center md:justify-end gap-3">
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-pink-100 py-2 px-6 rounded-full shadow-lg font-bold border-2 border-pink-300 transition-all duration-200 will-change-transform"
+              className="bg-purple-600 hover:bg-purple-700 text-pink-100 py-2 px-6 rounded-full shadow-lg font-bold border-2 border-pink-300 transition-transform hover:scale-105"
             >
               🔍 Filter
             </button>
             <button
               onClick={handleAddIssue}
-              className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-all duration-200 flex items-center gap-2 will-change-transform"
+              className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-transform hover:scale-105 flex items-center justify-center gap-2"
             >
               ➕ Publish Issue
             </button>
             <button
               onClick={handleHeatmapOpen}
-              className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-all duration-200 will-change-transform"
+              className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-transform hover:scale-105"
             >
               🗺 View Heatmap
             </button>

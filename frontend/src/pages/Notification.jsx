@@ -91,18 +91,18 @@ const Notification = ({ notifications = [], fetchNotifications, userId, socket }
   };
 
   return (
-  <div className="min-h-screen bg-gray-50 p-6">
+  <div className="min-h-screen bg-gray-50 p-2 sm:p-4 md:p-6">
     <div className="max-w-4xl mx-auto">
-      
+
       {/* Header */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-6">
-        <div className="flex items-center justify-between">
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="bg-purple-100 p-3 rounded-lg text-purple-600">
+            <div className="flex-shrink-0 bg-purple-100 p-3 rounded-lg text-purple-600">
               <FaBell size={24} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Notifications</h1>
               <p className="text-sm text-gray-500 mt-1">
                 {notifications.length} {notifications.length === 1 ? "notification" : "notifications"}
               </p>
@@ -111,16 +111,16 @@ const Notification = ({ notifications = [], fetchNotifications, userId, socket }
 
           {/* Action Buttons */}
           {notifications.length > 0 && (
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-shrink-0 justify-end">
               <button
                 onClick={markAllAsRead}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition shadow"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition shadow text-sm"
               >
                 Mark All Read
               </button>
               <button
                 onClick={deleteAllNotifications}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition shadow"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition shadow text-sm"
               >
                 Clear All
               </button>
@@ -131,7 +131,7 @@ const Notification = ({ notifications = [], fetchNotifications, userId, socket }
 
       {/* Notifications List */}
       {notifications.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-12 text-center">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 sm:p-12 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
             <FaRegBell className="text-gray-400" size={32} />
           </div>
@@ -144,19 +144,17 @@ const Notification = ({ notifications = [], fetchNotifications, userId, socket }
             <div
               key={notif._id}
               onClick={() => handleView(notif.url)}
-              className={`bg-white rounded-xl shadow border cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                notif.isRead
+              className={`bg-white rounded-xl shadow border cursor-pointer transition-all duration-200 hover:shadow-lg ${notif.isRead
                   ? "border-gray-200"
                   : "border-purple-300 bg-purple-50"
-              }`}
+                }`}
             >
-              <div className="p-5 flex justify-between items-start gap-4">
+              <div className="p-3 sm:p-5 flex justify-between items-start gap-4">
                 
                 {/* Left - Icon & Content */}
                 <div className="flex items-start gap-3 flex-1 min-w-0">
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                    notif.isRead ? "bg-gray-100 text-gray-400" : "bg-purple-100 text-purple-600"
-                  }`}>
+                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${notif.isRead ? "bg-gray-100 text-gray-400" : "bg-purple-100 text-purple-600"
+                    }`}>
                     <FaBell size={16} />
                   </div>
                   
@@ -175,7 +173,7 @@ const Notification = ({ notifications = [], fetchNotifications, userId, socket }
                 </div>
 
                 {/* Right - Action Buttons */}
-                <div className="flex gap-2 flex-shrink-0">
+                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 flex-shrink-0">
                   {!notif.isRead && (
                     <button
                       onClick={(e) => {
