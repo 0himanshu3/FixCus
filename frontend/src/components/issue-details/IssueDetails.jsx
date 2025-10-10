@@ -8,8 +8,8 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
-import { app } from "../firebase"; // Ensure you have this file configured
-import Timeline from "./Timeline";
+import { app } from "../../firebase"; // Ensure you have this file configured
+import Timeline from "../Timeline";
 import { toast } from "react-toastify";
 
 function IssueDetails() {
@@ -128,7 +128,7 @@ function IssueDetails() {
         feedbackFiles,
         setFeedbackUploadProgress
       );
-      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/submitFeedback`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/feedbacks/submitFeedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

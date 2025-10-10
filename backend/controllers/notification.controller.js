@@ -21,7 +21,7 @@ export const sendIssueAssignedNotification = async (issue, staffId) => {
                 userId: staff._id,
                 message: msg,
                 type: "issue-assigned",
-                relatedIssue: issue._id,
+                issueId: issue._id,
                 url: `/issue/${issue.slug}`
             }),
             Job.create({
@@ -61,11 +61,11 @@ export const sendTaskEscalationNotificationToStaff = async (staffId, issue, esca
         // Create in-app notification and email job concurrently
         const [notification] = await Promise.all([
             Notification.create({
-                recipientId: staff._id,
+                userId: staff._id,
                 message: msg,
                 type: "task-escalation",
-                relatedIssue: issue._id,
-                relatedTask: taskId,
+                issueId: issue._id,
+                taskId: taskId,
                 url: `/issue/${issue.slug}`
             }),
             Job.create({
@@ -99,15 +99,15 @@ export const sendTaskAssignmentNotification = async (taskId, assigneeId, issue) 
 
         const [notification] = await Promise.all([
             Notification.create({
-                recipientId: assignee._id,
+                userId: assignee._id,
                 message: msg,
                 type: "task-assigned",
-                relatedIssue: issue._id,
-                relatedTask: taskId,
+                issueId: issue._id,
+                taskId: taskId,
                 url: `/issue/${issue.slug}`
             }),
             Job.create({
-                type: "Task_Assignment_Email",
+                type: "Task_Assigned_Email",
                 payload: {
                     email: assignee.email,
                     staffName: assignee.name,
@@ -120,7 +120,7 @@ export const sendTaskAssignmentNotification = async (taskId, assigneeId, issue) 
         return { success: true, notificationId: notification._id };
 
     } catch (error) {
-        console.error("Error creating task assignment notification job:", error);
+        console.error("Error creating task assignment notification job:", error.message);
         return { success: false, error: error.message };
     }
 };
@@ -136,11 +136,11 @@ export const sendTaskDeadlineReminderNotification = async (taskId, assigneeId, i
 
         const [notification] = await Promise.all([
             Notification.create({
-                recipientId: assignee._id,
+                userId: assignee._id,
                 message: msg,
                 type: "task-deadline-reminder",
-                relatedIssue: issue._id,
-                relatedTask: taskId,
+                issueId: issue._id,
+                taskId: taskId,
                 url: `/issue/${issue.slug}`
             }),
             Job.create({
@@ -175,10 +175,10 @@ export const sendIssueCompletedNotification = async (issue, citizenId) => {
         // Create in-app notification and email job concurrently
         await Promise.all([
             Notification.create({
-                recipientId: citizen._id,
+                userId: citizen._id,
                 message: msg,
                 type: "issue-completed",
-                relatedIssue: issue._id,
+                issueId: issue._id,
                 url: `/issue/${issue.slug}`
             }),
             // Create a job for the slow email task
@@ -217,7 +217,7 @@ export const sendIssueRejectedNotification = async (issue, citizenId) => {
             userId: citizen._id,
             message: msg,
             type: "issue-rejected",
-            relatedIssue: issue._id,
+            issueId: issue._id,
             url: `/issue/${issue.slug}`
         });
 
@@ -236,13 +236,13 @@ export const sendIssueRejectedNotification = async (issue, citizenId) => {
 //Generic send notification function
 export const sendNotification = async (req, res, next) => {
     try {
-        const { userId, message, type, relatedIssue, relatedTask, url } = req.body;
+        const { userId, message, type, issueId, taskId, url } = req.body;
         if (!userId || !message || !type) {
             return next(new ApiError(400, "userId, message, and type are required"));
         }
 
         const notification = await Notification.create({
-            userId, message, type, relatedIssue, relatedTask, url
+            userId, message, type, issueId, taskId, url
         });
 
         io.to(userId.toString()).emit("new-notification", {
@@ -333,8 +333,8 @@ export const sendTaskCompletionNotification = async (taskId, issue, completedBy)
       userId: assigner._id,
       message: msg,
       type: "task-completed",
-      relatedIssue: issue._id,
-      relatedTask: taskId,
+      issueId: issue._id,
+      taskId: taskId,
       url: `/issue/${issue.slug}`,
       metadata: {
         taskId,
@@ -349,8 +349,8 @@ export const sendTaskCompletionNotification = async (taskId, issue, completedBy)
       type: "task-completed",
       isRead: false,
       notificationId: notification._id,
-      relatedIssue: issue._id,
-      relatedTask: taskId,
+      issueId: issue._id,
+      taskId: taskId,
       url: `/issue/${issue.slug}`
     });
 
@@ -384,8 +384,8 @@ export const sendTaskStatusUpdateNotification = async (taskId, issue, oldStatus,
       userId: assignee._id,
       message: msg,
       type: "task-status-update",
-      relatedIssue: issue._id,
-      relatedTask: taskId,
+      issueId: issue._id,
+      taskId: taskId,
       url: `/issue/${issue.slug}`,
       metadata: {
         taskId,
@@ -402,8 +402,8 @@ export const sendTaskStatusUpdateNotification = async (taskId, issue, oldStatus,
       type: "task-status-update",
       isRead: false,
       notificationId: notification._id,
-      relatedIssue: issue._id,
-      relatedTask: taskId,
+      issueId: issue._id,
+      taskId: taskId,
       url: `/issue/${issue.slug}`
     });
 

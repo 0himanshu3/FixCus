@@ -9,8 +9,8 @@ import {
   uploadBytesResumable,
   getDownloadURL,
 } from "firebase/storage";
-import { app } from "../firebase";
-import Timeline from "./Timeline";
+import { app } from "../../firebase";
+import Timeline from "../Timeline";
 import { toast } from "react-toastify";
 import {FaWhatsapp} from "react-icons/fa"
 
@@ -103,7 +103,7 @@ export default function IssueDetailsStaff() {
     try {
       setIsReassigning(true);
       // Expected backend endpoint: POST /api/v1/issues/reassign/:taskId
-      const res = await fetch(`/api/v1/issues/reassign/${reassignTask._id}`, {
+      const res = await fetch(`/api/v1/tasks/reassign/${reassignTask._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -153,7 +153,7 @@ export default function IssueDetailsStaff() {
       );
 
       const res = await fetch(
-        `/api/v1/issues/completeBySupervisor/${superCompleteTask._id}`,
+        `/api/v1/tasks/completeBySupervisor/${superCompleteTask._id}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -339,7 +339,7 @@ export default function IssueDetailsStaff() {
     }
 
     try {
-      const res = await fetch(`/api/v1/issues/update/${updateModalTask._id}`, {
+      const res = await fetch(`/api/v1/tasks/update/${updateModalTask._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -385,7 +385,7 @@ export default function IssueDetailsStaff() {
       );
 
       const res = await fetch(
-        `/api/v1/issues/submitProof/${proofModalTask._id}`,
+        `/api/v1/tasks/submitProof/${proofModalTask._id}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -414,7 +414,7 @@ export default function IssueDetailsStaff() {
   // Approve or reject proof (coordinator/supervisor)
   const approveOrRejectProof = async (taskId, approve) => {
     try {
-      const res = await fetch(`/api/v1/issues/approveReject/${taskId}`, {
+      const res = await fetch(`/api/v1/tasks/approveReject/${taskId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -451,7 +451,7 @@ export default function IssueDetailsStaff() {
         description: assignModalData.description,
         deadline: assignModalData.deadline,
       };
-      const res = await fetch(`/api/v1/issues/assign`, {
+      const res = await fetch(`/api/v1/tasks/assign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

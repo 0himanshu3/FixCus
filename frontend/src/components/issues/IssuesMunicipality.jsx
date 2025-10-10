@@ -1,25 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import IssuesHeatmap from "./IssuesHeatmap";
 import { useSelector } from "react-redux";
+import IssuesHeatmap from "../IssuesHeatmap";
 
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
-const issueCategories = [
-    "Road damage",
-    "Waterlogging / Drainage Issues",
-    "Improper Waste Management",
-    "Street lights/Exposed Wires",
-    "Unauthorized loudspeakers",
-    "Burning of garbage",
-    "Encroachment / Illegal Construction",
-    "Damaged Public Property",
-    "Stray Animal Menace",
-    "General Issue"
-  ];
 const statusOptions = ["Open", "In Progress", "Resolved"];
 
-function IssuesStaff() {
+function IssuesMunicipality() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [issues, setIssues] = useState([]);
@@ -28,31 +16,35 @@ function IssuesStaff() {
   const [isHeatmapOpen, setIsHeatmapOpen] = useState(false);
 
   const user = useSelector((state) => state.auth.user);
-  const userDistrict = user?.district || null;
+  const adminDistrict = user?.district || null;
+  const municipalityDivision = user?.division || null;
 
-  // Initialize filters from URL query params
   const [filters, setFilters] = useState({
     title: searchParams.get("title") || "",
-    category: searchParams.get("category") || "",
     priority: searchParams.get("priority") || "",
     status: searchParams.get("status") || "",
-    // location: searchParams.get("location") || "",
     votes: searchParams.get("votes") || "",
     recency: searchParams.get("recency") || "",
   });
 
-  // Fetch filtered issues from API
-  const fetchFilteredIssues = async (appliedFilters) => {
+ const fetchFilteredIssues = async (appliedFilters) => {
+    const priorityValues = {
+      "Very Low": 0,
+      "Low": 1,
+      "Medium": 2,
+      "High": 3,
+      "Critical": 4,
+    };
+
     setIsLoading(true);
     try {
-      // Build query string
       const query = new URLSearchParams();
       Object.entries(appliedFilters).forEach(([key, value]) => {
         if (value) query.append(key, value);
       });
 
-      if (userDistrict) {
-        query.append("location", userDistrict);
+      if (adminDistrict) {
+        query.append("district", adminDistrict);
       }
 
       const res = await fetch(
@@ -66,7 +58,32 @@ function IssuesStaff() {
 
       if (res.ok) {
         const data = await res.json();
-        setIssues(data.issues || []);
+
+        const validIssues = (data.issues || []).filter(
+          (issue) =>
+            issue.category === municipalityDivision &&
+            issue.issueDistrict &&
+            issue.issueDistrict.trim() !== "" &&
+            issue.issueDistrict === adminDistrict
+        );
+
+        const isAnyFilterActive = Object.values(appliedFilters).some(value => !!value);
+
+        let finalIssues;
+        if (isAnyFilterActive) {
+          finalIssues = validIssues;
+        } else {
+          finalIssues = validIssues.sort((a, b) => {
+            const priorityDifference = priorityValues[b.priority] - priorityValues[a.priority];
+            if (priorityDifference !== 0) {
+              return priorityDifference;
+            }
+            return new Date(a.issuePublishDate) - new Date(b.issuePublishDate);
+          });
+        }
+
+        setIssues(finalIssues);
+
       } else {
         console.error("Error fetching issues:", res.statusText);
       }
@@ -77,34 +94,26 @@ function IssuesStaff() {
     }
   };
 
-  // Initial fetch on mount
-  useEffect(() => {
-    fetchFilteredIssues(filters);
-  }, []);
 
-  const handleAddIssue = () => navigate("/create");
-  const handleViewIssue = (slug) => navigate(`/issue/${slug}`);
+  useEffect(() => {
+    if (adminDistrict) fetchFilteredIssues(filters);
+  }, [adminDistrict]);
 
   const handleApplyFilters = () => {
-    // Update URL
     setSearchParams(
-      Object.fromEntries(
-        Object.entries(filters).filter(([_, value]) => value)
-      )
+      Object.fromEntries(Object.entries(filters).filter(([_, value]) => value))
     );
-    // Fetch from API
     fetchFilteredIssues(filters);
     setIsFilterOpen(false);
   };
+  const handleViewIssue = (slug) => navigate(`/issue/${slug}`);
 
   const handleResetFilters = () => {
     const resetFilters = {
       title: "",
-      category: "",
       priority: "",
       status: "",
-      // location: "",
-      upvotes: "",
+      votes: "",
       recency: "",
     };
     setFilters(resetFilters);
@@ -113,6 +122,27 @@ function IssuesStaff() {
     setIsFilterOpen(false);
   };
 
+const fetchAllIssuesForHeatmap = async () => {
+    try {
+      const res = await fetch(
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/all`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        setAllIssuesForHeatmap(data.issues || []);
+      } else {
+        console.error("Error fetching all issues for heatmap:", res.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching all issues for heatmap:", error);
+    }
+  };
   const handleHeatmapOpen = () => setIsHeatmapOpen(true);
 
   return (
@@ -121,19 +151,15 @@ function IssuesStaff() {
       <div className="bg-gradient-to-r from-pink-400 to-pink-300 rounded-2xl p-6 shadow-2xl border-4 border-purple-600 mb-8">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <h1 className="text-4xl font-black text-purple-900 overflow-hidden">🎪 All Issues</h1>
-          <div className="flex gap-3 overflow-hidden">
+          <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
             <button
               onClick={() => setIsFilterOpen(true)}
               className="bg-purple-600 hover:bg-purple-700 text-pink-100 py-2 px-6 rounded-full shadow-lg font-bold border-2 border-pink-300 transition-all duration-200 will-change-transform"
             >
               🔍 Filter
             </button>
-            <button
-              onClick={handleAddIssue}
-              className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-all duration-200 flex items-center gap-2 will-change-transform"
-            >
-              ➕ Publish Issue
-            </button>
+
             <button
               onClick={handleHeatmapOpen}
               className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-all duration-200 will-change-transform"
@@ -141,8 +167,20 @@ function IssuesStaff() {
               🗺 View Heatmap
             </button>
           </div>
+
+          {/* <button
+            onClick={() => window.location.assign("demo.html")}
+            className="bg-green-500 hover:bg-green-600 text-white py-2 px-6 rounded-lg shadow transition-colors duration-200"
+          >
+            Demo
+          </button> */}
+        </div>
+       
+
         </div>
       </div>
+
+      
 
       {isLoading ? (
         <div className="flex justify-center items-center h-64">
@@ -154,16 +192,8 @@ function IssuesStaff() {
             🎭 No issues found
           </h3>
           <p className="mt-2 text-purple-800 font-semibold">
-            Get started by creating your first issue.
+            Try adjusting your filters.
           </p>
-          <div className="mt-4 overflow-hidden inline-block">
-            <button
-              onClick={handleAddIssue}
-              className="px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-400 transition-all duration-200 will-change-transform"
-            >
-              ➕ Publish Issue
-            </button>
-          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -248,6 +278,7 @@ function IssuesStaff() {
       )}
     </div>
 
+    {/* Heatmap Modal */}
     <IssuesHeatmap show={isHeatmapOpen} onClose={() => setIsHeatmapOpen(false)} />
 
     {/* Filter Modal */}
@@ -272,7 +303,7 @@ function IssuesStaff() {
               className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
             />
 
-            <select
+            {/* <select
               value={filters.category}
               onChange={(e) =>
                 setFilters({ ...filters, category: e.target.value })
@@ -285,7 +316,7 @@ function IssuesStaff() {
                   {cat}
                 </option>
               ))}
-            </select>
+            </select> */}
 
             <select
               value={filters.priority}
@@ -316,29 +347,19 @@ function IssuesStaff() {
                 </option>
               ))}
             </select>
-
-            {/* <input
-              type="text"
-              placeholder="Location"
-              value={filters.location}
-              onChange={(e) =>
-                setFilters({ ...filters, location: e.target.value })
-              }
-              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
-            /> */}
-
+              
             <select
               value={filters.votes}
               onChange={(e) =>
                 setFilters({ ...filters, votes: e.target.value })
               }
               className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
-            >
+             >
               <option value="">Sort by votes</option>
               <option value="upvoted">Most Upvoted First</option>
               <option value="downvoted">Most Downvoted First</option>
             </select>
-              
+
             <select
               value={filters.recency}
               onChange={(e) =>
@@ -374,4 +395,4 @@ function IssuesStaff() {
 
 }
 
-export default IssuesStaff;
+export default IssuesMunicipality;

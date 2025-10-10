@@ -15,16 +15,16 @@ import MainLayout from "./components/MainLayout";
 import About from "./pages/About";
 import Gallery from "./pages/Gallery";
 import Donate from "./pages/Donate";
-import Issues from "./components/Issues";
-import IssuesStaff from "./components/IssuesStaff";
-import IssueDetails from "./components/IssueDetails";
-import IssueDetailsStaff from "./components/IssueDetailsStaff";
-import MuncipalityMain from "./pages/MuncipalityMain";
-import AdminDashboard from "./pages/AdminDashboard";
+import Issues from "./components/issues/Issues";
+import IssuesStaff from "./components/issues/IssuesStaff";
+import IssueDetails from "./components/issue-details/IssueDetails";
+import IssueDetailsStaff from "./components/issue-details/IssueDetailsStaff";
+import MuncipalityMain from "./pages/dashboard/MuncipalityMain";
+import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import ApplicationRequest from "./pages/ApplicationRequest";
 import IssuesAdmin from "./components/IssuesAdmin";
-import IssueDetailsMunicipality from "./components/IssueDetailsMunicipality"; // If you have this component
-import IssuesMunicipality from "./components/IssuesMunicipality"; // If you have this component
+import IssueDetailsMunicipality from "./components/issue-details/IssueDetailsMunicipality"; // If you have this component
+import IssuesMunicipality from "./components/issues/IssuesMunicipality";// If you have this component
 import CreateIssue from "./pages/CreateIssue";
 import MonthlyAnalysis from "./pages/MonthlyAnalysis";
 import Notification from "./pages/Notification";
@@ -33,8 +33,8 @@ import MunicipalityDetails from "./pages/MunicipalityDetails";
 import 'leaflet/dist/leaflet.css';
 
 import IssuesHeatmapPage from "./pages/IssuesHeatmapPage";
-import DashboardStaff from "./pages/DashboardStaff";
-import Dashboard from "./pages/Dashboard";
+import DashboardStaff from "./pages/dashboard/DashboardStaff";
+import Dashboard from "./pages/dashboard/Dashboard";
 import FillApplicationPage from "./components/FillApplicationPage";
 const App = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);

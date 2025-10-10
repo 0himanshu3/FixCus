@@ -15,7 +15,7 @@ import {
   RadialLinearScale,
 } from "chart.js";
 import { Bar, Pie, Doughnut, PolarArea } from "react-chartjs-2";
-import Timeline from "./Timeline";
+import Timeline from "../Timeline";
 import { toast } from "react-toastify";
 import { FaWhatsapp } from "react-icons/fa";
 
@@ -29,12 +29,9 @@ ChartJS.register(
   Title,
   RadialLinearScale
 );
-
-// MODIFICATION START: New component to render formatted AI analysis
-const AnalysisRenderer = ({ analysis }) => {
+const AnalysisRenderer = ({ analysis = "" }) => {
   if (!analysis) return null;
 
-  // Define sections with titles and corresponding emojis
   const sections = [
     { title: "Overall Sentiment & Satisfaction", emoji: "📊" },
     { title: "Resolution Analysis", emoji: "📈" },
@@ -44,48 +41,77 @@ const AnalysisRenderer = ({ analysis }) => {
     { title: "Final Verdict", emoji: "⚖️" },
   ];
 
-  // Parse the analysis string into a structured object
-  const parsedAnalysis = sections.reduce((acc, section, index) => {
-    const nextSection = sections[index + 1];
-    const startPattern = `**${section.title}**`;
+  const normalize = (s) => s.replace(/[^a-z0-9]/gi, "").toLowerCase();
+  const normalizedSections = sections.map((s) => ({
+    ...s,
+    norm: normalize(s.title),
+  }));
 
-    const startIndex = analysis.indexOf(startPattern);
-    if (startIndex === -1) return acc;
+  // First pass: scan line-by-line and pick up headings that contain section titles
+  const lines = analysis.split(/\r?\n/);
+  const parsed = {};
+  let current = null;
 
-    let endIndex;
-    if (nextSection) {
-      const nextStartPattern = `**${nextSection.title}**`;
-      endIndex = analysis.indexOf(nextStartPattern, startIndex);
+  for (let rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    const lineNorm = line.replace(/[^a-z0-9]/gi, "").toLowerCase();
+    const headingMatch = normalizedSections.find((sec) =>
+      lineNorm.includes(sec.norm)
+    );
+
+    if (headingMatch) {
+      current = headingMatch.title;
+      parsed[current] = parsed[current] || [];
+      continue; // skip the heading line itself
     }
 
-    const contentRaw = analysis
-      .substring(
-        startIndex + startPattern.length,
-        endIndex === -1 ? undefined : endIndex
-      )
-      .trim();
+    if (current) {
+      // clean bullets, leading markers and bold markup
+      const cleaned = line
+        .replace(/^[\s>*-]{0,3}/, "")
+        .replace(/^\d+\.\s*/, "")
+        .replace(/\*\*/g, "")
+        .trim();
+      if (cleaned) parsed[current].push(cleaned);
+    }
+  }
 
-    // Process content for bullet points
-    const contentLines = contentRaw
-      .split("\n")
-      .filter((line) => line.trim() !== "")
-      .map((line) => line.replace(/^[*-]\s*/, ""));
+  // Fallback: if nothing found, split by markdown headings (## / #) and map blocks to section titles
+  const allEmpty = sections.every(
+    (s) => !(parsed[s.title] && parsed[s.title].length)
+  );
+  if (allEmpty) {
+    const blocks = analysis.split(/\n(?=#{1,6}\s+)/); // split where a markdown heading starts
+    blocks.forEach((block) => {
+      const [firstLine, ...rest] = block.split(/\r?\n/);
+      if (!firstLine) return;
+      const heading = firstLine.replace(/^#{1,6}\s*/, "").trim();
+      const headingNorm = normalize(heading);
+      const match = normalizedSections.find(
+        (sec) => headingNorm.includes(sec.norm) || sec.norm.includes(headingNorm)
+      );
+      if (!match) return;
+      const contentLines = rest
+        .map((l) => l.trim())
+        .filter((l) => l)
+        .map((l) => l.replace(/^[*-]\s*/, "").replace(/\*\*/g, "").trim());
+      parsed[match.title] = contentLines;
+    });
+  }
 
-    acc[section.title] = contentLines;
-    return acc;
-  }, {});
-
-  
   return (
     <div className="space-y-4">
       {sections.map((section) => {
-        const content = parsedAnalysis[section.title];
+        const content = parsed[section.title];
         if (!content || content.length === 0) return null;
 
         return (
           <div
             key={section.title}
-            className="bg-white/50 p-4 rounded-lg shadow border-2 border-pink-300">
+            className="bg-white/50 p-4 rounded-lg shadow border-2 border-pink-300"
+          >
             <h3 className="text-xl font-black text-purple-900 mb-2">
               {section.emoji} {section.title}
             </h3>
@@ -530,7 +556,7 @@ useEffect(() => {
     setShowFeedbackModal(true);
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/feedback/${issue._id}`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/feedbacks/feedback/${issue._id}`,
         { withCredentials: true }
       );
       setCitizenFeedbacks(res.data.feedbacks || []);
@@ -566,10 +592,13 @@ useEffect(() => {
 
     try {
       const res = await axios.post(
-        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/analyze-feedback`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/feedbacks/analyze-feedback`,
         { issueId: issue._id },
         { withCredentials: true }
       );
+      console.log('====================================');
+      console.log(res.data.analysis);
+      console.log('====================================');
       setAiAnalysis(res.data.analysis);
     } catch (error) {
       console.error("Error generating AI analysis:", error);
@@ -698,6 +727,7 @@ useEffect(() => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ whatsappLink: newLink }),
+        credentials: 'include',
       });
 
       if (res.ok) {
