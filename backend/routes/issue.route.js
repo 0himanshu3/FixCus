@@ -1,6 +1,6 @@
 import express from "express";
-import { addComment, createIssue,getMunicipalityIssues, deleteComment,getMyIssues,getCompletedIssuesByMuni, downvoteIssue, getTopIssues,getSummary,getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff,  resolveIssue, getMonthlyAnalysis, getReportForIssue,  getIssueTimeline,  getStaffDashboardDetails, generateIssueFromImage, getSuggestedStaff, assignMultipleSuggestedStaff, updateWhatsappLink } from "../controllers/issue.contoller.js";
-import { isAuthenticated, isAdminOrOrganiser,protectMunicipality } from "../middlewares/auth.middleware.js";
+import { addComment, createIssue,getMunicipalityIssues,getMonthlyReport, deleteComment,getMyIssues,getCompletedIssuesByMuni, downvoteIssue, getTopIssues,getSummary,getPendingIssues,editComment, getIssueBySlug, getIssues, upvoteIssue,getCompletedIssues,getIssueDetails, takeUpIssue, assignStaff, getAssignedStaff,  resolveIssue, getMonthlyAnalysis, getReportForIssue,  getIssueTimeline,  getStaffDashboardDetails, generateIssueFromImage, getSuggestedStaff, assignMultipleSuggestedStaff, updateWhatsappLink } from "../controllers/issue.contoller.js";
+import { isAuthenticated,protectMunicipality } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
@@ -38,6 +38,7 @@ router.get('/my', isAuthenticated, getMyIssues);
 router.get('/staff-summary', isAuthenticated, getSummary);
 router.get('/staff/dashboard', isAuthenticated, getStaffDashboardDetails );
 router.get('/staff-dashboard/:staffId', isAuthenticated, getStaffDashboardDetails);
+router.get('/reports', isAuthenticated, getMonthlyReport);
 
 
 router.get("/:issueId/suggested-staff", isAuthenticated, getSuggestedStaff);

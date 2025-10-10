@@ -56,7 +56,7 @@ function Login() {
         if (user?.role === 'Admin') {
             return <Navigate to="/admin/dashboard" />;
         } else if (user?.role === 'Municipality Admin') {
-            return <Navigate to="/municipality" />;
+            return <Navigate to="/dashboard" />;
         }
         return <Navigate to={"/"} />;
     }

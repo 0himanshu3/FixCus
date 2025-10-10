@@ -28,7 +28,7 @@ const StatCard = ({ title, value, icon }) => (
 );
 
 const formatTime = (hours) => {
-  if (!hours) return 'N/A';
+  if (!hours && hours !== 0) return 'N/A';
   const h = Math.round(hours);
   const days = Math.floor(h / 24);
   const remHours = h % 24;
@@ -40,7 +40,11 @@ const MonthlyAnalysis = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [csvLoading, setCsvLoading] = useState(false);
   const userId = useSelector((state) => state.auth.user?._id);
+    const muniAdminName = useSelector((state) => state.auth.user?.name);
+   const muniName=useSelector((state) => state.auth.user?.municipalityName);
+
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -63,7 +67,7 @@ const MonthlyAnalysis = () => {
         const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/monthly-analysis`, {
           params: { month: selectedMonth },
           withCredentials: true
-        }); 
+        });
         setData(res.data);
         setLoading(false);
       } catch (err) {
@@ -102,7 +106,138 @@ const MonthlyAnalysis = () => {
     });
   };
 
-if (loading) return <div style={{ padding: '2rem', color: '#4b5563' }}>Loading analysis...</div>;
+  // Utility to escape CSV fields
+  const escapeCSV = (value) => {
+    if (value === null || value === undefined) return '';
+    const str = typeof value === 'string' ? value : String(value);
+    if (str.includes('"') || str.includes(',') || str.includes('\n')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  const handleDownloadCSV = async () => {
+    setCsvLoading(true);
+   try {
+
+  let issues = [];
+    const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/reports`, {
+      params: { month: selectedMonth },
+      withCredentials: true,
+    });
+
+    if (res.data) {
+      if (Array.isArray(res.data)) issues = res.data;
+      else if (Array.isArray(res.data.issues)) issues = res.data.issues;
+      else if (Array.isArray(res.data.data)) issues = res.data.data;
+    }
+  
+
+
+      const rows = [];
+
+   
+        // header for admins
+        rows.push(['Municipality Admin Name', 'Municipality Name']);
+        rows.push([muniAdminName,muniName])
+      // Totals
+      const assignedIssues = data?.assignedIssues ?? issues.length;
+      const staffCount = data?.staffCount ?? (data?.staffsCount ?? 0);
+      rows.push([]);
+      rows.push(['Total Assigned Issues', String(assignedIssues)]);
+      rows.push(['Total Staffs in Division', String(staffCount)]);
+      rows.push([]);
+
+      // Issue table header
+      const header = [
+        '_id',
+        'title',
+        'category',
+        'priority',
+        'content',
+        'issueLocation',
+        'issueDistrict',
+        'issueState',
+        'issueCountry',
+        'issuePublishDate',
+        'reportedBy',
+        'status',
+        'upvotesCount',
+        'downvotesCount',
+        'staffsAssignedCount',
+        'deadline',
+        'issueTakenUpBy',
+        'issueTakenUpTime',
+        'issueResolvedAt',
+        'resolutionTimeHours' 
+      ];
+      rows.push(header);
+
+      // For each issue, create a row
+      issues.forEach((it) => {
+        // support both nested counts or arrays
+        const upvotesCount = Array.isArray(it.upvotes) ? it.upvotes.length : (it.upvotesCount ?? it.upvotes ?? 0);
+        const downvotesCount = Array.isArray(it.downvotes) ? it.downvotes.length : (it.downvotesCount ?? it.downvotes ?? 0);
+        const staffsAssignedCount = Array.isArray(it.staffsAssigned) ? it.staffsAssigned.length : (it.staffsAssignedCount ?? 0);
+
+        // compute resolution time (hours) if possible
+        let resolutionHours = '';
+        if (it.issueResolvedAt && it.issueTakenUpTime) {
+          const resolved = new Date(it.issueResolvedAt).getTime();
+          const takenUp = new Date(it.issueTakenUpTime).getTime();
+          if (!isNaN(resolved) && !isNaN(takenUp) && resolved >= takenUp) {
+            resolutionHours = Math.round((resolved - takenUp) / (1000 * 60 * 60)); // hours
+          }
+        }
+
+        const row = [
+          escapeCSV(it._id || ''),
+          escapeCSV(it.title || ''),
+          escapeCSV(it.category || ''),
+          escapeCSV(it.priority || ''),
+          escapeCSV(it.content || ''),
+          escapeCSV(it.issueLocation || ''),
+          escapeCSV(it.issueDistrict || ''),
+          escapeCSV(it.issueState || ''),
+          escapeCSV(it.issueCountry || ''),
+          escapeCSV(it.issuePublishDate || ''),
+          escapeCSV(it.reportedBy || (it.reportedBy?._id ?? '') || ''),
+          escapeCSV(it.status || ''),
+          escapeCSV(upvotesCount),
+          escapeCSV(downvotesCount),
+          escapeCSV(staffsAssignedCount),
+          escapeCSV(it.deadline || ''),
+          escapeCSV(it.issueTakenUpBy || ''),
+          escapeCSV(it.issueTakenUpTime || ''),
+          escapeCSV(it.issueResolvedAt || ''),
+          escapeCSV(resolutionHours)
+        ];
+        rows.push(row);
+      });
+
+      // Convert rows to CSV string
+      const csvContent = rows.map(r => r.map(c => (typeof c === 'string' ? c : String(c))).join(',')).join('\n');
+
+      // Download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Monthly_Report_${selectedMonth}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+    } catch (err) {
+      console.error('CSV generation failed:', err);
+      alert('Failed to generate CSV report. Check console for details.');
+    } finally {
+      setCsvLoading(false);
+    }
+  };
+
+  if (loading) return <div style={{ padding: '2rem', color: '#4b5563' }}>Loading analysis...</div>;
   if (error) return <div style={{ padding: '2rem', color: '#b91c1c' }}>{error}</div>;
   const {
     assignedIssues = 0,
@@ -114,10 +249,10 @@ if (loading) return <div style={{ padding: '2rem', color: '#4b5563' }}>Loading a
     votesData = []
   } = data || {};
   const newMostDownvoted =
-  mostDownvoted && mostUpvoted && mostDownvoted._id === mostUpvoted._id
-    ? null
-    : mostDownvoted;
-    
+    mostDownvoted && mostUpvoted && mostDownvoted._id === mostUpvoted._id
+      ? null
+      : mostDownvoted;
+
   const pieData = [
     { name: 'Completed', value: completedIssues },
     { name: 'Pending', value: Math.max(assignedIssues - completedIssues, 0) }
@@ -130,7 +265,7 @@ if (loading) return <div style={{ padding: '2rem', color: '#4b5563' }}>Loading a
   }));
 
   return (
-      <div id="monthly-analysis-container" style={{ backgroundColor: '#f9fafb', minHeight: '100vh', padding: '2rem' }}>
+    <div id="monthly-analysis-container" style={{ backgroundColor: '#f9fafb', minHeight: '100vh', padding: '2rem' }}>
       <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
         
         {/* Header */}
@@ -139,21 +274,45 @@ if (loading) return <div style={{ padding: '2rem', color: '#4b5563' }}>Loading a
             <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: '#111827' }}>Monthly Analysis</h1>
             <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>Overview of issues & performance</p>
           </div>
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            style={{
-              padding: '0.5rem 1rem',
-              borderRadius: '0.5rem',
-              borderColor: '#d1d5db',
-              color: '#111827',
-              fontWeight: 500
-            }}
-          >
-            {months.map((m) => (
-              <option key={m.value} value={m.value}>{m.label}</option>
-            ))}
-          </select>
+
+          {/* Filter column (month select + CSV button) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              style={{
+                padding: '0.5rem 1rem',
+                borderRadius: '0.5rem',
+                borderColor: '#d1d5db',
+                color: '#111827',
+                fontWeight: 500
+              }}
+            >
+              {months.map((m) => (
+                <option key={m.value} value={m.value}>{m.label}</option>
+              ))}
+            </select>
+
+            {/* CSV Report button (hex colors only) */}
+            <button
+              onClick={handleDownloadCSV}
+              disabled={csvLoading}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 0.9rem',
+                backgroundColor: '#06b6d4', // cyan-500 hex-like
+                color: '#ffffff',
+                fontWeight: 600,
+                borderRadius: '0.5rem',
+                border: 'none',
+                cursor: csvLoading ? 'not-allowed' : 'pointer'
+              }}
+            >
+              {csvLoading ? 'Generating CSV...' : 'Download CSV Report'}
+            </button>
+          </div>
         </div>
 
         {/* Stat Cards */}
@@ -165,54 +324,53 @@ if (loading) return <div style={{ padding: '2rem', color: '#4b5563' }}>Loading a
         </div>
 
         {/* Charts Row */}
-<div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem', marginBottom: '2rem' }}>
-  
-  {/* Pie Chart */}
-  <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb', overflow: 'auto', maxHeight: '24rem' }}>
-    <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem', color: '#111827' }}>Completion Rate</h3>
-    <ResponsiveContainer width="100%" height={250}>
-      <PieChart>
-        <Pie
-          data={pieData}
-          dataKey="value"
-          nameKey="name"
-          innerRadius={48}
-          outerRadius={72}
-          paddingAngle={3}
-          label={({ percent }) => `${Math.round(percent * 100)}%`}
-        >
-          <Cell fill={COLORS[0]} />
-          <Cell fill={COLORS[1]} />
-        </Pie>
-        <Tooltip />
-        <Legend />
-      </PieChart>
-    </ResponsiveContainer>
-  </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem', marginBottom: '2rem' }}>
+          
+          {/* Pie Chart */}
+          <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb', overflow: 'auto', maxHeight: '24rem' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem', color: '#111827' }}>Completion Rate</h3>
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={48}
+                  outerRadius={72}
+                  paddingAngle={3}
+                  label={({ percent }) => `${Math.round(percent * 100)}%`}
+                >
+                  <Cell fill={COLORS[0]} />
+                  <Cell fill={COLORS[1]} />
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
 
-  {/* Bar Chart */}
-  <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
-    <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem', color: '#111827' }}>Top Issues (Upvotes vs Downvotes)</h3>
-    {votesBarData.length > 0 ? (
-      <ResponsiveContainer width="100%" height={260}>
-        <BarChart data={votesBarData} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis dataKey="name" interval={0} angle={-20} textAnchor="end" height={60} />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Bar dataKey="upvotes" fill="#3b82f6" />
-          <Bar dataKey="downvotes" fill="#ef4444" />
-        </BarChart>
-      </ResponsiveContainer>
-    ) : (
-      <p style={{ color: '#6b7280' }}>No issue votes data available.</p>
-    )}
-  </div>
-</div>
+          {/* Bar Chart */}
+          <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem', color: '#111827' }}>Top Issues (Upvotes vs Downvotes)</h3>
+            {votesBarData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={votesBarData} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis dataKey="name" interval={0} angle={-20} textAnchor="end" height={60} />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="upvotes" fill="#3b82f6" />
+                  <Bar dataKey="downvotes" fill="#ef4444" />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p style={{ color: '#6b7280' }}>No issue votes data available.</p>
+            )}
+          </div>
+        </div>
 
-
-          {/* Most Upvoted/Downvoted */}
+        {/* Most Upvoted/Downvoted */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
           
           {/* Most Upvoted */}
