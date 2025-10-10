@@ -5,6 +5,7 @@ import { Server } from "socket.io";
 import cron from "node-cron";
 import { escalateIssuePriority, escalateOverdueTasksService,reopenUnresolvedIssues} from "./controllers/issue.contoller.js";
 import { sendDeadlineRemindersService } from "./controllers/notification.controller.js";
+import { processJobQueue } from "./worker.js";
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -71,6 +72,11 @@ cron.schedule("0 0,12 * * *", async () => {
   catch (err) {
     console.error("[CRON] Issue priority escalation error:", err);
   }
+});
+
+cron.schedule('* * * * *', () => {
+  console.log('[CRON] Checking for pending jobs in the queue...');
+  processJobQueue();
 });
 
 server.listen(process.env.PORT || 3000, () => {

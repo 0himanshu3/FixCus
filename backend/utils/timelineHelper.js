@@ -54,7 +54,6 @@ export const createTimelineEvent = async (eventData) => {
                             "User": "Citizen",  // Regular users are citizens
                             "Municipality Staff": "Municipality Staff"
                         };
-                        
                         if (roleMapping[user.role]) {
                             actorRole = roleMapping[user.role];
                         } else {

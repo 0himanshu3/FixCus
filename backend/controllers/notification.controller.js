@@ -5,79 +5,202 @@ import { User } from "../models/user.model.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { io } from "../server.js";
 import { generateIssueAssignedEmailTemplate, generateIssueCompletedEmailTemplate, generateTaskAssignmentEmailTemplate, generateTaskEscalationEmailTemplate, generateTaskDeadlineReminderEmailTemplate } from "../utils/emailTemplates.js";
+import Job from "../models/jobQueue.model.js";
 
 //Send notification when an issue is assigned to a staff
 export const sendIssueAssignedNotification = async (issue, staffId) => {
     try {
-        const staff = await User.findById(staffId);
+        const staff = await User.findById(staffId).select('name email');
         if (!staff) return console.error("Staff not found:", staffId);
 
-        const msg = `You have been assigned a new project: "${issue.title}"`;
+        const msg = `You have been assigned a new issue: "${issue.title}"`;
 
-        // Create in-app notification
-        await Notification.create({
-            userId: staff._id,
-            message: msg,
-            type: "issue-assigned",
-            relatedIssue: issue._id,
-            url: `/issue/${issue.slug}`
-        });
-
-      const emailBody = generateIssueAssignedEmailTemplate(staff.name, issue.title);
-
-      // Send the email
-      await sendEmail({
-        email: staff.email,
-        subject: "New Issue Assigned",
-        message: emailBody
-      });
+        // Create in-app notification and email job concurrently
+        await Promise.all([
+            Notification.create({
+                userId: staff._id,
+                message: msg,
+                type: "issue-assigned",
+                relatedIssue: issue._id,
+                url: `/issue/${issue.slug}`
+            }),
+            Job.create({
+                type: "Issue_Assigned_Email",
+                payload: {
+                    email: staff.email,
+                    staffName: staff.name,
+                    issueTitle: issue.title,
+                },
+            })
+        ]);
 
         // Emit real-time notification via socket
-        io.to(staff._id.toString()).emit("new-notification", {
-            message: msg,
-            type: "issue-assigned",
-            isRead: false
-        });
+        io.to(staff._id.toString()).emit("new-notification", { message: msg });
 
     } catch (error) {
-        console.error("Error sending issue-assigned notification:", error);
+        console.error("Error creating issue-assigned notification job:", error);
+    }
+};
+
+//Send notification when an issue is escalated
+export const sendTaskEscalationNotificationToStaff = async (staffId, issue, escalationData = {}) => {
+    try {
+        const staff = await User.findById(staffId).select('name email');
+        if (!staff) return { success: false, error: "Staff not found" };
+
+        const { taskId, escalationType, newDeadline } = escalationData;
+        let msg = `A task for issue "${issue.title}" has been escalated.`; // Default message
+        
+        // Simplified message generation
+        if (escalationType?.includes('to-coordinator') || escalationType?.includes('to-supervisor')) {
+            msg = `TASK ESCALATION: A task from issue "${issue.title}" has been escalated to you. New deadline: ${newDeadline ? newDeadline.toLocaleDateString() : 'N/A'}`;
+        } else if (escalationType?.includes('from-worker') || escalationType?.includes('from-coordinator')) {
+            msg = `TASK UPDATE: Your task from issue "${issue.title}" has been escalated due to an overdue deadline.`;
+        }
+
+        // Create in-app notification and email job concurrently
+        const [notification] = await Promise.all([
+            Notification.create({
+                recipientId: staff._id,
+                message: msg,
+                type: "task-escalation",
+                relatedIssue: issue._id,
+                relatedTask: taskId,
+                url: `/issue/${issue.slug}`
+            }),
+            Job.create({
+                type: "Task_Escalation_Email",
+                payload: {
+                    email: staff.email,
+                    staffName: staff.name,
+                    issueTitle: issue.title,
+                    message: msg 
+                }
+            })
+        ]);
+
+        // Emit real-time notification via socket
+        io.to(staff._id.toString()).emit("new-notification", { message: msg });
+        return { success: true, notificationId: notification._id };
+
+    } catch (error) {
+        console.error("Error creating escalation notification job:", error);
+        return { success: false, error: error.message };
+    }
+};
+
+// Send notification when a task is created
+export const sendTaskAssignmentNotification = async (taskId, assigneeId, issue) => {
+    try {
+        const assignee = await User.findById(assigneeId).select('name email');
+        if (!assignee) return { success: false, error: "Assignee not found" };
+
+        const msg = `NEW TASK: You have been assigned a new task for issue "${issue.title}".`;
+
+        const [notification] = await Promise.all([
+            Notification.create({
+                recipientId: assignee._id,
+                message: msg,
+                type: "task-assigned",
+                relatedIssue: issue._id,
+                relatedTask: taskId,
+                url: `/issue/${issue.slug}`
+            }),
+            Job.create({
+                type: "Task_Assignment_Email",
+                payload: {
+                    email: assignee.email,
+                    staffName: assignee.name,
+                    issueTitle: issue.title,
+                }
+            })
+        ]);
+
+        io.to(assignee._id.toString()).emit("new-notification", { message: msg });
+        return { success: true, notificationId: notification._id };
+
+    } catch (error) {
+        console.error("Error creating task assignment notification job:", error);
+        return { success: false, error: error.message };
+    }
+};
+
+// Send notification when a task deadline is approaching
+export const sendTaskDeadlineReminderNotification = async (taskId, assigneeId, issue, deadline) => {
+    try {
+        const assignee = await User.findById(assigneeId).select('name email');
+        if (!assignee) return { success: false, error: "Assignee not found" };
+
+        const timeLeft = Math.ceil((new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24));
+        const msg = `DEADLINE REMINDER: Your task for issue "${issue.title}" is due in ${timeLeft} day(s).`;
+
+        const [notification] = await Promise.all([
+            Notification.create({
+                recipientId: assignee._id,
+                message: msg,
+                type: "task-deadline-reminder",
+                relatedIssue: issue._id,
+                relatedTask: taskId,
+                url: `/issue/${issue.slug}`
+            }),
+            Job.create({
+                type: "Task_Deadline_Reminder_Email",
+                payload: {
+                    email: assignee.email,
+                    staffName: assignee.name,
+                    issueTitle: issue.title,
+                    deadline: deadline.toISOString(),
+                    timeLeft: timeLeft
+                }
+            })
+        ]);
+        
+        io.to(assignee._id.toString()).emit("new-notification", { message: msg });
+        return { success: true, notificationId: notification._id };
+
+    } catch (error) {
+        console.error("Error creating deadline reminder notification job:", error);
+        return { success: false, error: error.message };
     }
 };
 
 //Send notification when an issue is completed
 export const sendIssueCompletedNotification = async (issue, citizenId) => {
     try {
-        const citizen = await User.findById(citizenId);
+        const citizen = await User.findById(citizenId).select('name email');
         if (!citizen) return console.error("Citizen not found:", citizenId);
 
         const msg = `Your issue "${issue.title}" has been marked as resolved`;
 
-        // In-app notification
-        await Notification.create({
-            userId: citizen._id,
-            message: msg,
-            type: "issue-completed",
-            relatedIssue: issue._id,
-            url: `/issue/${issue.slug}`
-        });
+        // Create in-app notification and email job concurrently
+        await Promise.all([
+            Notification.create({
+                recipientId: citizen._id,
+                message: msg,
+                type: "issue-completed",
+                relatedIssue: issue._id,
+                url: `/issue/${issue.slug}`
+            }),
+            // Create a job for the slow email task
+            Job.create({
+                type: "Issue_Completed_Email",
+                payload: {
+                    email: citizen.email,
+                    staffName: citizen.name, 
+                    issueTitle: issue.title,
+                },
+            })
+        ]);
 
-        // Emit real-time
+        // Emit real-time notification via socket
         io.to(citizen._id.toString()).emit("new-notification", {
             message: msg,
             type: "issue-completed",
             isRead: false
         });
 
-        const emailMsg = generateIssueCompletedEmailTemplate(citizen.name, issue.title);
-        // Send email
-        await sendEmail({
-            email: citizen.email,
-            subject: `Issue Completed: ${issue.title}`,
-            message: emailMsg
-        });
-
     } catch (error) {
-        console.error("Error sending issue-completed notification:", error);
+        console.error("Error creating issue-completed notification job:", error);
     }
 };
 
@@ -187,207 +310,6 @@ export const deleteNotification = async (req, res, next) => {
     }
 };
 
-//Send notification when an issue is escalated to a supervisor or coordinator
-export const sendTaskEscalationNotificationToStaff = async (staffId, issue, escalationData = {}) => {
-  try {
-    const staff = await User.findById(staffId);
-    if (!staff) {
-      console.error("Staff not found:", staffId);
-      return { success: false, error: "Staff not found" };
-    }
-
-    const { 
-      taskId, 
-      originalTaskId, 
-      escalationType, 
-      newDeadline, 
-      escalatedTo 
-    } = escalationData;
-
-    let msg, notificationType, url;
-
-    // Determine notification content based on escalation type
-    switch (escalationType) {
-      case 'worker-to-coordinator':
-        msg = `TASK ESCALATION: A task from issue "${issue.title}" has been escalated to you (Coordinator) due to overdue deadline. New deadline: ${newDeadline ? newDeadline.toLocaleDateString() : 'N/A'}`;
-        notificationType = "task-escalation-coordinator";
-        url = `/issue/${issue.slug}`;
-        break;
-      
-      case 'coordinator-to-supervisor':
-        msg = `TASK ESCALATION: A task from issue "${issue.title}" has been escalated to you (Supervisor) due to overdue deadline. New deadline: ${newDeadline ? newDeadline.toLocaleDateString() : 'N/A'}`;
-        notificationType = "task-escalation-supervisor";
-        url = `/issue/${issue.slug}`;
-        break;
-      
-      case 'task-escalated-from-worker':
-        msg = `TASK UPDATE: Your task from issue "${issue.title}" has been escalated to the Coordinator due to overdue deadline.`;
-        notificationType = "task-escalated-from-worker";
-        url = `/issue/${issue.slug}`;
-        break;
-      
-      case 'task-escalated-from-coordinator':
-        msg = `TASK UPDATE: Your task from issue "${issue.title}" has been escalated to the Supervisor due to overdue deadline.`;
-        notificationType = "task-escalated-from-coordinator";
-        url = `/issue/${issue.slug}`;
-        break;
-      
-      default:
-        msg = `TASK ESCALATION: A task from issue "${issue.title}" has been escalated to you due to overdue deadline.`;
-        notificationType = "issue-escalation";
-        url = `/issue/${issue.slug}`;
-    }
-
-    // Create in-app notification
-    const notification = await Notification.create({
-      userId: staff._id,
-      message: msg,
-      type: notificationType,
-      relatedIssue: issue._id,
-      relatedTask: taskId || originalTaskId,
-      url: url,
-      metadata: {
-        escalationType,
-        originalTaskId,
-        newTaskId: taskId,
-        escalatedTo,
-        newDeadline: newDeadline ? newDeadline.toISOString() : null
-      }
-    });
-
-    const emailMsg = generateTaskEscalationEmailTemplate(issue.title, msg);
-    // Send email notification
-    await sendEmail({
-      email: staff.email,
-      subject: "Task Escalation Notification",
-      message: emailMsg
-    });
-
-    // Emit real-time notification via socket
-    io.to(staff._id.toString()).emit("new-notification", {
-      message: msg,
-      type: notificationType,
-      isRead: false,
-      notificationId: notification._id,
-      relatedIssue: issue._id,
-      relatedTask: taskId || originalTaskId,
-      url: url
-    });
-
-    console.log(`Escalation notification sent to ${staff.name} (${staff.email}): ${msg}`);
-    return { success: true, notificationId: notification._id };
-
-  } catch (error) {
-    console.error("Error sending escalation notification:", error);
-    return { success: false, error: error.message };
-  }
-};
-
-// Send notification when a task is created (new assignment)
-export const sendTaskAssignmentNotification = async (taskId, assigneeId, issue) => {
-  try {
-    const assignee = await User.findById(assigneeId);
-    if (!assignee) {
-      console.error("Assignee not found:", assigneeId);
-      return { success: false, error: "Assignee not found" };
-    }
-
-    const msg = `NEW TASK ASSIGNED: You have been assigned a new task for issue "${issue.title}". Please review and start working on it.`;
-
-    const notification = await Notification.create({
-      userId: assignee._id,
-      message: msg,
-      type: "task-assigned",
-      relatedIssue: issue._id,
-      relatedTask: taskId,
-      url: `/issue/${issue.slug}`,
-      metadata: {
-        taskId,
-        issueId: issue._id,
-        assignmentType: "new"
-      }
-    });
-
-    const emailMsg = generateTaskAssignmentEmailTemplate(issue.title, assignee.name);
-    // Send email notification
-    await sendEmail({
-      email: assignee.email,
-      subject: "New Task Assigned",
-      message: emailMsg
-    });
-
-    io.to(assignee._id.toString()).emit("new-notification", {
-      message: msg,
-      type: "task-assigned",
-      isRead: false,
-      notificationId: notification._id,
-      relatedIssue: issue._id,
-      relatedTask: taskId,
-      url: `/issue/${issue.slug}`
-    });
-
-    console.log(`Task assignment notification sent to ${assignee.name}: ${msg}`);
-    return { success: true, notificationId: notification._id };
-
-  } catch (error) {
-    console.error("Error sending task assignment notification:", error);
-    return { success: false, error: error.message };
-  }
-};
-
-// Send notification when a task deadline is approaching
-export const sendTaskDeadlineReminderNotification = async (taskId, assigneeId, issue, deadline) => {
-  try {
-    const assignee = await User.findById(assigneeId);
-    if (!assignee) {
-      console.error("Assignee not found:", assigneeId);
-      return { success: false, error: "Assignee not found" };
-    }
-
-    const timeLeft = Math.ceil((deadline - new Date()) / (1000 * 60 * 60 * 24));
-    const msg = `DEADLINE REMINDER: Your task for issue "${issue.title}" is due in ${timeLeft} day(s). Please ensure timely completion.`;
-
-    const notification = await Notification.create({
-      userId: assignee._id,
-      message: msg,
-      type: "task-deadline-reminder",
-      relatedIssue: issue._id,
-      relatedTask: taskId,
-      url: `/issue/${issue.slug}`,
-      metadata: {
-        taskId,
-        issueId: issue._id,
-        deadline: deadline.toISOString(),
-        daysLeft: timeLeft
-      }
-    });
-
-    const emailMsg = generateTaskDeadlineReminderEmailTemplate(issue.title, assignee.name, deadline, timeLeft);
-    // Send email notification
-    await sendEmail({
-      email: assignee.email,
-      subject: "Task Deadline Reminder",
-      message: emailMsg
-    });
-
-    io.to(assignee._id.toString()).emit("new-notification", {
-      message: msg,
-      type: "task-deadline-reminder",
-      isRead: false,
-      notificationId: notification._id,
-      relatedIssue: issue._id,
-      relatedTask: taskId,
-      url: `/issue/${issue.slug}`
-    });
-
-    console.log(`Deadline reminder sent to ${assignee.name}: ${msg}`);
-    return { success: true, notificationId: notification._id };
-
-  } catch (error) {
-    console.error("Error sending deadline reminder notification:", error);
-    return { success: false, error: error.message };
-  }
-};
 
 // Send notification when a task is completed
 export const sendTaskCompletionNotification = async (taskId, issue, completedBy) => {
