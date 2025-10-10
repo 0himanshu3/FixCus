@@ -9,6 +9,8 @@ const Header = ({ notifications }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
+  console.log(user);
+  
 
   const [menuModalOpen, setMenuModalOpen] = useState(false);
 
@@ -69,7 +71,7 @@ const Header = ({ notifications }) => {
               className={`${isActive(item.path)
                 ? "text-yellow-300 font-black border-b-2 border-yellow-300"
                 : "hover:text-white transition duration-200"
-              }`}
+                }`}
             >
               {item.label}
             </Link>
@@ -86,7 +88,7 @@ const Header = ({ notifications }) => {
                   className={`${isActive(item.path)
                     ? "text-yellow-300 font-black border-b-2 border-yellow-300"
                     : "hover:text-white transition duration-200"
-                  }`}
+                    }`}
                 >
                   {item.label}
                 </Link>
@@ -102,7 +104,7 @@ const Header = ({ notifications }) => {
                 className={`${isActive(item.path)
                   ? "text-yellow-300 font-black border-b-2 border-yellow-300"
                   : "hover:text-white transition duration-200"
-                }`}
+                  }`}
               >
                 {item.label}
               </Link>
@@ -118,7 +120,7 @@ const Header = ({ notifications }) => {
                 className={`${isActive(item.path)
                   ? "text-yellow-300 font-black border-b-2 border-yellow-300"
                   : "hover:text-white transition duration-200"
-                }`}
+                  }`}
               >
                 {item.label}
               </Link>
@@ -134,7 +136,7 @@ const Header = ({ notifications }) => {
                 className={`${isActive(item.path)
                   ? "text-yellow-300 font-black border-b-2 border-yellow-300"
                   : "hover:text-white transition duration-200"
-                }`}
+                  }`}
               >
                 {item.label}
               </Link>
@@ -150,7 +152,7 @@ const Header = ({ notifications }) => {
                 className={`${isActive(item.path)
                   ? "text-yellow-300 font-black border-b-2 border-yellow-300"
                   : "hover:text-white transition duration-200"
-                }`}
+                  }`}
               >
                 {item.label}
               </Link>
@@ -160,8 +162,19 @@ const Header = ({ notifications }) => {
 
         {/* Right side: Account / Logout / Notifications / Hamburger */}
         <div className="flex items-center gap-4">
-          {isAuthenticated ? (
+          {isAuthenticated  ? (
             <div className="hidden md:flex items-center gap-2">
+              {user?.role === "User" && (
+              <button
+                onClick={() => {
+                  navigate("/change-details");
+                  setMenuModalOpen(false);
+                }}
+                className="bg-green-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-green-600 border-2 border-purple-500 transform hover:scale-105 transition duration-200"
+              >
+                👤 Account
+              </button>
+              )}
               <button
                 onClick={handleLogout}
                 className="bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-red-600 border-2 border-pink-300 cursor-pointer transform transition duration-200"
@@ -299,24 +312,22 @@ const Header = ({ notifications }) => {
                 ))
               }
 
-              {/* Account / Logout / Sign In buttons */}
               {isAuthenticated ? (
-                <div className="flex flex-col space-y-2 mt-4">
+                <div className="hidden md:flex items-center gap-2">
+                  {user?.role === "User" && (
+                    <button
+                      onClick={() => {
+                        navigate("/change-details");
+                        setMenuModalOpen(false);
+                      }}
+                      className="bg-green-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-green-600 border-2 border-purple-500 transform hover:scale-105 transition duration-200"
+                    >
+                      👤 Account
+                    </button>
+                  )}
                   <button
-                    onClick={() => {
-                      navigate("/change-details");
-                      setMenuModalOpen(false);
-                    }}
-                    className="bg-green-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-green-600 border-2 border-purple-500 transform hover:scale-105 transition duration-200"
-                  >
-                    👤 Account
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setMenuModalOpen(false);
-                    }}
-                    className="bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-red-600 border-2 border-purple-500 transform hover:scale-105 transition duration-200"
+                    onClick={handleLogout}
+                    className="bg-red-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-red-600 border-2 border-pink-300 cursor-pointer transform transition duration-200"
                   >
                     🚪 Logout
                   </button>
@@ -324,12 +335,12 @@ const Header = ({ notifications }) => {
               ) : (
                 <Link
                   to="/login"
-                  onClick={() => setMenuModalOpen(false)}
-                  className="mt-4 bg-pink-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-pink-600 border-2 border-purple-500 block text-center transform hover:scale-105 transition duration-200"
+                  className="hidden md:flex bg-pink-500 text-white px-4 py-2 rounded-full font-bold shadow-lg hover:bg-pink-600 border-2 border-yellow-300 transform cursor-pointer transition duration-200"
                 >
                   🎪 Sign In
                 </Link>
               )}
+
             </nav>
           </div>
         </div>

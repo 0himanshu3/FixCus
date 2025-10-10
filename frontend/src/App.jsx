@@ -37,6 +37,7 @@ import DashboardStaff from "./pages/dashboard/DashboardStaff";
 import Dashboard from "./pages/dashboard/Dashboard";
 import FillApplicationPage from "./components/FillApplicationPage";
 import MunicipalityMain from "./pages/dashboard/MuncipalityMain";
+import ChangeDetails from "./pages/ChangeDetails";
 const App = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
@@ -170,6 +171,13 @@ const App = () => {
           <Route path="/create" element={<CreateIssue />} />
           <Route path="/monthly-analysis" element={<MonthlyAnalysis />} />
           <Route path="/municipality-view" element={<MunicipalityView />} />
+          {
+            user?.role === "User" && (
+              <>
+              <Route path="/change-details" element={<ChangeDetails />} />
+              </>
+          )}
+          
          {user?.role === "Admin" && (
         <>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
