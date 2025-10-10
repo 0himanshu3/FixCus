@@ -1986,3 +1986,72 @@ export const updateWhatsappLink = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error while adding the link.' });
   }
 };
+
+export const getMonthlyReport = async (req, res) => {
+  try {
+    const { month } = req.query;
+
+    if (!month) {
+      return res.status(400).json({ message: "Month parameter is required" });
+    }
+
+    const [year, monthNum] = month.split("-");
+    const startDate = new Date(year, monthNum - 1, 1);
+    const endDate = new Date(year, monthNum, 1);
+
+    const query = {
+      createdAt: { $gte: startDate, $lt: endDate },
+    };
+
+    const issues = await Issue.find(query)
+      .populate("reportedBy", "name email")
+      .populate("issueTakenUpBy", "name")
+      .populate("staffsAssigned", "name")
+      .lean();
+
+    const formattedIssues = issues.map(issue => {
+      let resolutionHours = "N/A";
+      if (issue.resolvedAt && issue.issueTakenUpTime) {
+        const resolved = new Date(issue.resolvedAt).getTime();
+        const takenUp = new Date(issue.issueTakenUpTime).getTime();
+        if (!isNaN(resolved) && !isNaN(takenUp) && resolved >= takenUp) {
+          resolutionHours = Math.round((resolved - takenUp) / (1000 * 60 * 60));
+        }
+      }
+
+      return {
+        _id: issue._id,
+        title: issue.title,
+        category: issue.category,
+        priority: issue.priority,
+        content: issue.content,
+        issueLocation: issue.issueLocation,
+        issueDistrict: issue.issueDistrict,
+        issueState: issue.issueState,
+        issueCountry: issue.issueCountry,
+        issuePublishDate: issue.issuePublishDate,
+        reportedBy: issue.reportedBy?.name || "N/A",
+        reportedByEmail: issue.reportedBy?.email || "N/A",
+        status: issue.status,
+        upvotesCount: issue.upvotes?.length || 0,
+        downvotesCount: issue.downvotes?.length || 0,
+        staffsAssignedCount: issue.staffsAssigned?.length || 0,
+        deadline: issue.deadline,
+        issueTakenUpBy: issue.issueTakenUpBy?.name || "N/A",
+        issueTakenUpTime: issue.issueTakenUpTime,
+        issueResolvedAt: issue.resolvedAt,  
+        resolutionTimeHours: resolutionHours,
+      };
+    });
+
+    return res.status(200).json({
+      month,
+      totalIssues: issues.length,
+      issues: formattedIssues,
+    });
+
+  } catch (err) {
+    console.error("Error generating monthly report:", err);
+    res.status(500).json({ message: "Failed to generate report", error: err.message });
+  }
+};

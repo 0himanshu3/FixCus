@@ -51,8 +51,7 @@ export const processJobQueue = async () => {
           break;
         }
 
-        case "Task_Assignment_Email": {
-          // Corrected: The payload contains 'issueTitle', not 'taskTitle'
+        case "Task_Assigned_Email": {
           const { email, staffName, issueTitle } = job.payload;
           const emailBody = generateTaskAssignmentEmailTemplate(
             staffName,
