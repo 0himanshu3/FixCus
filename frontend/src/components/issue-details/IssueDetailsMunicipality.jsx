@@ -723,7 +723,7 @@ useEffect(() => {
     }
 
     try {
-      const res = await fetch(`/api/v1/issues/${issue._id}/whatsapp`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/${issue._id}/whatsapp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ whatsappLink: newLink }),
