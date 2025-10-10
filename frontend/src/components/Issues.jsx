@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import IssuesHeatmap from "./IssuesHeatmap";
 
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
 const issueCategories = [
@@ -23,6 +24,7 @@ function Issues() {
   const [issues, setIssues] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isHeatmapOpen, setIsHeatmapOpen] = useState(false);
 
   // Initialize filters from URL query params
   const [filters, setFilters] = useState({
@@ -103,6 +105,8 @@ function Issues() {
     setIsFilterOpen(false);
   };
 
+  const handleHeatmapOpen = () => setIsHeatmapOpen(true);
+
   return (
   <div className="relative min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -121,6 +125,12 @@ function Issues() {
               className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-all duration-200 flex items-center gap-2 will-change-transform"
             >
               ➕ Publish Issue
+            </button>
+            <button
+              onClick={handleHeatmapOpen}
+              className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-all duration-200 will-change-transform"
+            >
+              🗺 View Heatmap
             </button>
           </div>
         </div>
@@ -229,7 +239,9 @@ function Issues() {
           ))}
         </div>
       )}
-    </div>
+      </div>
+      
+    <IssuesHeatmap show={isHeatmapOpen} onClose={() => setIsHeatmapOpen(false)} />
 
     {isFilterOpen && (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
