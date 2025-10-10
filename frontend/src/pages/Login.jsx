@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { login, resetAuthSlice } from '../redux/slices/authSlice';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { motion } from 'framer-motion'
 
 function Login() {
@@ -12,6 +13,8 @@ function Login() {
 
     const { loading, error, message, user, isAuthenticated } = useSelector(state => state.auth);
     
+    const navigateTo = useNavigate();
+
     const handleLogin = (e) => {
         e.preventDefault();
         const data = new FormData();
@@ -20,23 +23,34 @@ function Login() {
         dispatch(login(data));
     }
 
-    const navigateTo = useNavigate()
-
     useEffect(() => {
         if (message) {
-            if (user?.role === 'Admin') {
-                navigateTo("/admin/dashboard");
-            } else if (user?.role === 'Municipality Admin') {
-                navigateTo("/municipality");
-            } else {
-                navigateTo("/");
-            }
+            toast.success(message || "Login successful!", {
+                position: "top-right",
+                autoClose: 2000,
+                theme: "colored"
+            });
+            
+            setTimeout(() => {
+                if (user?.role === 'Admin') {
+                    navigateTo("/admin/dashboard");
+                } else if (user?.role === 'Municipality Admin') {
+                    navigateTo("/municipality");
+                } else {
+                    navigateTo("/");
+                }
+            }, 1500);
         }
+
         if (error) {
-            toast.error(error);
+            toast.error(error || "Login failed! Please try again.", {
+                position: "top-right",
+                autoClose: 3000,
+                theme: "colored"
+            });
             dispatch(resetAuthSlice());
         }
-    }, [dispatch, isAuthenticated, error, loading, message, user, navigateTo])
+    }, [dispatch, isAuthenticated, error, loading, message, user, navigateTo]);
 
     if (isAuthenticated) {
         if (user?.role === 'Admin') {
@@ -61,6 +75,9 @@ function Login() {
 
     return (
         <div className="flex flex-col justify-center md:flex-row h-screen relative overflow-hidden">
+            {/* Toasts */}
+            <ToastContainer />
+
             {/* Animated circus background pattern */}
             <div className="absolute inset-0 bg-gradient-to-br from-purple-100 via-pink-100 to-yellow-100 opacity-50"></div>
             <div className="absolute inset-0" style={{
@@ -139,15 +156,6 @@ function Login() {
                         >
                             {loading ? '⏳ Signing In...' : '🎉 SIGN IN NOW!'}
                         </button>
-
-                        {/* Admin Login Button */}
-                        {/* <button
-                            type="button"
-                            onClick={() => navigateTo("/admin/login")}
-                            className="w-full bg-gradient-to-r from-gray-700 to-gray-900 text-white font-bold text-sm py-3 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 transform hover:-translate-y-1"
-                        >
-                            🔐 ADMIN LOGIN
-                        </button> */}
                     </form>
                 </div>
             </motion.div>
@@ -163,13 +171,11 @@ function Login() {
                     boxShadow: '-15px 0 30px rgba(147, 51, 234, 0.2)'
                 }}
             >
-                {/* Decorative elements */}
                 <div className="absolute top-10 right-10 w-24 h-24 bg-yellow-300 rounded-full opacity-20 animate-pulse"></div>
                 <div className="absolute bottom-20 left-16 w-32 h-32 bg-pink-300 rounded-full opacity-20 animate-bounce" style={{ animationDuration: '3s' }}></div>
                 <div className="absolute top-1/3 left-20 w-16 h-16 bg-purple-300 rounded-full opacity-30"></div>
                 
                 <div className="text-center z-10 space-y-6">
-                    {/* Fun icon */}
                     <div className="flex justify-center mb-6">
                         <div className="relative">
                             <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full blur-xl opacity-50 animate-pulse"></div>
@@ -205,4 +211,4 @@ function Login() {
     )
 }
 
-export default Login
+export default Login;
