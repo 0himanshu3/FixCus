@@ -15,11 +15,9 @@ export default function TestAdvancedMarker() {
         document.head.appendChild(s);
         await new Promise((r, e) => { s.onload = r; s.onerror = e; });
       }
-      console.log("google loaded:", !!window.google, "marker lib present?", !!window.google.maps?.marker);
 
       const { Map } = await window.google.maps.importLibrary('maps');
       const { AdvancedMarkerElement } = await window.google.maps.importLibrary('marker');
-      console.log("AdvancedMarkerElement:", !!AdvancedMarkerElement);
 
       const center = { lat: 28.9843847907343, lng: 77.70621702075009 };
       const map = new Map(mapRef.current, { center, zoom: 15, mapId: import.meta.env.VITE_GOOGLE_MAP_ID || "DEMO_MAP_ID" });
@@ -36,7 +34,6 @@ export default function TestAdvancedMarker() {
       debugCopy.style.position = 'fixed'; debugCopy.style.left = '10px'; debugCopy.style.top = '10px'; document.body.appendChild(debugCopy);
 
       marker = new AdvancedMarkerElement({ map, position: center, content: container, title: "Test" });
-      console.log("Advanced marker created:", marker, "marker.content:", marker.content);
     })().catch(console.error);
 
     return () => { if (marker) marker.map = null; };

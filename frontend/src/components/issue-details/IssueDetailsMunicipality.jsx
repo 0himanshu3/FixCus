@@ -343,7 +343,7 @@ function IssueDetailsMunicipality() {
   async function fetchStaff() {
     try {
       setLoadingStaff(true);
-      const res = await axios.get(`http://localhost:3000/api/v1/auth/staff`, {
+      const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/staff`, {
         withCredentials: true,
       });
       setStaff(res.data || []);
@@ -358,7 +358,7 @@ function IssueDetailsMunicipality() {
   const fetchIssue = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/issues/${slug}`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/${slug}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -384,13 +384,10 @@ function IssueDetailsMunicipality() {
     setLoadingSuggested(true);
     try {
       const res = await axios.get(
-        `http://localhost:3000/api/v1/issues/${issueId}/suggested-staff`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/${issueId}/suggested-staff`,
         { withCredentials: true }
       );
       const data = res.data || {};
-      console.log('====================================');
-      console.log(data);
-      console.log('====================================');
       const suggested = data.suggested || data.suggestions || data.top || [];
       setSuggestedStaff(suggested);
     } catch (err) {
@@ -502,7 +499,7 @@ useEffect(() => {
     if (!deadline)
       return toast.info("Please set a deadline before taking up the issue");
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/issues/takeup`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/takeup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -526,7 +523,7 @@ useEffect(() => {
 
     setAssigningStaff(true);
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/issues/assign-staff`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/assign-staff`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -559,7 +556,7 @@ useEffect(() => {
     setShowFeedbackModal(true);
     try {
       const res = await axios.get(
-        `http://localhost:3000/api/v1/feedbacks/feedback/${issue._id}`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/feedbacks/feedback/${issue._id}`,
         { withCredentials: true }
       );
       setCitizenFeedbacks(res.data.feedbacks || []);
@@ -576,7 +573,7 @@ useEffect(() => {
     setShowReportModal(true);
     try {
       const res = await axios.get(
-        `http://localhost:3000/api/v1/issues/report/${issue._id}`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/report/${issue._id}`,
         { withCredentials: true }
       );
       setSupervisorReport(res.data.report);
@@ -595,7 +592,7 @@ useEffect(() => {
 
     try {
       const res = await axios.post(
-        `http://localhost:3000/api/v1/feedbacks/analyze-feedback`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/feedbacks/analyze-feedback`,
         { issueId: issue._id },
         { withCredentials: true }
       );
@@ -623,7 +620,7 @@ useEffect(() => {
     const candidateId = candidate.userId || candidate.user || candidate._id;
     setAssigningSuggestedId(candidateId);
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/issues/assign-staff`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/assign-staff`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -671,7 +668,7 @@ useEffect(() => {
     }));
 
     const res = await fetch(
-      `http://localhost:3000/api/v1/issues/assign-suggested`,
+      `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/assign-suggested`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import IssuesHeatmap from "../IssuesHeatmap";
+import IssuesHeatmap from "./IssuesHeatmap";
 
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
 const issueCategories = [
@@ -18,15 +18,13 @@ const issueCategories = [
   ];
 const statusOptions = ["Open", "In Progress", "Resolved"];
 
-function Issues() {
+function IssuesAdmin() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [issues, setIssues] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isHeatmapOpen, setIsHeatmapOpen] = useState(false);
-  const user = useSelector((state) => state.auth.user);
-  const userDistrict = user?.district || null;
 
   // Initialize filters from URL query params
   const [filters, setFilters] = useState({
@@ -34,11 +32,10 @@ function Issues() {
     category: searchParams.get("category") || "",
     priority: searchParams.get("priority") || "",
     status: searchParams.get("status") || "",
-    // location: searchParams.get("location") || "",
+    location: searchParams.get("location") || "",
     votes: searchParams.get("votes") || "",
     recency: searchParams.get("recency") || "",
   });
-
 
   // Fetch filtered issues from API
   const fetchFilteredIssues = async (appliedFilters) => {
@@ -50,12 +47,8 @@ function Issues() {
         if (value) query.append(key, value);
       });
 
-      if (userDistrict) {
-        query.append("location", userDistrict);
-      }
-
       const res = await fetch(
-        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/all?${query.toString()}`,
+        `http://localhost:3000/api/v1/issues/all?${query.toString()}`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
@@ -102,7 +95,7 @@ function Issues() {
       category: "",
       priority: "",
       status: "",
-      // location: "",
+      location: "",
       votes: "",
       recency: "",
     };
@@ -127,12 +120,12 @@ function Issues() {
             >
               🔍 Filter
             </button>
-            <button
+            {/* <button
               onClick={handleAddIssue}
               className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-all duration-200 flex items-center gap-2 will-change-transform"
             >
               ➕ Publish Issue
-            </button>
+            </button> */}
             <button
               onClick={handleHeatmapOpen}
               className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-all duration-200 will-change-transform"
@@ -156,12 +149,12 @@ function Issues() {
             Get started by creating your first issue.
           </p>
           <div className="mt-4 overflow-hidden inline-block">
-            <button
+            {/* <button
               onClick={handleAddIssue}
               className="px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-400 transition-all duration-200 will-change-transform"
             >
               ➕ Publish Issue
-            </button>
+            </button> */}
           </div>
         </div>
       ) : (
@@ -224,7 +217,7 @@ function Issues() {
               </p>
             </div>
           </div>
-          
+
           {/* Button with gradient animation */}
           <div className="overflow-hidden">
             <button
@@ -316,7 +309,7 @@ function Issues() {
               ))}
             </select>
 
-            {/* <input
+            <input
               type="text"
               placeholder="Location"
               value={filters.location}
@@ -324,7 +317,7 @@ function Issues() {
                 setFilters({ ...filters, location: e.target.value })
               }
               className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
-            /> */}
+            />
 
             <select
               value={filters.votes}
@@ -373,4 +366,4 @@ function Issues() {
 
 }
 
-export default Issues;
+export default IssuesAdmin;

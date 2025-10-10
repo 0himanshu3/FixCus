@@ -18,9 +18,6 @@ import dotenv from "dotenv";
 
 export const createIssue = async (req, res) => {
     try {
-        console.log("createIssue called");
-        
-        console.log(req.body);
         
         const { title, content, category, issueLocation, issuePublishDate, images, videos, issueDistrict, issueState, issueCountry } = req.body;
 
@@ -468,13 +465,13 @@ export const getMonthlyAnalysis = async (req, res) => {
         // Start and end dates for the month
         const startDate = new Date(year, monthIndex - 1, 1);
         const endDate = new Date(year, monthIndex, 0, 23, 59, 59, 999);
-        console.log(userId);
+        
         // Get assigned issues in that month
         const assignedIssues = await Issue.find({
             issueTakenUpBy: userId,
             issuePublishDate: { $gte: startDate, $lte: endDate }
         });
-       console.log(assignedIssues);
+       
         const completedIssues = assignedIssues.filter(issue => issue.status === 'Resolved');
         const totalAssigned = assignedIssues.length;
         const totalCompleted = completedIssues.length;
@@ -532,14 +529,12 @@ export const getMonthlyAnalysis = async (req, res) => {
 export const takeUpIssue = async (req, res) => {
     try {
         const { issueId, deadline } = req.body;
-        console.log(issueId, deadline);
 
         if (!issueId || !deadline) {
             return res.status(400).json({ success: false, message: "Issue ID and deadline are required" });
         }
 
         const issue = await Issue.findById(issueId);
-        console.log(issue);
 
         if (!issue) {
             return res.status(404).json({ success: false, message: "Issue not found" });
@@ -588,7 +583,6 @@ export const takeUpIssue = async (req, res) => {
 export const assignStaff = async (req, res) => {
     try {
         const { issueId, staffEmail, role } = req.body;
-        console.log(issueId, staffEmail, role);
 
         if (!issueId || !staffEmail || !role) {
             return res.status(400).json({ message: "Issue ID, Staff Email, and Role are required" });
@@ -616,13 +610,11 @@ export const assignStaff = async (req, res) => {
         if (!staff) {
             return res.status(404).json({ message: "Staff not found" });
         }
-        console.log(staff);
 
 
         if (staff.role !== "Municipality Staff") {
             return res.status(400).json({ message: "User is not a Municipality Staff" });
         }
-        console.log(issue, staff, role);
 
         // Check if staff already assigned with same role
         const alreadyAssigned = issue.staffsAssigned.some(
@@ -1195,7 +1187,6 @@ export const getStaffDashboardDetails = async (req, res) => {
   try {
     // prefer route param, fallback to logged-in user id
     const candidateId = req.params?.staffId ?? req?.user?._id;
-    console.log('candidateId (raw):', candidateId, ' typeof:', typeof candidateId);
 
     if (!candidateId) {
       return res.status(400).json({ success: false, message: 'Staff ID is required (params or authenticated user).' });
@@ -1218,10 +1209,7 @@ export const getStaffDashboardDetails = async (req, res) => {
       .populate('issueId', 'title category')
       .sort({ deadline: 1 })
       .lean();
-
-    console.log('Staff ObjectId:', staffObjectId.toHexString());
-    console.log('Assigned issues count:', allAssignedIssues.length);
-    console.log('Assigned tasks count:', allAssignedTasks.length);
+    
 
     // Build dashboardData (same logic as before)
     const dashboardData = {
@@ -1286,7 +1274,6 @@ export const getStaffDashboardDetails = async (req, res) => {
 export const getStaffDashboard = async (req, res) => {
   try {
     const rawStaffId = req?.user?._id;
-    console.log('rawStaffId (as received):', rawStaffId);
 
     let staffObjectId;
     try {
@@ -1305,12 +1292,7 @@ export const getStaffDashboard = async (req, res) => {
       .populate('issueId', 'title category')
       .sort({ deadline: 1 })
       .lean();
-
-    console.log('====================================');
-    console.log(`Staff ObjectId: ${staffObjectId.toHexString()}`);
-    console.log('Assigned issues count:', allAssignedIssues.length);
-    console.log('Assigned tasks count:', allAssignedTasks.length);
-    console.log('====================================');
+    
 
     // If nothing assigned
     if ((!allAssignedIssues || allAssignedIssues.length === 0) && (!allAssignedTasks || allAssignedTasks.length === 0)) {
@@ -1397,11 +1379,6 @@ export const getStaffDashboard = async (req, res) => {
       dashboardData.taskStats.total > 0
         ? Math.round((dashboardData.taskStats.completed / dashboardData.taskStats.total) * 100)
         : 0;
-
-    console.log('dashboardData summary:', {
-      issueTotals: dashboardData.issueStats,
-      taskTotals: dashboardData.taskStats,
-    });
 
     return res.status(200).json({
       success: true,
@@ -1940,7 +1917,6 @@ export const reopenUnresolvedIssues = async () => {
 
    
     for (const issue of overdueIssues) {
-      console.log(issue);
   if (!issue) continue;
 
 
@@ -1974,12 +1950,10 @@ export const reopenUnresolvedIssues = async () => {
   });
   await newIssue.save();
 }
-
-    console.log(`Checked ${overdueIssues.length} overdue issues. Reopened issues where needed.`);
-    return overdueIssues.length;
+    
   } catch (err) {
     console.error('Reopen Issues Error:', err);
-    return res.status(500).json({ message: 'Internal server error' });
+    return 0;
   }
 };
 

@@ -22,6 +22,7 @@ import IssueDetailsStaff from "./components/issue-details/IssueDetailsStaff";
 import MuncipalityMain from "./pages/dashboard/MuncipalityMain";
 import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import ApplicationRequest from "./pages/ApplicationRequest";
+import IssuesAdmin from "./components/IssuesAdmin";
 import IssueDetailsMunicipality from "./components/issue-details/IssueDetailsMunicipality"; // If you have this component
 import IssuesMunicipality from "./components/issues/IssuesMunicipality";// If you have this component
 import CreateIssue from "./pages/CreateIssue";
@@ -90,7 +91,7 @@ const App = () => {
   const [socket, setSocket] = useState(null);
   const fetchNotifications = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/v1/notification", {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/notification`, {
         credentials: "include",
       });
       const data = await res.json();
@@ -104,14 +105,13 @@ const App = () => {
   useEffect(() => {
     if (isAuthenticated && user?._id) {
       // Create socket with error handling
-      const newSocket = io("http://localhost:3000", {
+      const newSocket = io(import.meta.env.VITE_REACT_APP_BACKEND_BASEURL, {
         timeout: 5000,
         forceNew: true,
         autoConnect: true
       });
 
       newSocket.on('connect', () => {
-        console.log("Socket.IO connected successfully");
         setSocket(newSocket);
 
         // Join user's room
@@ -132,14 +132,12 @@ const App = () => {
       });
 
       newSocket.on('connect_error', (error) => {
-        console.log("Socket.IO connection failed - server may not be running:", error.message);
         setSocket(null);
         // Still fetch notifications without real-time updates
         fetchNotifications();
       });
 
       newSocket.on('disconnect', () => {
-        console.log("Socket.IO disconnected");
         setSocket(null);
       });
 
@@ -171,6 +169,7 @@ const App = () => {
           <Route path="/municipality-view" element={<MunicipalityView />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/requests" element={<ApplicationRequest />} />
+          <Route path="/admin/issues" element={<IssuesAdmin />} />
           <Route path="/issues-heatmap" element={<IssuesHeatmapPage />} />
           <Route path="/fill-application-page" element={<FillApplicationPage />} />
           <Route path="/municipality/:slug" element={<MunicipalityDetails />} />

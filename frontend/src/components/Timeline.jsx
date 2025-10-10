@@ -14,7 +14,7 @@ const Timeline = ({ issueId, isOpen, onClose }) => {
 
   const fetchTimelineEvents = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/api/v1/issues/timeline/${issueId}`, {
+      const response = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/timeline/${issueId}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

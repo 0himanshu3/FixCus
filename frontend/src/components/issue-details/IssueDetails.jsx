@@ -45,7 +45,7 @@ function IssueDetails() {
   const fetchIssue = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/issues/${slug}`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/${slug}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -128,7 +128,7 @@ function IssueDetails() {
         feedbackFiles,
         setFeedbackUploadProgress
       );
-      const res = await fetch(`http://localhost:3000/api/v1/feedbacks/submitFeedback`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/feedbacks/submitFeedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -156,7 +156,7 @@ function IssueDetails() {
 
   const handleUpvote = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/issues/upvote`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/upvote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -170,7 +170,7 @@ function IssueDetails() {
 
   const handleDownvote = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/issues/downvote`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/downvote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -185,7 +185,7 @@ function IssueDetails() {
   const handleAddComment = async () => {
     if (!comment.trim()) return;
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/issues/comment`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -204,7 +204,7 @@ function IssueDetails() {
     if (!editingContent.trim()) return;
     try {
       const res = await fetch(
-        `http://localhost:3000/api/v1/issues/comment/${commentId}`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/comment/${commentId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -225,7 +225,7 @@ function IssueDetails() {
   const handleDeleteComment = async (commentId) => {
     try {
       const res = await fetch(
-        `http://localhost:3000/api/v1/issues/comment/${commentId}`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/comment/${commentId}`,
         {
           method: "DELETE",
           credentials: "include",

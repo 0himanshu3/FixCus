@@ -45,11 +45,10 @@ function IssuesMunicipality() {
 
       if (adminDistrict) {
         query.append("district", adminDistrict);
-        
       }
 
       const res = await fetch(
-        `http://localhost:3000/api/v1/issues/all?${query.toString()}`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/all?${query.toString()}`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },
@@ -126,7 +125,7 @@ function IssuesMunicipality() {
 const fetchAllIssuesForHeatmap = async () => {
     try {
       const res = await fetch(
-        "http://localhost:3000/api/v1/issues/all",
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/all`,
         {
           method: "GET",
           headers: { "Content-Type": "application/json" },

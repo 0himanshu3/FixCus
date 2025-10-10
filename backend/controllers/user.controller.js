@@ -73,7 +73,6 @@ export const register = async (req, res) => {
         sendVerificationCode(verificationCode, email, res);
 
     } catch (error) {
-        console.log(error.message);
         return res.status(500).json({
             success: false,
             message: "Something went wrong"
@@ -101,8 +100,6 @@ export const verifyOtp = async (req, res) => {
             accountVerified: false,
         }).sort({ createdAt: -1 });
         
-        console.log("User entries:", userEntries);
-        console.log("Municipality entries:", municipalityEntries);
         
         // Determine which collection has the user
         let user;
@@ -116,8 +113,6 @@ export const verifyOtp = async (req, res) => {
             return res.status(400).json({ msg: "Invalid OTP" });
         }
         
-        console.log("Found user:", user);
-        console.log("Verification code:", user.verificationCode);
         
         if(user.verificationCode !== Number(otp)){
             return res.status(400).json({ msg: "Invalid OTP" });
@@ -138,7 +133,6 @@ export const verifyOtp = async (req, res) => {
 
         sendToken(user, 200, "Account Verified", res);
     } catch (error) {
-        console.log(error.message);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 }
@@ -183,7 +177,6 @@ export const logout =async(req,res)=>{
         res.clearCookie('token', { httpOnly: true });
         return res.status(200).json({ success: true, message: "Logged out successfully"})
         } catch (error) {
-            console.log(error.message);
             return res.status(500).json({ success: false, message: "Internal Server Error"
              })
         }
@@ -195,7 +188,6 @@ export const getUser = async (req, res) => {
        return res.status(200).json({ success: true, user });
 
     } catch (error) {
-        console.log(error.message);
         return res.status(500).json({ success: false, message: "Internal Server Error" });
 
         
@@ -267,7 +259,6 @@ export const forgotPassword= async(req,res)=>{
             message: `Email sent to ${user.email} successfully.`,
         });
     } catch (error) {
-        console.log(error.message);
         
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;

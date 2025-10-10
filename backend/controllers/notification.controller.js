@@ -329,7 +329,7 @@ export const sendTaskCompletionNotification = async (taskId, issue, completedBy)
 
     const assigner = task.assignedBy;
     if (!assigner) {
-      console.log("No assigner found for task:", taskId);
+      
       return { success: false, error: "No assigner found" };
     }
 
@@ -360,7 +360,7 @@ export const sendTaskCompletionNotification = async (taskId, issue, completedBy)
       url: `/issue/${issue.slug}`
     });
 
-    console.log(`Task completion notification sent to ${assigner.name}: ${msg}`);
+    
     return { success: true, notificationId: notification._id };
 
   } catch (error) {
@@ -380,7 +380,7 @@ export const sendTaskStatusUpdateNotification = async (taskId, issue, oldStatus,
 
     const assignee = task.assignedTo;
     if (!assignee) {
-      console.log("No assignee found for task:", taskId);
+      
       return { success: false, error: "No assignee found" };
     }
 
@@ -413,7 +413,7 @@ export const sendTaskStatusUpdateNotification = async (taskId, issue, oldStatus,
       url: `/issue/${issue.slug}`
     });
 
-    console.log(`Task status update notification sent to ${assignee.name}: ${msg}`);
+    
     return { success: true, notificationId: notification._id };
 
   } catch (error) {
@@ -445,7 +445,7 @@ export const sendDeadlineRemindersService = async ({ dryRun = false } = {}) => {
       hasEscalated: false
     }).populate('assignedTo', 'name email').populate('issueId', 'title');
 
-    console.log(`Found ${upcomingTasks.length} tasks with upcoming deadlines`);
+    
 
     for (const task of upcomingTasks) {
       results.processed++;
@@ -457,7 +457,6 @@ export const sendDeadlineRemindersService = async ({ dryRun = false } = {}) => {
         }
 
         if (dryRun) {
-          console.log(`[DRY RUN] Would send deadline reminder for task ${task._id} to ${task.assignedTo?.name}`);
           results.remindersSent++;
         } else {
           const reminderResult = await sendTaskDeadlineReminderNotification(
@@ -469,7 +468,6 @@ export const sendDeadlineRemindersService = async ({ dryRun = false } = {}) => {
           
           if (reminderResult.success) {
             results.remindersSent++;
-            console.log(`Deadline reminder sent for task ${task._id}`);
           } else {
             results.errors.push({ 
               taskId: task._id, 
@@ -486,7 +484,7 @@ export const sendDeadlineRemindersService = async ({ dryRun = false } = {}) => {
       }
     }
 
-    console.log(`Deadline reminder service completed: ${results.remindersSent} reminders sent, ${results.errors.length} errors`);
+    
     return results;
 
   } catch (error) {

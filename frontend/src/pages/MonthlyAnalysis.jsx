@@ -60,11 +60,10 @@ const MonthlyAnalysis = () => {
     if (!userId) return;
     const fetchAnalysis = async () => {
       try {
-        const res = await axios.get(`http://localhost:3000/api/v1/issues/monthly-analysis`, {
+        const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/monthly-analysis`, {
           params: { month: selectedMonth },
           withCredentials: true
         }); 
-        console.log(res);
         setData(res.data);
         setLoading(false);
       } catch (err) {

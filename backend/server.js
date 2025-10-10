@@ -10,22 +10,21 @@ import { processJobQueue } from "./worker.js";
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: process.env.FRONTEND_URL,
         methods: ["GET", "POST"],
         credentials: true,
     },
 })
 
 io.on("connection", (socket) => {
-    // console.log("Client connected:", socket.id);
     socket.on("join", (userId) => {
-      console.log(`User ${userId} joined room`);
+      
       socket.join(userId);
       socket.emit("joined-room", userId);
     });
   
     socket.on("disconnect", () => {
-      // console.log("Client disconnected:", socket.id);
+      
     });
   });
 export {io}
@@ -34,9 +33,7 @@ export {io}
 // Run escalation service every hour
 cron.schedule("0 * * * *", async () => {
   try {
-    console.log("[CRON] Running escalateOverdueTasksService");
     const result = await escalateOverdueTasksService();
-    console.log("[CRON] Escalation summary:", result);
   } catch (err) {
     console.error("[CRON] Escalation error:", err);
   }
@@ -45,9 +42,7 @@ cron.schedule("0 * * * *", async () => {
 // Run deadline reminders twice daily (9 AM and 6 PM)
 cron.schedule("0 9,18 * * *", async () => {
   try {
-    console.log("[CRON] Running sendDeadlineRemindersService");
     const result = await sendDeadlineRemindersService();
-    console.log("[CRON] Deadline reminders summary:", result);
   } catch (err) {
     console.error("[CRON] Deadline reminders error:", err);
   }
@@ -55,9 +50,7 @@ cron.schedule("0 9,18 * * *", async () => {
 
 cron.schedule("0 9,18 * * *", async () => {
   try {
-    console.log("[CRON] Running reopenUnresolvedIssues");
     const result = await reopenUnresolvedIssues();
-    console.log("[CRON] ReOpen Unresolved issues:",result);
   } catch (err) {
     console.error("[CRON] Reopending Unresolved issues error:", err);
   }
@@ -65,9 +58,7 @@ cron.schedule("0 9,18 * * *", async () => {
 
 cron.schedule("0 0,12 * * *", async () => {
   try {
-    console.log("[CRON] Running escalateIssuePriority");
     const result = await escalateIssuePriority();
-    console.log("[CRON] Issue priority escalation summary:", result);
   }
   catch (err) {
     console.error("[CRON] Issue priority escalation error:", err);
@@ -75,13 +66,10 @@ cron.schedule("0 0,12 * * *", async () => {
 });
 
 cron.schedule('* * * * *', () => {
-  console.log('[CRON] Checking for pending jobs in the queue...');
   processJobQueue();
 });
 
-server.listen(process.env.PORT || 3000, () => {
-    console.log(`Server is running on port ${process.env.PORT || 3000}`);
-    console.log(`Socket.IO server is ready`);
+server.listen(process.env.PORT , () => {
 });
 
 // (async () => {

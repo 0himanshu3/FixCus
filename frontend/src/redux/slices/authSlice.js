@@ -128,7 +128,7 @@ export const resetAuthSlice = () => (dispatch) => {
 export const register = (data) => async (dispatch) => {
     dispatch(authSlice.actions.registerRequest());
     await axios
-        .post("http://localhost:3000/api/v1/auth/register", data, {
+        .post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/register`, data, {
             withCredentials: true,
             headers: {
                 "Content-Type": "application/json",
@@ -146,7 +146,7 @@ export const register = (data) => async (dispatch) => {
 export const otpVerification = (email, otp) => async (dispatch) => {
     dispatch(authSlice.actions.otpVerificationRequest());
     await axios
-        .post("http://localhost:3000/api/v1/auth/verify-otp", { email, otp }, {
+        .post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/verify-otp`, { email, otp }, {
             withCredentials: true,
             headers: {
                 "Content-Type": "application/json",
@@ -163,7 +163,7 @@ export const otpVerification = (email, otp) => async (dispatch) => {
 export const login = (data) => async (dispatch) => {
     dispatch(authSlice.actions.loginRequest());
     await axios
-        .post("http://localhost:3000/api/v1/auth/login", data, {
+        .post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/login`, data, {
             withCredentials: true,
             headers: {
                 "Content-Type": "application/json",
@@ -180,7 +180,7 @@ export const login = (data) => async (dispatch) => {
 export const logout = () => async (dispatch) => {
     dispatch(authSlice.actions.logoutRequest());
     await axios
-        .get("http://localhost:3000/api/v1/auth/logout", {
+        .get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/logout`, {
             withCredentials: true,
         })
         .then((res) => {
@@ -195,11 +195,10 @@ export const logout = () => async (dispatch) => {
 export const getUser = () => async (dispatch) => {
     dispatch(authSlice.actions.getUserRequest());
     await axios
-        .get("http://localhost:3000/api/v1/auth/profile", {
+        .get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/profile`, {
             withCredentials: true,
         })
         .then((res) => {
-            console.log("this is response", res.data);
             dispatch(authSlice.actions.getUserSuccess(res.data));
         })
         .catch((error) => {
@@ -216,7 +215,7 @@ export const getUser = () => async (dispatch) => {
 export const forgotPassword = (email) => async (dispatch) => {
     dispatch(authSlice.actions.forgotPasswordRequest());
     await axios
-        .post("http://localhost:3000/api/v1/auth/password/forgot", { email }, {
+        .post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/password/forgot`, { email }, {
             withCredentials: true,
             headers: {
                 "Content-Type": "application/json",
@@ -235,7 +234,7 @@ export const resetPassword = (data, token) => async (dispatch) => {
     dispatch(authSlice.actions.resetPasswordRequest());
     await axios
         .put(
-            `http://localhost:3000/api/v1/auth/password/reset/${token}`,
+            `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/password/reset/${token}`,
             data,
             {
                 withCredentials: true,

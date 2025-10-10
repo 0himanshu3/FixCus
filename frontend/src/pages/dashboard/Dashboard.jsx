@@ -73,9 +73,9 @@ export default function Dashboard() {
       try {
         // parallel requests
         const [upRes, downRes, myRes] = await Promise.allSettled([
-          axios.get('http://localhost:3000/api/v1/issues/top', { params: { sortBy: 'upvotes', limit: 5 }, withCredentials: true }),
-          axios.get('http://localhost:3000/api/v1/issues/top', { params: { sortBy: 'downvotes', limit: 5 }, withCredentials: true }),
-          axios.get('http://localhost:3000/api/v1/issues/my', { withCredentials: true })
+          axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/top`, { params: { sortBy: 'upvotes', limit: 5 }, withCredentials: true }),
+          axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/top`, { params: { sortBy: 'downvotes', limit: 5 }, withCredentials: true }),
+          axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/my`, { withCredentials: true })
         ])
 
         const upvoted = (upRes.status === 'fulfilled' ? (upRes.value.data.topUpvoted || upRes.value.data.issues || upRes.value.data || []) : [])
