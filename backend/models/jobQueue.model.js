@@ -4,7 +4,7 @@ const jobSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: ['Issue_Assigned_Email', 'Issue_Completed_Email', 'Task_Assigned_Email', 'Task_Escalated_Email'],
+    enum: ['Issue_Assigned_Email', 'Issue_Completed_Email', 'Task_Assigned_Email', 'Task_Escalated_Email','Task_Deadline_Reminder_Email'],
   },
   payload: {
     type: mongoose.Schema.Types.Mixed,

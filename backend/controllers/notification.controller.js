@@ -92,14 +92,20 @@ export const sendTaskEscalationNotificationToStaff = async (staffId, issue, esca
 // Send notification when a task is created
 export const sendTaskAssignmentNotification = async (taskId, assigneeId, issue) => {
     try {
+        console.log('====================================');
+        console.log(assigneeId);
+        console.log('====================================');
         const assignee = await User.findById(assigneeId).select('name email');
+        console.log('====================================');
+        console.log(assignee);
+        console.log('====================================');
         if (!assignee) return { success: false, error: "Assignee not found" };
 
         const msg = `NEW TASK: You have been assigned a new task for issue "${issue.title}".`;
 
         const [notification] = await Promise.all([
             Notification.create({
-                recipientId: assignee._id,
+                userId: assignee._id,
                 message: msg,
                 type: "task-assigned",
                 relatedIssue: issue._id,
@@ -107,7 +113,7 @@ export const sendTaskAssignmentNotification = async (taskId, assigneeId, issue) 
                 url: `/issue/${issue.slug}`
             }),
             Job.create({
-                type: "Task_Assignment_Email",
+                type: "Task_Assigned_Email",
                 payload: {
                     email: assignee.email,
                     staffName: assignee.name,
@@ -120,7 +126,7 @@ export const sendTaskAssignmentNotification = async (taskId, assigneeId, issue) 
         return { success: true, notificationId: notification._id };
 
     } catch (error) {
-        console.error("Error creating task assignment notification job:", error);
+        console.error("Error creating task assignment notification job:", error.message);
         return { success: false, error: error.message };
     }
 };

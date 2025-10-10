@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import IssuesHeatmap from "./IssuesHeatmap";
+import IssuesHeatmap from "../IssuesHeatmap";
 
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
 const issueCategories = [

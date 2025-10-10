@@ -692,195 +692,6 @@ export const getAssignedStaff = async (req, res) => {
 };
 
 
-// Assign Task (Coordinator / Supervisor)
-export const assignTask = async (req, res) => {
-    try {
-        const { issueId, assignedTo, roleOfAssignee, title, description, deadline } = req.body;
-
-        const task = await Task.create({
-            title,
-            description,
-            issueId,
-            assignedBy: req.user._id,
-            assignedTo,
-            roleOfAssignee,
-            deadline,
-        });
-
-        // Update user's tasksAlloted
-        await User.findByIdAndUpdate(assignedTo, { $push: { tasksAlloted: { taskId: task._id } } });
-
-        // Send notification to the assigned user
-        const issue = await Issue.findById(issueId);
-        if (issue) {
-            await sendTaskAssignmentNotification(task._id, assignedTo, issue);
-        }
-
-        // Create timeline event for task creation
-        await createTimelineEvent({
-            issueId: issueId,
-            eventType: 'task_created',
-            title: 'Task Created',
-            description: `Task "${title}" was created and assigned to ${roleOfAssignee}`,
-            actorId: req.user._id,
-            taskId: task._id,
-            metadata: {
-                taskTitle: title,
-                // taskDescription: description,
-                deadline: deadline,
-                roleOfAssignee
-            }
-        });
-
-        res.status(201).json({ message: "Task assigned successfully", task });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server Error" });
-    }
-};
-
-// Get tasks for user
-export const getTasksForUser = async (req, res) => {
-    try {
-        const { userId } = req.params;   // from route param
-        const { issueId } = req.query;   // from query param
-
-        if (!userId || !issueId) {
-            return res.status(400).json({ success: false, message: "User ID and Issue ID are required" });
-        }
-
-        // Ensure the issue exists
-        const issue = await Issue.findById(issueId);
-        if (!issue) {
-            return res.status(404).json({ success: false, message: "Issue not found" });
-        }
-
-        // Fetch tasks assigned to this user for this issue
-        const tasks = await Task.find({
-            assignedTo: userId,
-            issueId: issueId, // Make sure Task schema has issueId reference!
-        })
-            .populate("assignedBy", "name email role")
-            .populate("assignedTo", "name email role")
-            .sort({ createdAt: -1 });
-
-        res.status(200).json({ success: true, tasks });
-    } catch (err) {
-        console.error("Error fetching tasks for user:", err);
-        res.status(500).json({ success: false, message: "Server error" });
-    }
-};
-
-// Add Task Update (Worker / Coordinator / Supervisor)
-export const updateTask = async (req, res) => {
-    try {
-        const { taskId } = req.params;
-        const { updateText } = req.body;
-
-        const task = await Task.findById(taskId);
-        if (!task) return res.status(404).json({ message: "Task not found" });
-
-        task.taskUpdates.push({ updateText, updatedBy: req.user._id });
-        task.status = "In Review";
-        await task.save();
-
-        // Create timeline event for task update
-        await createTimelineEvent({
-            issueId: task.issueId,
-            eventType: 'task_updated',
-            title: 'Task Updated',
-            description: `Task was updated: ${updateText}`,
-            actorId: req.user._id,
-            taskId: task._id,
-            metadata: {
-                updateText,
-                newStatus: "In Review"
-            }
-        });
-
-        res.status(200).json({ message: "Task updated successfully" });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server Error" });
-    }
-};
-
-// Submit Task Proof (Worker)
-export const submitTaskProof = async (req, res) => {
-    try {
-        const { taskId } = req.params;
-        const { proofText, proofImages } = req.body;
-
-        const task = await Task.findById(taskId);
-        if (!task) return res.status(404).json({ message: "Task not found" });
-
-        task.taskCompletionProof = proofText;
-        task.taskProofImages = proofImages || [];
-        task.taskProofSubmitted = true;
-        task.status = "In Review";
-        await task.save();
-
-        // Create timeline event for task proof submission
-        await createTimelineEvent({
-            issueId: task.issueId,
-            eventType: 'task_proof_submitted',
-            title: 'Task Proof Submitted',
-            description: `Task proof was submitted for review`,
-            actorId: req.user._id,
-            taskId: task._id,
-            metadata: {
-                proofText,
-                proofImagesCount: (proofImages || []).length
-            }
-        });
-
-        res.status(200).json({ message: "Task proof submitted successfully" });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server Error" });
-    }
-};
-
-// Approve / Reject Task Proof (Coordinator)
-export const approveRejectTaskProof = async (req, res) => {
-    try {
-        const { taskId } = req.params;
-        const { approve } = req.body;
-
-        const task = await Task.findById(taskId);
-        if (!task) return res.status(404).json({ message: "Task not found" });
-
-        task.status = approve ? "Completed" : "Pending";
-        if (!approve) {
-            task.taskProofSubmitted = false;
-            task.taskCompletionProof = "";
-            task.taskProofImages = [];
-        }
-
-        await task.save();
-
-        // Create timeline event for task approval/rejection
-        await createTimelineEvent({
-            issueId: task.issueId,
-            eventType: approve ? 'task_approved' : 'task_rejected',
-            title: approve ? 'Task Approved' : 'Task Rejected',
-            description: `Task was ${approve ? 'approved' : 'rejected'} by ${req.user.role}`,
-            actorId: req.user._id,
-            taskId: task._id,
-            metadata: {
-                approved: approve,
-                reviewerRole: req.user.role
-            }
-        });
-
-        res.status(200).json({ message: approve ? "Task approved" : "Task rejected" });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server Error" });
-    }
-};
-
-
 // Resolve Issue (Supervisor)
 export const resolveIssue = async (req, res) => {
     try {
@@ -999,7 +810,7 @@ export const resolveIssue = async (req, res) => {
     }
 };
 
-
+//make separate
 export async function escalateOverdueTasksService({ dryRun = false } = {}) {
     const now = new Date();
     const results = {
@@ -1174,98 +985,6 @@ export const getPendingIssues = async (req, res) => {
     }
 };
 
-export const submitFeedback = async (req, res, next) => {
-    const { issueId, ...feedbackData } = req.body;
-    const userId = req.user.id; // Assuming user ID is available from auth middleware
-
-    // 1. Validate Input
-    if (!issueId || !mongoose.Types.ObjectId.isValid(issueId)) {
-        return res.status(400).json({ success: false, message: "A valid issue ID is required." });
-    }
-
-    if (!feedbackData.resolved || !feedbackData.satisfactionRating) {
-        return res.status(400).json({ success: false, message: "Required feedback fields are missing." });
-    }
-
-    try {
-        // 2. Verify the issue exists and is marked as 'Resolved'
-        const issue = await Issue.findById(issueId);
-        if (!issue) {
-            return res.status(404).json({ success: false, message: "Issue not found." });
-        }
-        if (issue.status !== "Resolved") {
-            return res.status(400).json({ success: false, message: "Feedback can only be submitted for resolved issues." });
-        }
-
-        // 3. Check if this user has already submitted feedback for this issue
-        const existingFeedback = await Feedback.findOne({ issue: issueId, submittedBy: userId });
-        if (existingFeedback) {
-            return res.status(409).json({ success: false, message: "You have already submitted feedback for this issue." });
-        }
-
-        // 4. Create and save the new feedback document
-        const newFeedback = new Feedback({
-            ...feedbackData,
-            issue: issueId,
-            submittedBy: userId,
-        });
-
-        await newFeedback.save();
-
-        // Create timeline event for feedback submission
-        await createTimelineEvent({
-            issueId: issueId,
-            eventType: 'feedback_submitted',
-            title: 'Feedback Submitted',
-            description: `User submitted feedback with satisfaction rating: ${feedbackData.satisfactionRating}/5`,
-            actorId: userId,
-            metadata: {
-                satisfactionRating: feedbackData.satisfactionRating,
-                resolved: feedbackData.resolved,
-                resolutionTime: feedbackData.resolutionTime
-            }
-        });
-
-        // 6. Send success response
-        res.status(201).json({
-            success: true,
-            message: "Feedback submitted successfully.",
-            feedback: newFeedback,
-        });
-
-    } catch (error) {
-        console.error("Feedback submission error:", error);
-        res.status(500).json({ success: false, message: "Internal server error while submitting feedback." });
-    }
-};
-
-
-export const getFeedbackForIssue = async (req, res) => {
-    const { issueId } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(issueId)) {
-        return res.status(400).json({ success: false, message: "Invalid Issue ID." });
-    }
-
-    try {
-        const feedbacks = await Feedback.find({ issue: issueId }).populate(
-            "submittedBy",
-            "name email" // Select which fields from the User model to include
-        );
-
-        if (!feedbacks || feedbacks.length === 0) {
-            return res.status(404).json({ success: false, message: "No feedback found for this issue." });
-        }
-        
-        res.status(200).json({
-            success: true,
-            feedbacks,
-        });
-    } catch (error) {
-        console.error("Error fetching feedback:", error);
-        res.status(500).json({ success: false, message: "Internal server error while fetching feedback." });
-    }
-};
 
 export const getReportForIssue = async (req, res) => {
     const { issueId } = req.params;
@@ -1295,287 +1014,6 @@ export const getReportForIssue = async (req, res) => {
 };
 
 
-const reportGenerationPrompt = `You are an expert data analyst AI. Your task is to generate an insightful summary report based on citizen feedback for a resolved municipal issue. The feedback provided is a collection of entries, each containing multiple data points.
-
-Your analysis must be comprehensive, easy to read, and structured into the following sections using markdown formatting:
-
-1.  **Overall Sentiment & Satisfaction**:
-    * Calculate the average "Overall Satisfaction" rating (out of 5).
-    * Based on the average rating and comments, provide a one-sentence summary of the general public sentiment (e.g., "Overwhelmingly Positive," "Mixed but Leaning Positive," "Largely Negative").
-
-2.  **Resolution Analysis**:
-    * Summarize the "Issue Resolved" status (e.g., "Most users felt the issue was fully resolved...").
-    * Identify the common sentiment regarding the "Resolution Time" and "Quality of Resolution."
-
-3.  **Key Strengths**:
-    * Based on positive comments, high ratings, and "Yes" answers for professionalism and communication, list 2-3 key highlights or strengths of the resolution process. What did the team do well?
-
-4.  **Areas for Improvement**:
-    * Based on negative comments, low ratings, and suggestions, identify 2-3 recurring pain points or areas needing improvement.
-
-5.  **Actionable Suggestions**:
-    * Synthesize the "Suggestions for improvement" from all feedback entries into a concise, actionable list for the municipality.
-
-6.  **Final Verdict**:
-    * Provide a brief, concluding paragraph summarizing whether the resolution effort was successful from the citizens' perspective and reaffirming the most critical takeaway.
-
-Maintain a professional, objective, and data-driven tone throughout the report. The final output should be a single block of formatted text.`;
-
-/**
- * Merges multiple feedback documents into a single string for AI analysis.
- * @param {string} issueId - The ID of the issue to fetch feedback for.
- * @returns {Promise<string>} A single string containing all formatted feedback.
- */
-const mergeFeedbacks = async (issueId) => {
-    // Populate submittedBy to get user names for context
-    const feedbacks = await Feedback.find({ issue: issueId }).populate('submittedBy', 'name');
-    if (!feedbacks || feedbacks.length === 0) {
-        return "";
-    }
-
-    // Convert each feedback document into a detailed string format
-    const formattedFeedbacks = feedbacks.map((fb, index) => {
-        return `
---- Feedback Entry ${index + 1} ---
-Submitted By: ${fb.submittedBy?.name || 'Anonymous'}
-Date: ${new Date(fb.createdAt).toLocaleDateString()}
-
-- Was the issue resolved? ${fb.resolved}
-- Time taken to resolve: ${fb.resolutionTime}
-- Quality of resolution: ${fb.resolutionQuality}
-- Staff Professionalism: ${fb.staffProfessionalism}
-
-- Overall Satisfaction Rating: ${fb.satisfactionRating}/5
-- Was complaint taken seriously? ${fb.takenSeriously}
-- Was communication clear? ${fb.clearCommunication}
-- Future trust in municipality: ${fb.futureTrust}
-- Would use system again? ${fb.useSystemAgain}
-
-- Suggestions for Improvement: ${fb.suggestions || 'N/A'}
-- Additional Comments: ${fb.additionalComments || 'N/A'}
-`;
-    }).join("\n");
-
-    return formattedFeedbacks;
-}
-
-/**
- * @route   POST /api/v1/issues/analyze-feedback
- * @desc    Analyzes all feedback for an issue and returns an AI-generated summary.
- * @access  Private
- */
-export const analyzeFeedback = async (req, res) => {
-    const { issueId } = req.body;
-
-    if (!issueId) {
-        return res.status(400).json({ success: false, message: "Issue ID is required." });
-    }
-
-    try {
-        const mergedFeedbacks = await mergeFeedbacks(issueId);
-
-        if (!mergedFeedbacks) {
-            return res.status(200).json({ analysis: "There is no citizen feedback available to analyze for this issue." });
-        }
-
-        // API call to OpenRouter
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${process.env.OPENAI_KEY}`, // Ensure OPENAI_KEY is in your .env
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                "model": "mistralai/mistral-7b-instruct:free", // Using a capable free model
-                "messages": [
-                    {
-                        "role": "system",
-                        "content": reportGenerationPrompt
-                    },
-                    {
-                        "role": "user",
-                        "content": mergedFeedbacks
-                    }
-                ]
-            })
-        });
-        console.log(response);
-        
-
-        if (!response.ok) {
-            const errorBody = await response.text();
-            throw new Error(`AI API request failed with status ${response.status}: ${errorBody}`);
-        }
-
-        const jsonResponse = await response.json();
-        const analysis = jsonResponse.choices?.[0]?.message?.content;
-        console.log(analysis);
-        
-        if (!analysis) {
-            throw new Error("Received an invalid response from the AI model.");
-        }
-
-        res.status(200).json({ success: true, analysis });
-
-    } catch (error) {
-        console.error("Error in analyzeFeedback controller:", error);
-        res.status(500).json({ success: false, message: `Failed to generate AI analysis: ${error.message}` });
-    }
-};
-
-export const reassignTaskToCoordinator = async (req, res) => {
-  const { taskId } = req.params;
-  const { coordinatorId, deadline } = req.body;
-  console.log(req.body);
-  
-  const actorId = req.user && req.user._id;
-
-  if (!coordinatorId) {
-    return res.status(400).json({ success: false, message: "coordinatorId is required" });
-  }
-
-  const session = await mongoose.startSession();
-  session.startTransaction();
-  try {
-    const origTask = await Task.findById(taskId).session(session);
-    if (!origTask) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ success: false, message: "Original task not found" });
-    }
-
-    // Only allow the supervisor who is assigned this task to reassign it
-    if (
-      !origTask.assignedTo ||
-      String(origTask.assignedTo) !== String(actorId) ||
-      origTask.roleOfAssignee !== "Supervisor"
-    ) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(403).json({ success: false, message: "Not authorized to reassign this task" });
-    }
-
-    // Ensure coordinator exists
-    const coordinatorUser = await User.findById(coordinatorId).session(session);
-    if (!coordinatorUser) {
-      await session.abortTransaction();
-      session.endSession();
-      console.log("Coordinator user not found:", coordinatorId);
-      
-      return res.status(404).json({ success: false, message: "Coordinator user not found" });
-    }
-
-    // Prepare new task doc with same details but new assignee and deadline
-    const newTaskData = {
-      title: origTask.title,
-      description: origTask.description,
-      issueId: origTask.issueId,
-      assignedBy: actorId, // supervisor reassigns
-      assignedTo: coordinatorUser._id,
-      roleOfAssignee: "Coordinator",
-      status: "Pending",
-      deadline: deadline ? new Date(deadline) : origTask.deadline,
-      taskUpdates: [], // start fresh for the new task
-      taskCompletionProof: undefined,
-      taskProofImages: [],
-      taskProofSubmitted: false,
-      hasEscalated: false,
-      escalatedFrom: origTask._id,
-    };
-
-    // Create new task
-    const newTask = await Task.create([newTaskData], { session });
-    // newTask is an array because create([...])
-    const created = newTask[0];
-
-    // Delete original task
-    await Task.findByIdAndDelete(origTask._id, { session });
-
-    await session.commitTransaction();
-    session.endSession();
-
-    return res.status(200).json({
-      success: true,
-      message: "Task reassigned to coordinator",
-      task: created,
-    });
-  } catch (err) {
-    await session.abortTransaction();
-    session.endSession();
-    console.error("reassignTaskToCoordinator error:", err);
-    return res.status(500).json({ success: false, message: "Server error", error: err.message });
-  }
-};
-
-/**
- * Supervisor completes their task directly (no approval step)
- * - Updates task fields: status -> Completed, attaches completion text and proof images
- * POST /api/v1/tasks/supervisor/complete/:taskId
- * body: { completionText?: String, proofImages?: [String] }
- */
-export const completeTaskBySupervisor = async (req, res) => {
-  const { taskId } = req.params;
-  const { completionText, proofImages = [] } = req.body;
-  const actorId = req.user && req.user._id;
-
-  if (!completionText && (!Array.isArray(proofImages) || proofImages.length === 0)) {
-    return res.status(400).json({
-      success: false,
-      message: "Provide completionText or at least one proof image URL",
-    });
-  }
-
-  try {
-    const task = await Task.findById(taskId);
-    if (!task) {
-      return res.status(404).json({ success: false, message: "Task not found" });
-    }
-
-    // Only allow the supervisor assigned to this task to complete it
-    if (
-      !task.assignedTo ||
-      String(task.assignedTo) !== String(actorId) ||
-      task.roleOfAssignee !== "Supervisor"
-    ) {
-      return res.status(403).json({ success: false, message: "Not authorized to complete this task" });
-    }
-
-    // Update fields and mark completed
-    if (completionText) task.taskCompletionProof = completionText;
-    if (Array.isArray(proofImages) && proofImages.length > 0) task.taskProofImages = proofImages;
-    task.taskProofSubmitted = true;
-    task.status = "Completed";
-    // if you want to keep audit trail add an update entry to taskUpdates
-    task.taskUpdates = task.taskUpdates || [];
-    task.taskUpdates.push({
-      updateText: completionText ? `Completed by supervisor: ${completionText}` : "Completed by supervisor",
-      updatedBy: actorId,
-      updatedAt: new Date(),
-    });
-
-    await task.save();
-
-    // Create timeline event for supervisor task completion
-    await createTimelineEvent({
-        issueId: task.issueId,
-        eventType: 'task_approved',
-        title: 'Task Completed by Supervisor',
-        description: `Task was completed directly by supervisor`,
-        actorId: actorId,
-        taskId: task._id,
-        metadata: {
-            completionText,
-            proofImagesCount: proofImages.length,
-            completedBy: 'Supervisor'
-        }
-    });
-
-    return res.status(200).json({ success: true, message: "Task completed by supervisor", task });
-  } catch (err) {
-    console.error("completeTaskBySupervisor error:", err);
-    return res.status(500).json({ success: false, message: "Server error", error: err.message });
-  }
-};
 
 export const getTopIssues = async (req, res) => {
   try {
@@ -1706,6 +1144,8 @@ export const getIssueTimeline = async (req, res) => {
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
+
+
 function normalizeToObjectId(rawId) {
   if (!rawId && rawId !== 0) throw new Error('No id provided');
 
@@ -1842,6 +1282,7 @@ export const getStaffDashboardDetails = async (req, res) => {
     return res.status(500).json({ success: false, message: 'An internal server error occurred.' });
   }
 };
+
 export const getStaffDashboard = async (req, res) => {
   try {
     const rawStaffId = req?.user?._id;
@@ -2084,83 +1525,83 @@ export async function escalateIssuePriority() {
 }
 
 
-export const classifyIssueImage = async (req, res) => {
-  try {
-    const { imageUrl } = req.body;
+// export const classifyIssueImage = async (req, res) => {
+//   try {
+//     const { imageUrl } = req.body;
 
-    if (!imageUrl) {
-      return res.status(400).json({ success: false, message: "Image URL required" });
-    }
+//     if (!imageUrl) {
+//       return res.status(400).json({ success: false, message: "Image URL required" });
+//     }
 
-    // First, we download the image that the frontend has already uploaded to Firebase.
-    const imageResponse = await fetch(imageUrl);
-    if (!imageResponse.ok) {
-        return res.status(500).json({ success: false, message: "Failed to fetch image from URL" });
-    }
-    const imageBlob = await imageResponse.blob(); // Get the image as a binary blob
+//     // First, we download the image that the frontend has already uploaded to Firebase.
+//     const imageResponse = await fetch(imageUrl);
+//     if (!imageResponse.ok) {
+//         return res.status(500).json({ success: false, message: "Failed to fetch image from URL" });
+//     }
+//     const imageBlob = await imageResponse.blob(); // Get the image as a binary blob
 
-    const hfResponse = await fetch(
-      "https://api-inference.huggingface.co/models/google/vit-base-patch16-224",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.HF_API_KEY}`,
-          "Content-Type": imageBlob.type,
-        },
-        body: imageBlob,
-      }
-    );
+//     const hfResponse = await fetch(
+//       "https://api-inference.huggingface.co/models/google/vit-base-patch16-224",
+//       {
+//         method: "POST",
+//         headers: {
+//           Authorization: `Bearer ${process.env.HF_API_KEY}`,
+//           "Content-Type": imageBlob.type,
+//         },
+//         body: imageBlob,
+//       }
+//     );
 
-    const result = await hfResponse.json();
+//     const result = await hfResponse.json();
 
-    if (!Array.isArray(result) || result.length === 0) {
-      console.error("Hugging Face API returned no results:", result);
-      return res.status(500).json({ success: false, message: "Model returned no results" });
-    }
+//     if (!Array.isArray(result) || result.length === 0) {
+//       console.error("Hugging Face API returned no results:", result);
+//       return res.status(500).json({ success: false, message: "Model returned no results" });
+//     }
 
-    const topPrediction = result[0];
-    const label = topPrediction.label.toLowerCase();
+//     const topPrediction = result[0];
+//     const label = topPrediction.label.toLowerCase();
 
-    // This map connects the AI's general labels to YOUR specific project categories.
-    const categoryMap = {
-        "Road damage": ["road", "street", "pothole", "crack", "asphalt", "pavement", "manhole", "traffic cone", "highway"],
-        "Waterlogging / Drainage Issues": ["water", "puddle", "flood", "drain", "sewer", "gutter", "culvert", "clogged", "overflow"],
-        "Improper Waste Management": ["garbage", "trash", "litter", "waste", "dumpster", "bin", "plastic bag", "rubbish", "debris", "landfill"],
-        "Street lights/Exposed Wires": ["streetlight", "lamp post", "pole", "wire", "cable", "electrical", "power line", "utility pole"],
-        "Unauthorized loudspeakers": ["loudspeaker", "speaker", "amplifier", "sound system", "horn", "megaphone"],
-        "Burning of garbage": ["fire", "smoke", "burning", "flame", "bonfire", "incinerator"],
-        "Encroachment / Illegal Construction": ["construction site", "scaffolding", "brick", "cement", "barricade", "shop", "stall", "encroachment", "makeshift"],
-        "Damaged Public Property": ["bench", "bus stop", "sign", "fence", "wall", "graffiti", "vandalism", "broken"],
-        "Stray Animal Menace": ["dog", "cow", "pig", "monkey", "animal", "stray"],
-    };
+//     // This map connects the AI's general labels to YOUR specific project categories.
+//     const categoryMap = {
+//         "Road damage": ["road", "street", "pothole", "crack", "asphalt", "pavement", "manhole", "traffic cone", "highway"],
+//         "Waterlogging / Drainage Issues": ["water", "puddle", "flood", "drain", "sewer", "gutter", "culvert", "clogged", "overflow"],
+//         "Improper Waste Management": ["garbage", "trash", "litter", "waste", "dumpster", "bin", "plastic bag", "rubbish", "debris", "landfill"],
+//         "Street lights/Exposed Wires": ["streetlight", "lamp post", "pole", "wire", "cable", "electrical", "power line", "utility pole"],
+//         "Unauthorized loudspeakers": ["loudspeaker", "speaker", "amplifier", "sound system", "horn", "megaphone"],
+//         "Burning of garbage": ["fire", "smoke", "burning", "flame", "bonfire", "incinerator"],
+//         "Encroachment / Illegal Construction": ["construction site", "scaffolding", "brick", "cement", "barricade", "shop", "stall", "encroachment", "makeshift"],
+//         "Damaged Public Property": ["bench", "bus stop", "sign", "fence", "wall", "graffiti", "vandalism", "broken"],
+//         "Stray Animal Menace": ["dog", "cow", "pig", "monkey", "animal", "stray"],
+//     };
 
-    let suggestedCategory = "General Issue"; 
-    let highestScore = 0;
+//     let suggestedCategory = "General Issue"; 
+//     let highestScore = 0;
 
-    // Find the best matching category from the model's predictions
-    for (const category in categoryMap) {
-        const keywords = categoryMap[category];
-        for (const prediction of result) {
-            const predLabel = prediction.label.toLowerCase();
-            if (keywords.some(keyword => predLabel.includes(keyword))) {
-                if (prediction.score > highestScore) {
-                    suggestedCategory = category;
-                    highestScore = prediction.score;
-                }
-            }
-        }
-    }
+//     // Find the best matching category from the model's predictions
+//     for (const category in categoryMap) {
+//         const keywords = categoryMap[category];
+//         for (const prediction of result) {
+//             const predLabel = prediction.label.toLowerCase();
+//             if (keywords.some(keyword => predLabel.includes(keyword))) {
+//                 if (prediction.score > highestScore) {
+//                     suggestedCategory = category;
+//                     highestScore = prediction.score;
+//                 }
+//             }
+//         }
+//     }
 
-    res.json({
-      success: true,
-      category: suggestedCategory,
-    });
+//     res.json({
+//       success: true,
+//       category: suggestedCategory,
+//     });
     
-  } catch (err) {
-    console.error("Image classification error:", err);
-    res.status(500).json({ success: false, message: "Server error during classification" });
-  }
-};
+//   } catch (err) {
+//     console.error("Image classification error:", err);
+//     res.status(500).json({ success: false, message: "Server error during classification" });
+//   }
+// };
 
 dotenv.config({ path: 'config/config.env' });
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);

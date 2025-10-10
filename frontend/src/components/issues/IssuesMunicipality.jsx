@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useSelector } from "react-redux";
-import IssuesHeatmap from "./IssuesHeatmap";
+import IssuesHeatmap from "../IssuesHeatmap";
 
 const priorityLevels = ["Very Low", "Low", "Medium", "High", "Critical"];
 const statusOptions = ["Open", "In Progress", "Resolved"];
