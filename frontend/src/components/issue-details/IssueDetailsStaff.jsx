@@ -103,7 +103,7 @@ export default function IssueDetailsStaff() {
     try {
       setIsReassigning(true);
       // Expected backend endpoint: POST /api/v1/issues/reassign/:taskId
-      const res = await fetch(`/api/v1/tasks/reassign/${reassignTask._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/tasks/reassign/${reassignTask._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -153,7 +153,7 @@ export default function IssueDetailsStaff() {
       );
 
       const res = await fetch(
-        `/api/v1/tasks/completeBySupervisor/${superCompleteTask._id}`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/tasks/completeBySupervisor/${superCompleteTask._id}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -248,7 +248,7 @@ export default function IssueDetailsStaff() {
     if (!slug || !user) return;
     setIsLoading(true);
     try {
-      const res = await fetch(`/api/v1/issues/${slug}`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/${slug}`, {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch issue");
@@ -339,7 +339,7 @@ export default function IssueDetailsStaff() {
     }
 
     try {
-      const res = await fetch(`/api/v1/tasks/update/${updateModalTask._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/tasks/update/${updateModalTask._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -385,7 +385,7 @@ export default function IssueDetailsStaff() {
       );
 
       const res = await fetch(
-        `/api/v1/tasks/submitProof/${proofModalTask._id}`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/tasks/submitProof/${proofModalTask._id}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -414,7 +414,7 @@ export default function IssueDetailsStaff() {
   // Approve or reject proof (coordinator/supervisor)
   const approveOrRejectProof = async (taskId, approve) => {
     try {
-      const res = await fetch(`/api/v1/tasks/approveReject/${taskId}`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/tasks/approveReject/${taskId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -451,7 +451,7 @@ export default function IssueDetailsStaff() {
         description: assignModalData.description,
         deadline: assignModalData.deadline,
       };
-      const res = await fetch(`/api/v1/tasks/assign`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/tasks/assign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -540,7 +540,7 @@ export default function IssueDetailsStaff() {
           };
         });
 
-      const res = await fetch(`/api/v1/issues/resolve/${issue._id}`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/resolve/${issue._id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
