@@ -33,7 +33,7 @@ const Header = ({ notifications }) => {
   ];
 
   const municipalityLinks = [
-    { path: "/municipality", label: "Dashboard" },
+    { path: "/dashboard", label: "Dashboard" },
     { path: "/issues", label: "Issues", requiresApproval: true }, // only show if accountApproved
   ];
 
