@@ -145,7 +145,7 @@ export default function MunicipalityMain() {
   // Feedback / AI
   const openFeedbackModal = async (issueId) => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/feedback/${issueId}`, { withCredentials: true })
+      const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/feedbacks/feedback/${issueId}`, { withCredentials: true })
       setFeedbackList(res.data.feedbacks || [])
       setFeedbackModal(issueId)
     } catch (err) {
@@ -160,7 +160,7 @@ export default function MunicipalityMain() {
     try {
       setLoadingAIAnalysis(true)
       setAiAnalysis('')
-      const res = await axios.post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/analyze-feedback`, { issueId }, {
+      const res = await axios.post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/feedbacks/analyze-feedback`, { issueId }, {
         withCredentials: true
       })
       setAiAnalysis(res.data.analysis || '')
