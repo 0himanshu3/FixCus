@@ -5,7 +5,7 @@ import {
   generateIssueCompletedEmailTemplate,
   generateTaskAssignmentEmailTemplate,
   generateTaskEscalationEmailTemplate,
-  generateTaskDeadlineReminderEmailTemplate, // Added this import
+  generateTaskDeadlineReminderEmailTemplate,
 } from "./utils/emailTemplates.js";
 
 export const processJobQueue = async () => {
