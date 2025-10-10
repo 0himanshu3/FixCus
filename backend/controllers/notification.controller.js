@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { io } from "../server.js";
-import { generateIssueAssignedEmailTemplate } from "../utils/emailTemplates.js";
+import { generateIssueAssignedEmailTemplate, generateIssueCompletedEmailTemplate, generateTaskAssignmentEmailTemplate, generateTaskEscalationEmailTemplate, generateTaskDeadlineReminderEmailTemplate } from "../utils/emailTemplates.js";
 
 //Send notification when an issue is assigned to a staff
 export const sendIssueAssignedNotification = async (issue, staffId) => {
@@ -20,7 +20,7 @@ export const sendIssueAssignedNotification = async (issue, staffId) => {
             message: msg,
             type: "issue-assigned",
             relatedIssue: issue._id,
-            url: `/issues/${issue._id}`
+            url: `/issue/${issue.slug}`
         });
 
       const emailBody = generateIssueAssignedEmailTemplate(staff.name, issue.title);
@@ -50,7 +50,7 @@ export const sendIssueCompletedNotification = async (issue, citizenId) => {
         const citizen = await User.findById(citizenId);
         if (!citizen) return console.error("Citizen not found:", citizenId);
 
-        const msg = `Your issue "${issue.title}" has been marked as completed`;
+        const msg = `Your issue "${issue.title}" has been marked as resolved`;
 
         // In-app notification
         await Notification.create({
@@ -58,7 +58,7 @@ export const sendIssueCompletedNotification = async (issue, citizenId) => {
             message: msg,
             type: "issue-completed",
             relatedIssue: issue._id,
-            url: `/issues/${issue._id}`
+            url: `/issue/${issue.slug}`
         });
 
         // Emit real-time
@@ -95,7 +95,7 @@ export const sendIssueRejectedNotification = async (issue, citizenId) => {
             message: msg,
             type: "issue-rejected",
             relatedIssue: issue._id,
-            url: `/issues/${issue._id}`
+            url: `/issue/${issue.slug}`
         });
 
         // Send email
@@ -211,31 +211,31 @@ export const sendTaskEscalationNotificationToStaff = async (staffId, issue, esca
       case 'worker-to-coordinator':
         msg = `TASK ESCALATION: A task from issue "${issue.title}" has been escalated to you (Coordinator) due to overdue deadline. New deadline: ${newDeadline ? newDeadline.toLocaleDateString() : 'N/A'}`;
         notificationType = "task-escalation-coordinator";
-        url = `/issues/${issue._id}/tasks/${taskId}`;
+        url = `/issue/${issue.slug}`;
         break;
       
       case 'coordinator-to-supervisor':
         msg = `TASK ESCALATION: A task from issue "${issue.title}" has been escalated to you (Supervisor) due to overdue deadline. New deadline: ${newDeadline ? newDeadline.toLocaleDateString() : 'N/A'}`;
         notificationType = "task-escalation-supervisor";
-        url = `/issues/${issue._id}/tasks/${taskId}`;
+        url = `/issue/${issue.slug}`;
         break;
       
       case 'task-escalated-from-worker':
         msg = `TASK UPDATE: Your task from issue "${issue.title}" has been escalated to the Coordinator due to overdue deadline.`;
         notificationType = "task-escalated-from-worker";
-        url = `/issues/${issue._id}/tasks/${taskId}`;
+        url = `/issue/${issue.slug}`;
         break;
       
       case 'task-escalated-from-coordinator':
         msg = `TASK UPDATE: Your task from issue "${issue.title}" has been escalated to the Supervisor due to overdue deadline.`;
         notificationType = "task-escalated-from-coordinator";
-        url = `/issues/${issue._id}/tasks/${taskId}`;
+        url = `/issue/${issue.slug}`;
         break;
       
       default:
         msg = `TASK ESCALATION: A task from issue "${issue.title}" has been escalated to you due to overdue deadline.`;
         notificationType = "issue-escalation";
-        url = `/issues/${issue._id}`;
+        url = `/issue/${issue.slug}`;
     }
 
     // Create in-app notification
@@ -300,7 +300,7 @@ export const sendTaskAssignmentNotification = async (taskId, assigneeId, issue) 
       type: "task-assigned",
       relatedIssue: issue._id,
       relatedTask: taskId,
-      url: `/issues/${issue._id}/tasks/${taskId}`,
+      url: `/issue/${issue.slug}`,
       metadata: {
         taskId,
         issueId: issue._id,
@@ -323,7 +323,7 @@ export const sendTaskAssignmentNotification = async (taskId, assigneeId, issue) 
       notificationId: notification._id,
       relatedIssue: issue._id,
       relatedTask: taskId,
-      url: `/issues/${issue._id}/tasks/${taskId}`
+      url: `/issue/${issue.slug}`
     });
 
     console.log(`Task assignment notification sent to ${assignee.name}: ${msg}`);
@@ -353,7 +353,7 @@ export const sendTaskDeadlineReminderNotification = async (taskId, assigneeId, i
       type: "task-deadline-reminder",
       relatedIssue: issue._id,
       relatedTask: taskId,
-      url: `/issues/${issue._id}/tasks/${taskId}`,
+      url: `/issue/${issue.slug}`,
       metadata: {
         taskId,
         issueId: issue._id,
@@ -377,7 +377,7 @@ export const sendTaskDeadlineReminderNotification = async (taskId, assigneeId, i
       notificationId: notification._id,
       relatedIssue: issue._id,
       relatedTask: taskId,
-      url: `/issues/${issue._id}/tasks/${taskId}`
+      url: `/issue/${issue.slug}`
     });
 
     console.log(`Deadline reminder sent to ${assignee.name}: ${msg}`);
@@ -413,7 +413,7 @@ export const sendTaskCompletionNotification = async (taskId, issue, completedBy)
       type: "task-completed",
       relatedIssue: issue._id,
       relatedTask: taskId,
-      url: `/issues/${issue._id}/tasks/${taskId}`,
+      url: `/issue/${issue.slug}`,
       metadata: {
         taskId,
         issueId: issue._id,
@@ -429,7 +429,7 @@ export const sendTaskCompletionNotification = async (taskId, issue, completedBy)
       notificationId: notification._id,
       relatedIssue: issue._id,
       relatedTask: taskId,
-      url: `/issues/${issue._id}/tasks/${taskId}`
+      url: `/issue/${issue.slug}`
     });
 
     console.log(`Task completion notification sent to ${assigner.name}: ${msg}`);
@@ -464,7 +464,7 @@ export const sendTaskStatusUpdateNotification = async (taskId, issue, oldStatus,
       type: "task-status-update",
       relatedIssue: issue._id,
       relatedTask: taskId,
-      url: `/issues/${issue._id}/tasks/${taskId}`,
+      url: `/issue/${issue.slug}`,
       metadata: {
         taskId,
         issueId: issue._id,
@@ -482,7 +482,7 @@ export const sendTaskStatusUpdateNotification = async (taskId, issue, oldStatus,
       notificationId: notification._id,
       relatedIssue: issue._id,
       relatedTask: taskId,
-      url: `/issues/${issue._id}/tasks/${taskId}`
+      url: `/issue/${issue.slug}`
     });
 
     console.log(`Task status update notification sent to ${assignee.name}: ${msg}`);

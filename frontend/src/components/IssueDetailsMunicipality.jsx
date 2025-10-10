@@ -585,7 +585,7 @@ useEffect(() => {
   };
 
   // Suggested staff assignment - single candidate
-  const handleAssignSuggestedSingle = async (candidate, role) => {
+  const handleAssignSuggestedSingle = async (candidate, role) => { 
     if (!candidate?.email) {
       toast.error("Candidate email missing");
       return;

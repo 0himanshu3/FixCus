@@ -81,7 +81,7 @@ router.get("/:slug",isAuthenticated, getIssueBySlug);
 export default router;
 
 //for image classification
-router.post("/classify", classifyIssueImage);
+router.post("/classify", isAuthenticated, classifyIssueImage);
 
-router.post("/generate-from-image", generateIssueFromImage);
-router.post("/:issueId/whatsapp", updateWhatsappLink)
+router.post("/generate-from-image", isAuthenticated, generateIssueFromImage);
+router.post("/:issueId/whatsapp", updateWhatsappLink);

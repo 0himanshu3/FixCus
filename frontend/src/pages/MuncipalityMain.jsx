@@ -626,7 +626,7 @@ export default function MunicipalityMain() {
       {/* Assign New Municipality Staff Modal */}
       {isAssignModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm pointer-events-auto" onClick={closeAssignModal} />
+          <div className="absolute inset-0 backdrop-blur-sm pointer-events-auto" onClick={closeAssignModal} />
           <form onSubmit={assignNewStaff} className="relative pointer-events-auto bg-white rounded-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-6 shadow-2xl border-2 border-green-300">
             <div className="flex items-center justify-between mb-4">
               <div>

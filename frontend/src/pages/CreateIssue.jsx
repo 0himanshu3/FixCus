@@ -255,12 +255,12 @@ export default function CreateIssue() {
                     placeholder="Describe the issue here, or use the microphone to speak."
                     className="w-full px-4 py-3 border border-gray-300 rounded-md h-40 resize-y focus:outline-none focus:ring-2 focus:ring-purple-400 pr-12" // Added padding-right
                   />
-                  <SpeechToText
+                  {/* <SpeechToText
                     onTranscript={(transcript) => {
                       setFormData(prev => ({ ...prev, content: transcript }));
                     }}
                     initialText={formData.content}
-                  />
+                  /> */}
                 </div>
                 {/* Images */}
                 <div className="md:col-span-2">

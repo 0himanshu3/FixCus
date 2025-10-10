@@ -431,13 +431,12 @@ export const getStaffs = async (req, res) => {
 
 export const assignMunicipalityStaff = async (req, res, next) => {
   try {
-    // ---- Basic auth/role check ----
-    // Assume auth middleware has set req.user (with at least .role and .id)
+    // Basic auth/role check
     if (!req.user) {
       return res.status(401).json({ success: false, message: "Not authenticated" });
     }
 
-    // ---- Validate input ----
+    // Validate input
     const { email, expertises } = req.body;
 
     if (!email || typeof email !== "string" || !email.includes("@")) {
@@ -461,10 +460,7 @@ export const assignMunicipalityStaff = async (req, res, next) => {
       "General Issue"
     ];
 
-    // Note: be careful: your frontend used "Street lights/Exposed Wires" (no extra slash).
-    // Make sure the strings match exactly between frontend and backend. If you prefer,
-    // normalize/alias them. For now we check exact membership (case-sensitive).
-    // If some category labels differ, adjust issueCategories accordingly.
+    
     const invalid = expertises.filter(e => !issueCategories.includes(e));
     if (invalid.length > 0) {
       return res.status(400).json({
@@ -474,13 +470,17 @@ export const assignMunicipalityStaff = async (req, res, next) => {
       });
     }
 
-    // ---- Find user ----
+    // Find user
     const user = await User.findOne({ email: email.toLowerCase() }).select("+password"); // .select only to be explicit
     if (!user) {
       return res.status(404).json({ success: false, message: "User with that email not found." });
     }
 
-    // ---- Update role and expertises ----
+    if (user.role === "Municipality Staff") {
+      return res.status(400).json({ success: false, message: "User is already a Municipality Staff." });
+    }
+    
+    // Update role and expertises
     user.role = "Municipality Staff";
     user.expertises = expertises;
     // Optionally, you might set other flags like accountApproved = true, availability defaults, etc.

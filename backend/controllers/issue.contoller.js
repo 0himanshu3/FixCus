@@ -2405,7 +2405,6 @@ export const getSuggestedStaff = asyncHandler(async (req, res) => {
 });
 
 /**
- * POST /api/v1/issues/:issueId/assign-suggested
  * Assigns suggested top 5 staff to the issue:
  * - #1 => Supervisor
  * - #2 => Coordinator
@@ -2421,13 +2420,9 @@ export const assignMultipleSuggestedStaff = async (req, res) => {
     if (!staffList || !Array.isArray(staffList) || staffList.length === 0) {
       return res.status(400).json({ message: "No staff provided" });
     }
-    console.log('====================================');
-    console.log(staffList);
-    console.log('====================================');
 
     for (const staffData of staffList) {
       const { email, role, issueId } = staffData;
-
       if (!email || !role || !issueId) continue;
 
       // Find the issue
@@ -2446,15 +2441,38 @@ export const assignMultipleSuggestedStaff = async (req, res) => {
 
       // Assign staff
       issue.staffsAssigned.push({ user: user._id, role });
-      await issue.save();
+      user.issuesParticipated.push({ issueId: issue._id });
+
+      // Save both
+      await Promise.all([issue.save(), user.save()]);
+
+      // Send notification
+      await sendIssueAssignedNotification(issue, user._id);
+
+      // Create timeline event
+      await createTimelineEvent({
+        issueId: issue._id,
+        eventType: "staff_assigned",
+        title: "Staff Assigned",
+        description: `${user.name} was assigned as ${role}`,
+        actorId: req.municipality?._id || user._id, // ✅ fallback
+        assignedStaffId: user._id,
+        assignedStaffRole: role,
+        metadata: {
+          staffName: user.name,
+          staffEmail: user.email,
+        },
+      });
     }
 
-    res.status(200).json({ message: "Staff assigned successfully" });
+    res.status(200).json({ message: "Staffs assigned successfully" });
   } catch (err) {
     console.error("assignMultipleSuggestedStaff", err);
-    res.status(500).json({ message: "Failed to assign staff" });
+    res.status(500).json({ message: "Failed to assign staffs" });
   }
 };
+
+
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
