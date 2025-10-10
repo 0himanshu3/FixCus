@@ -7,6 +7,7 @@ import {
   FaHourglassHalf, FaUserCheck, FaStar, FaRegStar, FaRobot, FaCommentDots,
   FaThumbsUp, FaBullhorn, FaLightbulb
 } from 'react-icons/fa'
+import ReactMarkdown from 'react-markdown';
 
 export default function MunicipalityMain() {
   const user = useSelector((s) => s.auth.user)
@@ -796,7 +797,7 @@ export default function MunicipalityMain() {
       {/* Feedback modal */}
       {feedbackModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm pointer-events-auto" onClick={closeFeedbackModal} />
+          <div className="absolute inset-0 backdrop-blur-sm pointer-events-auto" onClick={closeFeedbackModal} />
           <div className="relative pointer-events-auto bg-gray-50 w-full max-w-3xl max-h-[90vh] flex flex-col p-6 rounded-xl shadow-2xl border-2 border-purple-300">
             <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <h3 className="text-xl font-bold text-purple-900 flex items-center gap-2"><FaCommentDots /> Citizen Feedback</h3>
@@ -838,13 +839,30 @@ export default function MunicipalityMain() {
                 ))
               )}
 
-              {(loadingAIAnalysis || aiAnalysis) && (
+             {(loadingAIAnalysis || aiAnalysis) && (
                 <div className="mt-4 p-4 border-2 border-teal-300 rounded-lg bg-gradient-to-br from-teal-50 to-cyan-50 shadow-md">
                   <h4 className="font-bold text-teal-800 text-lg mb-3 flex items-center gap-2"><FaRobot /> AI-Powered Summary</h4>
                   {loadingAIAnalysis ? (
                     <div className="flex justify-center items-center p-6"><div className="text-teal-700 font-medium">Generating insights...</div></div>
                   ) : (
-                    <AIAnalysisDisplay analysis={aiAnalysis} />
+                    <ReactMarkdown
+                      // The `components` prop lets us style the HTML tags that Markdown creates
+                      components={{
+                        h2: ({node, ...props}) => <h2 className="text-2xl font-bold text-teal-900 pb-2 mb-3 border-b border-teal-200" {...props} />,
+                        h3: ({node, ...props}) => <h3 className="text-lg font-bold text-teal-800 mt-4 mb-1" {...props} />,
+                        p: ({node, ...props}) => <p className="text-base text-gray-700 leading-relaxed mb-3" {...props} />,
+                        ul: ({node, ...props}) => <ul className="list-none space-y-2 pl-2" {...props} />,
+                        li: ({node, ...props}) => (
+                          <li className="flex items-start">
+                            <span className="text-teal-500 font-bold mr-2 mt-1">∙</span>
+                            <span className="flex-1">{props.children}</span>
+                          </li>
+                        ),
+                        strong: ({node, ...props}) => <strong className="font-bold text-teal-900" {...props} />,
+                      }}
+                    >
+                      {aiAnalysis}
+                    </ReactMarkdown>
                   )}
                 </div>
               )}
