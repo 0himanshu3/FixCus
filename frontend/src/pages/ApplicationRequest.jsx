@@ -7,7 +7,14 @@ const ApplicationRequest = () => {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/v1/municipality/requests/pending')
+        const res = await fetch('http://localhost:3000/api/v1/municipality/requests/pending', {
+        method: 'GET',
+        credentials: 'include', 
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
         const data = await res.json()
         if (res.ok) setRequests(data)
       } catch (err) {
@@ -19,7 +26,13 @@ const ApplicationRequest = () => {
 
   const handleApprove = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/municipality/requests/${id}/approve`, { method: 'PATCH' })
+      const res = await fetch(`http://localhost:3000/api/v1/municipality/requests/${id}/approve`, {
+      method: 'PATCH',
+      credentials: 'include', 
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
       if (res.ok) setRequests(prev => prev.map(r => r._id === id ? { ...r, status: 'approved' } : r))
       setSelectedRequest(null)
     } catch (err) { console.error(err) }
@@ -27,7 +40,13 @@ const ApplicationRequest = () => {
 
   const handleReject = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/municipality/requests/${id}/reject`, { method: 'PATCH' })
+      const res = await fetch(`http://localhost:3000/api/v1/municipality/requests/${id}/reject`, 
+        { method: 'PATCH',
+      credentials: 'include', 
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
       if (res.ok) setRequests(prev => prev.map(r => r._id === id ? { ...r, status: 'rejected' } : r))
       setSelectedRequest(null)
     } catch (err) { console.error(err) }

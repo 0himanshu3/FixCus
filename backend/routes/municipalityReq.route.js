@@ -5,9 +5,9 @@ import { isAuthenticated } from "../middlewares/auth.middleware.js";
 
 const router =express.Router();
 
-router.post('/apply',applicationReq)
-router.get('/getInfo/:userId',getStatus)
-router.get('/requests/pending', getRequests)
-router.patch('/requests/:id/approve',approveRequest)
-router.patch('/requests/:id/reject',rejectRequest)
+router.post('/apply',isAuthenticated,applicationReq)
+router.get('/getInfo/:userId',isAuthenticated,getStatus)
+router.get('/requests/pending', isAuthenticated,getRequests)
+router.patch('/requests/:id/approve',isAuthenticated,approveRequest)
+router.patch('/requests/:id/reject',isAuthenticated,rejectRequest)
 export default router;
