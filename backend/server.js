@@ -85,7 +85,7 @@ server.listen(process.env.PORT , () => {
 // (async () => {
 //   try {
 //     console.log("Manual Running escalateOverdueTasksService");
-//     const result = await escalateOverdueTasksService();
+//     const result = await  sendDeadlineRemindersService();
 //     console.log("Manual escalateOverdueTasksService summary:", result);
 //   } catch (err) {
 //     console.error("Manual escalateOverdueTasksService error:", err);

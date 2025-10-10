@@ -6,7 +6,8 @@ import { ResolutionReport } from "../models/resolutionReport.model.js";
 import {
     sendTaskEscalationNotificationToStaff,
     sendTaskAssignmentNotification,
-    sendIssueAssignedNotification
+    sendIssueAssignedNotification,
+    sendIssueCompletedNotification
 } from "./notification.controller.js";
 import Feedback from "../models/feedback.model.js";
 import { createTimelineEvent, getTimelineEvents } from "../utils/timelineHelper.js";
@@ -773,6 +774,8 @@ export const resolveIssue = async (req, res) => {
         issue.resolutionReport = report._id;            // requires Issue schema to have this field (see note)
         await issue.save();
 
+        await sendIssueCompletedNotification(issue, issue.reportedBy);
+      
         // Create timeline event for issue resolution
         await createTimelineEvent({
             issueId: issue._id,

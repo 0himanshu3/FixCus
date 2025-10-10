@@ -49,25 +49,61 @@ export const sendTaskEscalationNotificationToStaff = async (staffId, issue, esca
         const staff = await User.findById(staffId).select('name email');
         if (!staff) return { success: false, error: "Staff not found" };
 
-        const { taskId, escalationType, newDeadline } = escalationData;
-        let msg = `A task for issue "${issue.title}" has been escalated.`; // Default message
-        
-        // Simplified message generation
-        if (escalationType?.includes('to-coordinator') || escalationType?.includes('to-supervisor')) {
-            msg = `TASK ESCALATION: A task from issue "${issue.title}" has been escalated to you. New deadline: ${newDeadline ? newDeadline.toLocaleDateString() : 'N/A'}`;
-        } else if (escalationType?.includes('from-worker') || escalationType?.includes('from-coordinator')) {
-            msg = `TASK UPDATE: Your task from issue "${issue.title}" has been escalated due to an overdue deadline.`;
+        // Destructure all the necessary data from the escalation object
+        const { 
+            taskId, 
+            originalTaskId, 
+            escalationType, 
+            newDeadline, 
+            escalatedTo 
+        } = escalationData;
+
+        let msg, notificationType;
+        const url = `/issue/${issue.slug}`;
+
+        // This ensures the correct message and notification type are used for each specific case.
+        switch (escalationType) {
+            case 'worker-to-coordinator':
+                msg = `TASK ESCALATION: A task from issue "${issue.title}" has been escalated to you (Coordinator) due to an overdue deadline. New deadline: ${newDeadline ? newDeadline.toLocaleDateString() : 'N/A'}`;
+                notificationType = "task-escalation-coordinator";
+                break;
+            
+            case 'coordinator-to-supervisor':
+                msg = `TASK ESCALATION: A task from issue "${issue.title}" has been escalated to you (Supervisor) due to an overdue deadline. New deadline: ${newDeadline ? newDeadline.toLocaleDateString() : 'N/A'}`;
+                notificationType = "task-escalation-supervisor";
+                break;
+            
+            case 'task-escalated-from-worker':
+                msg = `TASK UPDATE: Your task from issue "${issue.title}" has been escalated to the Coordinator due to an overdue deadline.`;
+                notificationType = "task-escalated-from-worker";
+                break;
+            
+            case 'task-escalated-from-coordinator':
+                msg = `TASK UPDATE: Your task from issue "${issue.title}" has been escalated to the Supervisor due to an overdue deadline.`;
+                notificationType = "task-escalated-from-coordinator";
+                break;
+            
+            default:
+                msg = `TASK ESCALATION: A task from issue "${issue.title}" has been escalated to you due to an overdue deadline.`;
+                notificationType = "issue-escalation";
         }
 
         // Create in-app notification and email job concurrently
         const [notification] = await Promise.all([
             Notification.create({
-                userId: staff._id,
+                recipientId: staff._id,
                 message: msg,
-                type: "task-escalation",
-                issueId: issue._id,
-                taskId: taskId,
-                url: `/issue/${issue.slug}`
+                type: notificationType, // Use the correct, specific type
+                relatedIssue: issue._id,
+                relatedTask: taskId || originalTaskId,
+                url: url,
+                metadata: {
+                    escalationType,
+                    originalTaskId,
+                    newTaskId: taskId,
+                    escalatedTo,
+                    newDeadline: newDeadline ? newDeadline.toISOString() : null
+                }
             }),
             Job.create({
                 type: "Task_Escalation_Email",
@@ -82,6 +118,8 @@ export const sendTaskEscalationNotificationToStaff = async (staffId, issue, esca
 
         // Emit real-time notification via socket
         io.to(staff._id.toString()).emit("new-notification", { message: msg });
+        
+        console.log(`Escalation notification created for ${staff.name} (${staff.email}): ${msg}`);
         return { success: true, notificationId: notification._id };
 
     } catch (error) {
