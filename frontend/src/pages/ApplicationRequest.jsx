@@ -7,7 +7,7 @@ const ApplicationRequest = () => {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/v1/municipality/requests/pending', {
+        const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/municipality/requests/pending`, {
         method: 'GET',
         credentials: 'include', 
         headers: {
@@ -26,7 +26,7 @@ const ApplicationRequest = () => {
 
   const handleApprove = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/municipality/requests/${id}/approve`, {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/municipality/requests/${id}/approve`, {
       method: 'PATCH',
       credentials: 'include', 
       headers: {
@@ -40,7 +40,7 @@ const ApplicationRequest = () => {
 
   const handleReject = async (id) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/v1/municipality/requests/${id}/reject`, 
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/municipality/requests/${id}/reject`, 
         { method: 'PATCH',
       credentials: 'include', 
       headers: {

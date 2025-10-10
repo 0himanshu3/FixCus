@@ -436,7 +436,7 @@ const IssuesHeatmap = ({ show = false, onClose = () => {} }) => {
   useEffect(() => {
     const fetchIssues = async () => {
       try {
-        const res = await fetch("http://localhost:3000/api/v1/issues/all", {
+        const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/all`, {
           method: "GET", headers: { "Content-Type": "application/json" }, credentials: "include",
         });
         if (!res.ok) throw new Error("Failed to fetch issues");

@@ -55,7 +55,7 @@ export default function MunicipalityView() {
 
     const fetchMunicipalities = async () => {
       try {
-        const res = await axios.get('http://localhost:3000/api/v1/auth/getmunicipalities', { withCredentials: true })
+        const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/getmunicipalities`, { withCredentials: true })
         const data = res.data?.users ?? res.data ?? []
         if (!Array.isArray(data)) throw new Error('Invalid response format')
         if (mounted) setMunicipalities(data)

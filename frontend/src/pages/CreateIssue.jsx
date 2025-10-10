@@ -93,7 +93,7 @@ export default function CreateIssue() {
         throw new Error("Image could not be uploaded.");
 
       const res = await fetch(
-        "http://localhost:3000/api/v1/issues/generate-from-image",
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/generate-from-image`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -159,7 +159,7 @@ export default function CreateIssue() {
       const imageUrls = await uploadFiles(imageFiles, handleProgress);
       const videoUrls = await uploadFiles(videoFiles, handleProgress);
 
-      const res = await fetch("http://localhost:3000/api/v1/issues/create", {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

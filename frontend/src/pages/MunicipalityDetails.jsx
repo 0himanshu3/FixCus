@@ -81,7 +81,7 @@ export default function MunicipalityDetails() {
     const fetch = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:3000/api/v1/issues/municipality/${slug}`,
+          `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/municipality/${slug}`,
           { withCredentials: true }
         )
         const data = res.data ?? {}
@@ -118,7 +118,7 @@ export default function MunicipalityDetails() {
     setTimelineLoading(true)
     try {
       // timeline endpoint — adjust if needed
-      const res = await axios.get(`http://localhost:3000/api/v1/issues/timeline/${issue._id}`, {
+      const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/timeline/${issue._id}`, {
         withCredentials: true,
       })
       const data = res.data ?? {}

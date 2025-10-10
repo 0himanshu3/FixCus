@@ -14,7 +14,7 @@ export async function sendOrganizerApprovalRequest(organizerName, organizerEmail
             message: "Password recovery details sent to your email"
         });
     } catch (error) {
-        console.log("Something went wrong", error.stack);
+        
         return res.status(500).json({
             success: false,
             message: "Something went wrong"

@@ -99,7 +99,7 @@ export default function MunicipalityMain() {
   async function fetchIssues() {
     try {
       setLoadingIssues(true)
-      const res = await axios.get(`http://localhost:3000/api/v1/issues/pending`, {
+      const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/pending`, {
         withCredentials: true
       })
       setIssues(res.data.pendingIssues || res.data.issues || [])
@@ -114,7 +114,7 @@ export default function MunicipalityMain() {
   async function fetchResolvedIssues() {
     try {
       setLoadingResolved(true)
-      const res = await axios.get(`http://localhost:3000/api/v1/issues/completed-issuesbymuni`, {
+      const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/completed-issuesbymuni`, {
         withCredentials: true
       })
       const arr = res.data.completedIssues ?? res.data.issues ?? res.data ?? []
@@ -130,7 +130,7 @@ export default function MunicipalityMain() {
   async function fetchStaff() {
     try {
       setLoadingStaff(true)
-      const res = await axios.get(`http://localhost:3000/api/v1/auth/staff`, {
+      const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/staff`, {
         withCredentials: true
       })
       setStaff(res.data || [])
@@ -145,7 +145,7 @@ export default function MunicipalityMain() {
   // Feedback / AI
   const openFeedbackModal = async (issueId) => {
     try {
-      const res = await axios.get(`http://localhost:3000/api/v1/issues/feedback/${issueId}`, { withCredentials: true })
+      const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/feedback/${issueId}`, { withCredentials: true })
       setFeedbackList(res.data.feedbacks || [])
       setFeedbackModal(issueId)
     } catch (err) {
@@ -160,7 +160,7 @@ export default function MunicipalityMain() {
     try {
       setLoadingAIAnalysis(true)
       setAiAnalysis('')
-      const res = await axios.post(`http://localhost:3000/api/v1/issues/analyze-feedback`, { issueId }, {
+      const res = await axios.post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/analyze-feedback`, { issueId }, {
         withCredentials: true
       })
       setAiAnalysis(res.data.analysis || '')
@@ -187,7 +187,7 @@ export default function MunicipalityMain() {
       setSelectedStaff(staffMember)
       setLoadingStaffDetails(true)
       setIsStaffModalOpen(true)
-      const res = await axios.get(`http://localhost:3000/api/v1/issues/staff-dashboard/${staffMember._id}`, {
+      const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/staff-dashboard/${staffMember._id}`, {
         withCredentials: true
       })
       setSelectedStaffDetails(res.data.dashboardData)
@@ -311,7 +311,7 @@ export default function MunicipalityMain() {
 
     try {
       setAssigningLoading(true)
-      const res = await axios.post('http://localhost:3000/api/v1/auth/assign-municipality-staff', {
+      const res = await axios.post(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/assign-municipality-staff`, {
         email: assignEmail,
         expertises: assignExpertises
       }, {
@@ -377,7 +377,7 @@ export default function MunicipalityMain() {
       setEditingError('')
       setEditingSuccess('')
       const res = await axios.put(
-        `http://localhost:3000/api/v1/auth/staff/${editStaff._id}/expertises`,
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/staff/${editStaff._id}/expertises`,
         { expertises: editExpertises },
         { withCredentials: true }
       )

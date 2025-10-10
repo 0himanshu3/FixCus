@@ -60,7 +60,7 @@ const districts = selectedState
 
   const fetchUsers = async () => {
   try {
-    const res = await axios.get('http://localhost:3000/api/v1/auth/getusers', {
+    const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/getusers`, {
       withCredentials: true
     });
     setUsers(res.data.users || []);
@@ -74,7 +74,7 @@ const districts = selectedState
 
 const fetchMunicipalities = async () => {
   try {
-    const res = await axios.get('http://localhost:3000/api/v1/auth/getmunicipalities', {
+    const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/getmunicipalities`, {
       withCredentials: true
     });
     setMunicipalities(res.data.users || []);
@@ -91,7 +91,7 @@ const fetchMunicipalities = async () => {
 
   const fetchCompletedIssues = async () => {
     try {
-      const res = await axios.get(`http://localhost:3000/api/v1/issues/completed-issues`, { withCredentials: true });
+      const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/completed-issues`, { withCredentials: true });
       setCompletedIssues(res.data.issues || []);
     } catch (err) {
       console.error('Error fetching completed issues:', err);
@@ -101,7 +101,7 @@ const fetchMunicipalities = async () => {
 
   const fetchIssueDetails = async (issueId) => {
     try {
-      const res = await axios.get(`http://localhost:3000/api/v1/issues/issue-details/${issueId}`, { withCredentials: true });
+      const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/issue-details/${issueId}`, { withCredentials: true });
       setIssueDetails(res.data.issue);
     } catch (err) {
       console.error('Error fetching issue details:', err);
@@ -110,7 +110,7 @@ const fetchMunicipalities = async () => {
 
   const fetchIssueFeedback = async (issueId) => {
     try {
-      const res = await axios.get(`http://localhost:3000/api/v1/issues/feedback/${issueId}`, { withCredentials: true });
+      const res = await axios.get(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/issues/feedback/${issueId}`, { withCredentials: true });
       setFeedbackList(res.data.feedbacks || []);
       setShowFeedbackModal(true);
     } catch (err) {

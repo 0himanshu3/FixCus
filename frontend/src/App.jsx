@@ -90,7 +90,7 @@ const App = () => {
   const [socket, setSocket] = useState(null);
   const fetchNotifications = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/v1/notification", {
+      const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/notification`, {
         credentials: "include",
       });
       const data = await res.json();
@@ -104,14 +104,13 @@ const App = () => {
   useEffect(() => {
     if (isAuthenticated && user?._id) {
       // Create socket with error handling
-      const newSocket = io("http://localhost:3000", {
+      const newSocket = io(import.meta.env.VITE_REACT_APP_BACKEND_BASEURL, {
         timeout: 5000,
         forceNew: true,
         autoConnect: true
       });
 
       newSocket.on('connect', () => {
-        console.log("Socket.IO connected successfully");
         setSocket(newSocket);
 
         // Join user's room
@@ -132,14 +131,12 @@ const App = () => {
       });
 
       newSocket.on('connect_error', (error) => {
-        console.log("Socket.IO connection failed - server may not be running:", error.message);
         setSocket(null);
         // Still fetch notifications without real-time updates
         fetchNotifications();
       });
 
       newSocket.on('disconnect', () => {
-        console.log("Socket.IO disconnected");
         setSocket(null);
       });
 

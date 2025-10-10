@@ -42,7 +42,7 @@ export default function FillApplicationPage() {
       setError(null)
       try {
         const res = await axios.get(
-          `http://localhost:3000/api/v1/municipality/getInfo/${user._id}`,
+          `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/municipality/getInfo/${user._id}`,
           { withCredentials: true }
         )
         if (!mounted) return
@@ -90,7 +90,6 @@ export default function FillApplicationPage() {
   const uploadFilesToFirebase = async (filesArray) => {
   
     if (!filesArray || filesArray.length === 0) return []
-    console.log(auth.currentUser);
     setIsUploading(true)
     const storage = getStorage(app)
     const urls = []
@@ -172,9 +171,9 @@ export default function FillApplicationPage() {
         userId: user?._id || '',
         supportingDocuments: uploadedUrls, // URLs array
       }
-      console.log(payload.supportingDocuments);
+      
       const res = await axios.post(
-        'http://localhost:3000/api/v1/municipality/apply',
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/municipality/apply`,
         payload,
         { withCredentials: true }
       )

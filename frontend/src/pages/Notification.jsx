@@ -21,7 +21,7 @@ const Notification = ({ notifications = [], fetchNotifications, userId, socket }
 
   const markAsRead = async (notificationId) => {
     try {
-      await fetch(`http://localhost:3000/api/v1/notification/${notificationId}/read`, {
+      await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/notification/${notificationId}/read`, {
         method: "PATCH",
         credentials: "include",
       });
@@ -37,7 +37,7 @@ const Notification = ({ notifications = [], fetchNotifications, userId, socket }
 
   const deleteNotification = async (notificationId) => {
     try {
-      await fetch(`http://localhost:3000/api/v1/notification/${notificationId}`, {
+      await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/notification/${notificationId}`, {
         method: "DELETE",
         credentials: "include",
       });
