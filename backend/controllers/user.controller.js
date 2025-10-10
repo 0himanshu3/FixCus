@@ -66,12 +66,9 @@ export const register = async (req, res) => {
                 country
             });
         }
-        
         const verificationCode = await user.generateVerificationCode();
         await user.save();
-        
         sendVerificationCode(verificationCode, email, res);
-
     } catch (error) {
         return res.status(500).json({
             success: false,

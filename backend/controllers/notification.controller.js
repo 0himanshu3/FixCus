@@ -2,6 +2,7 @@ import { Notification } from "../models/notification.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
+import { Task } from "../models/task.model.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import { io } from "../server.js";
 import { generateIssueAssignedEmailTemplate, generateIssueCompletedEmailTemplate, generateTaskAssignmentEmailTemplate, generateTaskEscalationEmailTemplate, generateTaskDeadlineReminderEmailTemplate } from "../utils/emailTemplates.js";
