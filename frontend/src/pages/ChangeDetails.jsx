@@ -27,19 +27,23 @@ function ChangeDetails() {
     const [confirmPassword, setConfirmPassword] = useState("");
     const [category, setCategory] = useState("");
 
-    // On component mount or when user changes, set initial form fields
     useEffect(() => {
         if (user) {
             setLocation(user.location || "");
             setWeekdays(user.availability?.weekdays || false);
             setWeekends(user.availability?.weekends || false);
-            // If your user.avatar is just a URL string, use that directly;
-            // If it's an object with { url }, adjust accordingly.
-            setAvatarURL(
-                typeof user.avatar === "string" ? user.avatar : user.avatar?.url || null
-            );
+            setAvatarURL(typeof user.avatar === "string" ? user.avatar : user.avatar?.url || null);
         }
     }, [user]);
+
+    // Allowed special symbols (keep in sync with backend)
+    const allowedSpecials = ["!", "@", "#", "$", "%", "^", "&", "*", "(", ")", "_", "+", "-"];
+
+    // Password requirement helpers (used by UI & validation)
+    const passwordLengthOk = (value) => typeof value === "string" && value.length >= 8 && value.length <= 16;
+    const passwordUppercaseOk = (value) => /[A-Z]/.test(value || "");
+    const passwordDigitOk = (value) => /\d/.test(value || "");
+    const passwordSpecialOk = (value) => /[!@#$%^&*()_+\-]/.test(value || "");
 
     // Upload avatar to Firebase
     const handleAvatarUpload = async () => {
@@ -85,7 +89,7 @@ function ChangeDetails() {
     const handleApplyChanges = async () => {
         try {
             const payload = {
-                user_id: user._id, // must match your backend controller
+                user_id: user._id,
                 weekdays,
                 weekends,
             };
@@ -115,11 +119,29 @@ function ChangeDetails() {
         }
     };
 
-    // Handle password change
+    // Handle password change - frontend validation + request
     const handleChangePassword = async () => {
-        // Basic validation
+        // Confirm match
         if (newPassword !== confirmPassword) {
             toast.error("New password and confirm password do not match");
+            return;
+        }
+
+        // Validate rules client-side before sending
+        if (!passwordLengthOk(newPassword)) {
+            toast.error("Password must be 8–16 characters");
+            return;
+        }
+        if (!passwordUppercaseOk(newPassword)) {
+            toast.error("Password must include at least one uppercase letter (A-Z)");
+            return;
+        }
+        if (!passwordDigitOk(newPassword)) {
+            toast.error("Password must include at least one digit (0-9)");
+            return;
+        }
+        if (!passwordSpecialOk(newPassword)) {
+            toast.error(`Password must include at least one special symbol (${allowedSpecials.join(" ")})`);
             return;
         }
 
@@ -130,7 +152,6 @@ function ChangeDetails() {
                 newPassword,
             };
 
-            // Example endpoint: /api/v1/auth/updatePassword
             const res = await fetch(`${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/auth/updatePassword`, {
                 method: "PUT",
                 credentials: "include",
@@ -143,7 +164,6 @@ function ChangeDetails() {
             if (res.ok) {
                 toast.success("Password updated successfully!");
                 setShowPasswordModal(false);
-                // Clear password fields
                 setOldPassword("");
                 setNewPassword("");
                 setConfirmPassword("");
@@ -166,6 +186,14 @@ function ChangeDetails() {
         "Social Inclusion & Awareness",
     ];
 
+    // Live requirement booleans for UI
+    const reqs = {
+        length: passwordLengthOk(newPassword),
+        uppercase: passwordUppercaseOk(newPassword),
+        digit: passwordDigitOk(newPassword),
+        special: passwordSpecialOk(newPassword),
+    };
+
     return (
         <div className="bg-white rounded-lg shadow-md p-6 flex flex-col items-center">
             <div className="mb-4 px-6 py-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-md shadow-lg">
@@ -173,8 +201,6 @@ function ChangeDetails() {
                     {user?.name || "User Name"}
                 </h3>
             </div>
-
-
 
             {/* Avatar Preview */}
             <div className="relative mb-6">
@@ -214,9 +240,8 @@ function ChangeDetails() {
 
             {imageUploadError && <p className="text-red-500 mb-4">{imageUploadError}</p>}
 
-            {/* Location Field */}
             {/* Location */}
-            <div>
+            <div className="mb-4 w-full max-w-md">
                 <LocationPicker
                     location={location}
                     setLocation={(val) => {
@@ -224,8 +249,6 @@ function ChangeDetails() {
                     }}
                 />
             </div>
-
-            
 
             {/* Buttons */}
             <div className="flex flex-col items-center gap-4 w-full max-w-md">
@@ -246,14 +269,12 @@ function ChangeDetails() {
             {/* Password Modal */}
             {showPasswordModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    {/* Modal Container */}
                     <div className="bg-white rounded-lg p-6 w-full max-w-sm">
                         <h3 className="text-xl font-semibold mb-4">Change Password</h3>
+
                         {/* Old Password */}
                         <div className="mb-3">
-                            <label className="block mb-1 font-medium text-gray-700">
-                                Current Password
-                            </label>
+                            <label className="block mb-1 font-medium text-gray-700">Current Password</label>
                             <input
                                 type="password"
                                 value={oldPassword}
@@ -265,9 +286,7 @@ function ChangeDetails() {
 
                         {/* New Password */}
                         <div className="mb-3">
-                            <label className="block mb-1 font-medium text-gray-700">
-                                New Password
-                            </label>
+                            <label className="block mb-1 font-medium text-gray-700">New Password</label>
                             <input
                                 type="password"
                                 value={newPassword}
@@ -278,10 +297,8 @@ function ChangeDetails() {
                         </div>
 
                         {/* Confirm New Password */}
-                        <div className="mb-6">
-                            <label className="block mb-1 font-medium text-gray-700">
-                                Confirm New Password
-                            </label>
+                        <div className="mb-3">
+                            <label className="block mb-1 font-medium text-gray-700">Confirm New Password</label>
                             <input
                                 type="password"
                                 value={confirmPassword}
@@ -289,6 +306,34 @@ function ChangeDetails() {
                                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 placeholder="Confirm new password"
                             />
+                        </div>
+
+                        {/* Live password requirements */}
+                        <div className="mb-4 text-sm space-y-1">
+                            <div className="flex items-center">
+                                <span className={`mr-2 ${reqs.length ? "text-green-600" : "text-gray-400"}`}>
+                                    {reqs.length ? "✅" : "⬜"}
+                                </span>
+                                <span className={`${reqs.length ? "text-gray-700" : "text-gray-400"}`}>8–16 characters</span>
+                            </div>
+                            <div className="flex items-center">
+                                <span className={`mr-2 ${reqs.uppercase ? "text-green-600" : "text-gray-400"}`}>
+                                    {reqs.uppercase ? "✅" : "⬜"}
+                                </span>
+                                <span className={`${reqs.uppercase ? "text-gray-700" : "text-gray-400"}`}>At least one uppercase letter (A-Z)</span>
+                            </div>
+                            <div className="flex items-center">
+                                <span className={`mr-2 ${reqs.digit ? "text-green-600" : "text-gray-400"}`}>
+                                    {reqs.digit ? "✅" : "⬜"}
+                                </span>
+                                <span className={`${reqs.digit ? "text-gray-700" : "text-gray-400"}`}>At least one digit (0-9)</span>
+                            </div>
+                            <div className="flex items-center">
+                                <span className={`mr-2 ${reqs.special ? "text-green-600" : "text-gray-400"}`}>
+                                    {reqs.special ? "✅" : "⬜"}
+                                </span>
+                                <span className={`${reqs.special ? "text-gray-700" : "text-gray-400"}`}>At least one special symbol ({allowedSpecials.join(" ")})</span>
+                            </div>
                         </div>
 
                         {/* Modal Buttons */}

@@ -82,7 +82,7 @@ const MonthlyAnalysis = () => {
   const handleDownloadPDF = () => {
     setPdfLoading(true);
     const input = document.getElementById("monthly-analysis-container");
-
+    
     const all = input.querySelectorAll("*");
     all.forEach((el) => {
       const style = getComputedStyle(el);
@@ -91,17 +91,22 @@ const MonthlyAnalysis = () => {
       el.style.borderColor = style.borderColor;
     });
 
-    html2canvas(input, { scale: 2 }).then((canvas) => {
-      const imgData = canvas.toDataURL("image/png");
+    html2canvas(input, {
+      scale: 1,
+      useCORS: true 
+    }).then((canvas) => {
+      const imgData = canvas.toDataURL("image/jpeg", 0.8);
+
       const pdf = new jsPDF("p", "mm", "a4");
       const imgProps = pdf.getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save("Monthly_Analysis.pdf");
+
+      pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save("Monthly_Analysis_Compressed.pdf");
       setPdfLoading(false);
     }).catch((err) => {
-      console.error(err);
+      console.error("Error generating PDF:", err);
       setPdfLoading(false);
     });
   };

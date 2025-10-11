@@ -374,7 +374,7 @@ export const updateUser = async (req, res) => {
   }
 };
 
-  export const updatePassword = async (req, res) => {
+export const updatePassword = async (req, res) => {
     try {
       const { user_id, oldPassword, newPassword } = req.body;
   
@@ -384,10 +384,25 @@ export const updateUser = async (req, res) => {
       }
   
       // Check new password length
-      if (newPassword.length < 8 || newPassword.length > 16) {
+      if (typeof newPassword !== "string" || newPassword.length < 8 || newPassword.length > 16) {
         return res
           .status(400)
           .json({ message: "Password must be between 8 and 16 characters." });
+      }
+
+      // Complexity checks
+      const uppercaseRegex = /[A-Z]/;
+      const digitRegex = /\d/;
+      const specialRegex = /[!@#$%^&*()_+\-]/; // allowed: ! @ # $ % ^ & * ( ) _ + -
+
+      if (!uppercaseRegex.test(newPassword)) {
+        return res.status(400).json({ message: "Password must include at least one uppercase letter (A-Z)." });
+      }
+      if (!digitRegex.test(newPassword)) {
+        return res.status(400).json({ message: "Password must include at least one digit (0-9)." });
+      }
+      if (!specialRegex.test(newPassword)) {
+        return res.status(400).json({ message: "Password must include at least one special symbol (allowed: ! @ # $ % ^ & * ( ) _ + -)." });
       }
   
       // Find user and include password field
@@ -417,6 +432,7 @@ export const updateUser = async (req, res) => {
         .json({ message: "Server error", error: error.message });
     }
   };
+
 
 export const getStaffs = async (req, res) => {
   try {
