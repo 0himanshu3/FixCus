@@ -35,7 +35,7 @@ function Login() {
                 if (user?.role === 'Admin') {
                     navigateTo("/admin/dashboard");
                 } else if (user?.role === 'Municipality Admin') {
-                    navigateTo("/municipality");
+                    navigateTo("/dashboard");
                 } else {
                     navigateTo("/");
                 }

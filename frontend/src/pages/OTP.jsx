@@ -24,7 +24,7 @@ function OTP() {
             toast.success(message);
             if (isAuthenticated && user) {
                 if (user.role === "Municipality Admin") {
-                    navigate("/municipality");
+                    navigate("/dashboard");
                 } else {
                     navigate("/");
                 }
