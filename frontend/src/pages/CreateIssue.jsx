@@ -199,22 +199,22 @@ export default function CreateIssue() {
     setVideoFiles((p) => [...p, ...Array.from(e.target.files)]);
 
   return (
-    <div className="w-full min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800">
-      <div className="max-w-4xl mx-auto px-6 lg:px-8 py-8">
-        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-6">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">
+    <div className="w-full min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 overflow-x-hidden">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-4 sm:p-6 overflow-x-hidden">
+          <div className="text-center mb-4 sm:mb-6">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
               Create a New Issue
             </h1>
-            <p className="text-gray-500 mt-1">
+            <p className="text-gray-500 mt-1 text-sm sm:text-base">
               Choose your preferred method to report an issue.
             </p>
           </div>
 
-          <div className="flex justify-center gap-2 p-1 bg-gray-200 rounded-lg mb-8">
+          <div className="flex flex-col sm:flex-row justify-center gap-2 p-1 bg-gray-200 rounded-lg mb-6 sm:mb-8">
             <button
               onClick={() => setMode("ai")}
-              className={`w-full py-2 px-4 rounded-md text-sm font-semibold transition-all ${
+              className={`w-full py-2 sm:py-3 px-3 sm:px-4 rounded-md text-xs sm:text-sm font-semibold transition-all touch-friendly ${
                 mode === "ai"
                   ? "bg-purple-600 text-white shadow"
                   : "text-gray-600"
@@ -223,7 +223,7 @@ export default function CreateIssue() {
             </button>
             <button
               onClick={() => setMode("manual")}
-              className={`w-full py-2 px-4 rounded-md text-sm font-semibold transition-all ${
+              className={`w-full py-2 sm:py-3 px-3 sm:px-4 rounded-md text-xs sm:text-sm font-semibold transition-all touch-friendly ${
                 mode === "manual"
                   ? "bg-purple-600 text-white shadow"
                   : "text-gray-600"
@@ -234,12 +234,12 @@ export default function CreateIssue() {
 
           {mode === "ai" && (
             <div>
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     1. Upload Images of the Issue
                   </label>
-                  <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                  <div className="p-3 sm:p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
                     <input
                       type="file"
                       multiple
@@ -250,12 +250,12 @@ export default function CreateIssue() {
                     />
                     <label
                       htmlFor="ai-file-input"
-                      className="cursor-pointer text-purple-600 font-semibold">
+                      className="cursor-pointer text-purple-600 font-semibold text-sm sm:text-base touch-friendly">
                       Click to select images
                     </label>
                   </div>
                   {imageFiles.length > 0 && (
-                    <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                    <div className="mt-3 sm:mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
                       {imageFiles.map((file, index) => (
                         <div
                           key={index}
@@ -268,7 +268,7 @@ export default function CreateIssue() {
                           <button
                             type="button"
                             onClick={() => handleRemoveImage(index)}
-                            className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                            className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-600 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs font-bold touch-friendly">
                             &times;
                           </button>
                         </div>
@@ -280,7 +280,7 @@ export default function CreateIssue() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     2. Upload Videos (Optional)
                   </label>
-                  <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                  <div className="p-3 sm:p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
                     <input
                       type="file"
                       multiple
@@ -291,7 +291,7 @@ export default function CreateIssue() {
                     />
                     <label
                       htmlFor="ai-video-input"
-                      className="cursor-pointer text-purple-600 font-semibold">
+                      className="cursor-pointer text-purple-600 font-semibold text-sm sm:text-base touch-friendly">
                       {videoFiles.length > 0
                         ? `${videoFiles.length} videos selected`
                         : "Click to select videos"}
@@ -309,11 +309,11 @@ export default function CreateIssue() {
                 </div>
               </div>
 
-              <div className="mt-8 text-center">
+              <div className="mt-6 sm:mt-8 text-center">
                 <button
                   onClick={handleAIGenerate}
                   disabled={isGenerating || isSubmitting}
-                  className="w-full max-w-xs px-6 py-3 rounded-lg bg-pink-600 text-white font-bold hover:bg-pink-700 disabled:bg-pink-300">
+                  className="w-full max-w-xs px-4 sm:px-6 py-2 sm:py-3 rounded-lg bg-pink-600 text-white font-bold hover:bg-pink-700 disabled:bg-pink-300 text-sm sm:text-base touch-friendly">
                   {isGenerating ? "AI is Working..." : "Generate Issue with AI"}
                 </button>
               </div>
@@ -327,43 +327,43 @@ export default function CreateIssue() {
               )}
 
               {aiGeneratedData && (
-                <div className="mt-8 p-4 border-2 border-purple-400 rounded-lg bg-purple-50">
-                  <h3 className="text-xl font-bold text-purple-800">
+                <div className="mt-6 sm:mt-8 p-3 sm:p-4 border-2 border-purple-400 rounded-lg bg-purple-50 overflow-x-hidden">
+                  <h3 className="text-lg sm:text-xl font-bold text-purple-800">
                     AI Generated Draft
                   </h3>
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
                     Please review the details below.
                   </p>
-                  <div className="space-y-3 text-left">
+                  <div className="space-y-2 sm:space-y-3 text-left">
                     <div>
-                      <p className="font-semibold">Title:</p>
-                      <p className="p-2 bg-white rounded border">
+                      <p className="font-semibold text-sm sm:text-base">Title:</p>
+                      <p className="p-2 bg-white rounded border text-sm sm:text-base break-words">
                         {aiGeneratedData.title}
                       </p>
                     </div>
                     <div>
-                      <p className="font-semibold">Category:</p>
-                      <p className="p-2 bg-white rounded border">
+                      <p className="font-semibold text-sm sm:text-base">Category:</p>
+                      <p className="p-2 bg-white rounded border text-sm sm:text-base break-words">
                         {aiGeneratedData.category}
                       </p>
                     </div>
                     <div>
-                      <p className="font-semibold">Description:</p>
-                      <p className="p-2 bg-white rounded border whitespace-pre-wrap">
+                      <p className="font-semibold text-sm sm:text-base">Description:</p>
+                      <p className="p-2 bg-white rounded border whitespace-pre-wrap text-sm sm:text-base break-words">
                         {aiGeneratedData.description}
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-4 sm:mt-6">
                     <button
                       onClick={handleAcceptAI}
                       disabled={isSubmitting}
-                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:bg-green-300">
+                      className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:bg-green-300 text-sm sm:text-base touch-friendly">
                       {isSubmitting ? "Creating..." : "Accept & Create Issue"}
                     </button>
                     <button
                       onClick={handleEditManually}
-                      className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600">
+                      className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 text-sm sm:text-base touch-friendly">
                       Edit Manually
                     </button>
                   </div>
@@ -374,7 +374,7 @@ export default function CreateIssue() {
 
           {mode === "manual" && (
             <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Title
@@ -408,7 +408,7 @@ export default function CreateIssue() {
                     ))}
                   </select>
                 </div>
-                <div className="md:col-span-2">
+                <div className="lg:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Location
                   </label>
@@ -417,7 +417,7 @@ export default function CreateIssue() {
                     setLocation={setLocation}
                   />
                 </div>
-                <div className="relative md:col-span-2">
+                <div className="relative lg:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Description
                   </label>
@@ -438,7 +438,7 @@ export default function CreateIssue() {
                     initialText={formData.content}
                   /> */}
                 </div>
-                <div className="md:col-span-2">
+                <div className="lg:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Images
                   </label>
@@ -447,10 +447,10 @@ export default function CreateIssue() {
                     multiple
                     accept="image/*"
                     onChange={handleImageFileChange}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                    className="block w-full text-xs sm:text-sm text-gray-500 file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
                   />
                   {imageFiles.length > 0 && (
-                    <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                    <div className="mt-3 sm:mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4">
                       {imageFiles.map((file, index) => (
                         <div
                           key={index}
@@ -463,7 +463,7 @@ export default function CreateIssue() {
                           <button
                             type="button"
                             onClick={() => handleRemoveImage(index)}
-                            className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                            className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-600 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity touch-friendly">
                             &times;
                           </button>
                         </div>
@@ -471,7 +471,7 @@ export default function CreateIssue() {
                     </div>
                   )}
                 </div>
-                <div className="md:col-span-2">
+                <div className="lg:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Videos (Optional)
                   </label>
@@ -480,7 +480,7 @@ export default function CreateIssue() {
                     multiple
                     accept="video/*"
                     onChange={handleVideoFileChange}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                    className="block w-full text-xs sm:text-sm text-gray-500 file:mr-2 sm:file:mr-4 file:py-1 sm:file:py-2 file:px-2 sm:file:px-4 file:rounded-full file:border-0 file:text-xs sm:file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
                   />
                 </div>
               </div>
@@ -493,11 +493,11 @@ export default function CreateIssue() {
                 </div>
               )}
 
-              <div className="mt-8 flex justify-end">
+              <div className="mt-6 sm:mt-8 flex justify-end">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-3 rounded-md bg-purple-600 text-white font-medium hover:bg-purple-700 disabled:opacity-60">
+                  className="px-4 sm:px-5 py-2 sm:py-3 rounded-md bg-purple-600 text-white font-medium hover:bg-purple-700 disabled:opacity-60 text-sm sm:text-base touch-friendly">
                   {isSubmitting ? "Creating..." : "Create Issue"}
                 </button>
               </div>

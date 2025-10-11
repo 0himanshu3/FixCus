@@ -115,29 +115,29 @@ function Issues() {
   const handleHeatmapOpen = () => setIsHeatmapOpen(true);
 
   return (
-  <div className="relative min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-gradient-to-r from-pink-400 to-pink-300 rounded-2xl p-4 sm:p-6 shadow-2xl border-4 border-purple-600 mb-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h1 className="text-3xl sm:text-4xl font-black text-purple-900 text-center md:text-left">
+  <div className="relative min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-pink-800 overflow-x-hidden">
+    <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
+      <div className="bg-gradient-to-r from-pink-400 to-pink-300 rounded-2xl p-3 sm:p-4 md:p-6 shadow-2xl border-4 border-purple-600 mb-6 sm:mb-8">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-purple-900 text-center lg:text-left">
             🎪 All Issues
           </h1>
-          <div className="flex flex-col sm:flex-row sm:justify-center md:justify-end gap-3">
+          <div className="flex flex-col sm:flex-row sm:justify-center lg:justify-end gap-2 sm:gap-3">
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="bg-purple-600 hover:bg-purple-700 text-pink-100 py-2 px-6 rounded-full shadow-lg font-bold border-2 border-pink-300 transition-transform hover:scale-105"
+              className="bg-purple-600 hover:bg-purple-700 text-pink-100 py-2 px-4 sm:px-6 rounded-full shadow-lg font-bold border-2 border-pink-300 transition-transform hover:scale-105 text-sm sm:text-base touch-friendly"
             >
               🔍 Filter
             </button>
             <button
               onClick={handleAddIssue}
-              className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-transform hover:scale-105 flex items-center justify-center gap-2"
+              className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-4 sm:px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-transform hover:scale-105 flex items-center justify-center gap-2 text-sm sm:text-base touch-friendly"
             >
               ➕ Publish Issue
             </button>
             <button
               onClick={handleHeatmapOpen}
-              className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-transform hover:scale-105"
+              className="bg-pink-500 hover:bg-pink-600 text-white py-2 px-4 sm:px-6 rounded-full shadow-lg font-bold border-2 border-purple-300 transition-transform hover:scale-105 text-sm sm:text-base touch-friendly"
             >
               🗺 View Heatmap
             </button>
@@ -150,24 +150,24 @@ function Issues() {
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-pink-400"></div>
         </div>
       ) : issues.length === 0 ? (
-        <div className="text-center py-12 bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl border-4 border-purple-600 shadow-xl">
-          <h3 className="mt-4 text-2xl font-black text-purple-900">
+        <div className="text-center py-8 sm:py-12 bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl border-4 border-purple-600 shadow-xl px-4">
+          <h3 className="mt-4 text-xl sm:text-2xl font-black text-purple-900">
             🎭 No issues found
           </h3>
-          <p className="mt-2 text-purple-800 font-semibold">
+          <p className="mt-2 text-purple-800 font-semibold text-sm sm:text-base">
             Get started by creating your first issue.
           </p>
           <div className="mt-4 overflow-hidden inline-block">
             <button
               onClick={handleAddIssue}
-              className="px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-400 transition-all duration-200 will-change-transform"
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-400 transition-all duration-200 will-change-transform text-sm sm:text-base touch-friendly"
             >
               ➕ Publish Issue
             </button>
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
           {issues.map((event) => (
       <motion.div
         key={event._id}
@@ -193,11 +193,11 @@ function Issues() {
           {event.status}
         </div>
         
-        <div className="p-8 pt-12">
+        <div className="p-4 sm:p-6 md:p-8 pt-8 sm:pt-10 md:pt-12">
           {/* Header */}
-          <div className="text-center mb-4">
+          <div className="text-center mb-3 sm:mb-4">
             <div className="text-xs font-black text-purple-700 tracking-widest mb-1">MUNICIPAL ISSUE</div>
-            <h2 className="text-3xl font-black text-purple-900 overflow-hidden uppercase leading-tight group-hover:text-pink-700 transition-colors duration-300 truncate" style={{ textShadow: '2px 2px 0px rgba(236, 72, 153, 0.3)' }}>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-purple-900 overflow-hidden uppercase leading-tight group-hover:text-pink-700 transition-colors duration-300 truncate" style={{ textShadow: '2px 2px 0px rgba(236, 72, 153, 0.3)' }}>
               {event.title}
             </h2>
             <div className="text-xs font-black text-purple-700 tracking-widest mt-1">━━ COMPLAINT REPORT ━━</div>
@@ -205,24 +205,24 @@ function Issues() {
           
           {/* Category badge with glow */}
           {event.category && (
-            <div className="text-center mb-4 overflow-hidden">
-              <span className="inline-block bg-purple-700 text-yellow-300 text-sm font-black px-5 py-2 rounded-full border-4 border-yellow-300 uppercase shadow-lg group-hover:shadow-yellow-300/50 transition-shadow duration-300">
+            <div className="text-center mb-3 sm:mb-4 overflow-hidden">
+              <span className="inline-block bg-purple-700 text-yellow-300 text-xs sm:text-sm font-black px-3 sm:px-5 py-1 sm:py-2 rounded-full border-4 border-yellow-300 uppercase shadow-lg group-hover:shadow-yellow-300/50 transition-shadow duration-300">
                 🎪 {event.category}
               </span>
             </div>
           )}
           
           {/* Info box with border color change */}
-          <div className="bg-white/70 rounded-lg p-4 mb-4 border-4 border-purple-500 shadow-inner group-hover:border-pink-500 group-hover:bg-white/90 transition-all duration-300">
-            <div className="space-y-2 text-sm text-purple-900 font-bold">
+          <div className="bg-white/70 rounded-lg p-3 sm:p-4 mb-3 sm:mb-4 border-4 border-purple-500 shadow-inner group-hover:border-pink-500 group-hover:bg-white/90 transition-all duration-300">
+            <div className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-purple-900 font-bold">
               <p className="flex items-center justify-between">
                 <span>📍 DISTRICT:</span>
-                <span className="text-right">{event.issueDistrict}</span>
+                <span className="text-right truncate ml-2">{event.issueDistrict}</span>
               </p>
               <div className="border-t-2 border-dashed border-purple-300"></div>
               <p className="flex items-center justify-between">
                 <span>📅 REPORTED:</span>
-                <span>{new Date(event.issuePublishDate).toLocaleDateString()}</span>
+                <span className="text-xs sm:text-sm">{new Date(event.issuePublishDate).toLocaleDateString()}</span>
               </p>
             </div>
           </div>
@@ -231,7 +231,7 @@ function Issues() {
           <div className="overflow-hidden">
             <button
               onClick={() => handleViewIssue(event.slug)}
-              className="w-full bg-gradient-to-r from-purple-700 via-pink-600 to-purple-700 text-yellow-300 py-4 rounded-full font-black shadow-lg border-4 border-yellow-300 uppercase text-lg tracking-wider hover:brightness-110 hover:shadow-yellow-300/50 transition-all duration-300 will-change-transform relative overflow-hidden group"
+              className="w-full bg-gradient-to-r from-purple-700 via-pink-600 to-purple-700 text-yellow-300 py-3 sm:py-4 rounded-full font-black shadow-lg border-4 border-yellow-300 uppercase text-sm sm:text-base md:text-lg tracking-wider hover:brightness-110 hover:shadow-yellow-300/50 transition-all duration-300 will-change-transform relative overflow-hidden group touch-friendly"
             >
               <span className="relative z-10 cursor-pointer">VIEW ISSUE DETAILS</span>
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-x-12 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-700"></div>
@@ -259,10 +259,10 @@ function Issues() {
           onClick={() => setIsFilterOpen(false)}
         />
 
-        <div className="relative bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl shadow-2xl w-full max-w-md p-6 z-10 border-4 border-purple-600">
-          <h2 className="text-2xl font-black text-purple-900 mb-4 overflow-hidden">🔍 Filter Issues</h2>
+        <div className="relative bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md p-4 sm:p-6 z-10 border-4 border-purple-600 overflow-x-hidden">
+          <h2 className="text-xl sm:text-2xl font-black text-purple-900 mb-3 sm:mb-4 overflow-hidden">🔍 Filter Issues</h2>
 
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <input
               type="text"
               placeholder="Title"
@@ -270,7 +270,7 @@ function Issues() {
               onChange={(e) =>
                 setFilters({ ...filters, title: e.target.value })
               }
-              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+              className="w-full border-4 border-purple-500 rounded-lg px-3 sm:px-4 py-2 sm:py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300 text-sm sm:text-base"
             />
 
             <select
@@ -278,7 +278,7 @@ function Issues() {
               onChange={(e) =>
                 setFilters({ ...filters, category: e.target.value })
               }
-              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+              className="w-full border-4 border-purple-500 rounded-lg px-3 sm:px-4 py-2 sm:py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300 text-sm sm:text-base"
             >
               <option value="">All Categories</option>
               {issueCategories.map((cat, idx) => (
@@ -293,7 +293,7 @@ function Issues() {
               onChange={(e) =>
                 setFilters({ ...filters, priority: e.target.value })
               }
-              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+              className="w-full border-4 border-purple-500 rounded-lg px-3 sm:px-4 py-2 sm:py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300 text-sm sm:text-base"
             >
               <option value="">All Priorities</option>
               {priorityLevels.map((level, idx) => (
@@ -308,7 +308,7 @@ function Issues() {
               onChange={(e) =>
                 setFilters({ ...filters, status: e.target.value })
               }
-              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+              className="w-full border-4 border-purple-500 rounded-lg px-3 sm:px-4 py-2 sm:py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300 text-sm sm:text-base"
             >
               <option value="">All Status</option>
               {statusOptions.map((s, idx) => (
@@ -333,7 +333,7 @@ function Issues() {
               onChange={(e) =>
                 setFilters({ ...filters, votes: e.target.value })
               }
-              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+              className="w-full border-4 border-purple-500 rounded-lg px-3 sm:px-4 py-2 sm:py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300 text-sm sm:text-base"
             >
               <option value="">Sort by votes</option>
               <option value="upvoted">Most Upvoted First</option>
@@ -345,7 +345,7 @@ function Issues() {
               onChange={(e) =>
                 setFilters({ ...filters, recency: e.target.value })
               }
-              className="w-full border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+              className="w-full border-4 border-purple-500 rounded-lg px-3 sm:px-4 py-2 sm:py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300 text-sm sm:text-base"
             >
               <option value="">Sort by Recency</option>
               <option value="newest">Newest First</option>
@@ -353,16 +353,16 @@ function Issues() {
             </select>
           </div>
 
-          <div className="flex justify-end mt-6 gap-3 overflow-hidden">
+          <div className="flex flex-col sm:flex-row justify-end mt-4 sm:mt-6 gap-2 sm:gap-3 overflow-hidden">
             <button
               onClick={handleResetFilters}
-              className="px-6 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400 transition-all duration-200 will-change-transform"
+              className="px-4 sm:px-6 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400 transition-all duration-200 will-change-transform text-sm sm:text-base touch-friendly"
             >
               🔄 Reset
             </button>
             <button
               onClick={handleApplyFilters}
-              className="px-6 py-2 bg-purple-700 text-pink-100 rounded-full font-bold border-2 border-pink-400 hover:bg-purple-800 shadow-md transition-all duration-200 will-change-transform"
+              className="px-4 sm:px-6 py-2 bg-purple-700 text-pink-100 rounded-full font-bold border-2 border-pink-400 hover:bg-purple-800 shadow-md transition-all duration-200 will-change-transform text-sm sm:text-base touch-friendly"
             >
               ✅ Apply
             </button>

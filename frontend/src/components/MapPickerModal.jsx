@@ -121,18 +121,18 @@ const MapPickerModal = ({ show, onClose, location, onSelectLocation }) => {
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
       <div
         ref={modalRef}
-        className="bg-white w-[90%] md:w-2/3 h-[70%] rounded-lg shadow-2xl relative border-4 border-purple-500 overflow-hidden">
+        className="bg-white w-full max-w-4xl h-[80vh] sm:h-[70vh] md:h-[60vh] rounded-lg shadow-2xl relative border-4 border-purple-500 overflow-hidden">
         {/* Map container*/}
         <div ref={mapContainerRef} className="w-full h-full" />
         <button
           onClick={handleGetCurrentLocation}
-          className="absolute bottom-4 right-4 z-10 bg-white px-4 py-2 rounded-full shadow-lg text-sm font-semibold text-purple-700 hover:bg-purple-50 transition-colors flex items-center gap-2 border border-purple-200">
+          className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 z-10 bg-white px-2 sm:px-4 py-1 sm:py-2 rounded-full shadow-lg text-xs sm:text-sm font-semibold text-purple-700 hover:bg-purple-50 transition-colors flex items-center gap-1 sm:gap-2 border border-purple-200 touch-friendly">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
+            className="h-4 w-4 sm:h-5 sm:w-5"
             viewBox="0 0 20 20"
             fill="currentColor">
             <path
@@ -141,12 +141,13 @@ const MapPickerModal = ({ show, onClose, location, onSelectLocation }) => {
               clipRule="evenodd"
             />
           </svg>
-          Current Location
+          <span className="hidden sm:inline">Current Location</span>
+          <span className="sm:hidden">📍</span>
         </button>
 
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 bg-white w-8 h-8 flex items-center justify-center rounded-full shadow-lg text-lg font-bold text-purple-700 hover:bg-gray-100">
+          className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10 bg-white w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-full shadow-lg text-sm sm:text-lg font-bold text-purple-700 hover:bg-gray-100 touch-friendly">
           &times;
         </button>
       </div>

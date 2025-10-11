@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import 'leaflet/dist/leaflet.css';
+
 /* apparently this font is better for people with visual impairment (braille website) */
 @font-face {
   font-family: 'Atkinson Hyperlegible';
@@ -9,6 +10,437 @@
   font-style: normal;
 }
 
-button, Link{
+/* Global Responsive Design System */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  font-family: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  max-width: 100vw;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  overflow-x: hidden;
+}
+
+/* Responsive Typography */
+h1, h2, h3, h4, h5, h6 {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+p, span, div {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Responsive Images - exclude logos and specific elements */
+img:not([alt*="logo"]):not([alt*="Logo"]):not(.logo) {
+  max-width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+/* Specific styles for content images */
+.content img {
+  max-width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+/* Responsive Videos */
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive Tables */
+table {
+  width: 100%;
+  overflow-x: auto;
+  display: block;
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  table {
+    display: table;
+    white-space: normal;
+  }
+}
+
+/* Responsive Forms */
+input, textarea, select {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Responsive Containers */
+.container-responsive {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .container-responsive {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .container-responsive {
+    padding: 0 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-responsive {
+    padding: 0 2.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container-responsive {
+    padding: 0 3rem;
+  }
+}
+
+/* Responsive Grid System */
+.grid-responsive {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .grid-responsive {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .grid-responsive {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-responsive {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+}
+
+/* Responsive Flex Utilities */
+.flex-responsive {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .flex-responsive {
+    flex-direction: row;
+    gap: 1.5rem;
+  }
+}
+
+/* Overflow Handling */
+.overflow-handle {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.overflow-handle::-webkit-scrollbar {
+  height: 6px;
+}
+
+.overflow-handle::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.overflow-handle::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.overflow-handle::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Text Overflow Handling */
+.text-overflow-handle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-overflow-handle-multiline {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Responsive Spacing */
+.spacing-responsive {
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .spacing-responsive {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .spacing-responsive {
+    padding: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .spacing-responsive {
+    padding: 2.5rem;
+  }
+}
+
+/* Mobile-First Button Styles */
+.btn-responsive {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px; /* Touch target size */
+}
+
+@media (min-width: 640px) {
+  .btn-responsive {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+  }
+}
+
+/* Responsive Modal */
+.modal-responsive {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-content-responsive {
+  width: 100%;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+@media (min-width: 640px) {
+  .modal-content-responsive {
+    max-width: 28rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .modal-content-responsive {
+    max-width: 32rem;
+  }
+}
+
+/* Responsive Cards */
+.card-responsive {
+  background: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  word-wrap: break-word;
+}
+
+/* Responsive Navigation */
+.nav-responsive {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .nav-responsive {
+    flex-direction: row;
+    gap: 1rem;
+  }
+}
+
+/* Touch-friendly interactions */
+.touch-friendly {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Responsive Text Sizes */
+.text-responsive-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.text-responsive-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+.text-responsive-base {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
+.text-responsive-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.text-responsive-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.text-responsive-2xl {
+  font-size: 1.5rem;
+  line-height: 2rem;
+}
+
+.text-responsive-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+.text-responsive-4xl {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+}
+
+@media (min-width: 640px) {
+  .text-responsive-xs { font-size: 0.75rem; }
+  .text-responsive-sm { font-size: 0.875rem; }
+  .text-responsive-base { font-size: 1rem; }
+  .text-responsive-lg { font-size: 1.125rem; }
+  .text-responsive-xl { font-size: 1.25rem; }
+  .text-responsive-2xl { font-size: 1.5rem; }
+  .text-responsive-3xl { font-size: 1.875rem; }
+  .text-responsive-4xl { font-size: 2.25rem; }
+}
+
+@media (min-width: 768px) {
+  .text-responsive-xs { font-size: 0.75rem; }
+  .text-responsive-sm { font-size: 0.875rem; }
+  .text-responsive-base { font-size: 1rem; }
+  .text-responsive-lg { font-size: 1.125rem; }
+  .text-responsive-xl { font-size: 1.25rem; }
+  .text-responsive-2xl { font-size: 1.5rem; }
+  .text-responsive-3xl { font-size: 1.875rem; }
+  .text-responsive-4xl { font-size: 2.25rem; }
+}
+
+@media (min-width: 1024px) {
+  .text-responsive-xs { font-size: 0.75rem; }
+  .text-responsive-sm { font-size: 0.875rem; }
+  .text-responsive-base { font-size: 1rem; }
+  .text-responsive-lg { font-size: 1.125rem; }
+  .text-responsive-xl { font-size: 1.25rem; }
+  .text-responsive-2xl { font-size: 1.5rem; }
+  .text-responsive-3xl { font-size: 1.875rem; }
+  .text-responsive-4xl { font-size: 2.25rem; }
+}
+
+/* Responsive Margins and Padding */
+.margin-responsive {
+  margin: 1rem;
+}
+
+.padding-responsive {
+  padding: 1rem;
+}
+
+@media (min-width: 640px) {
+  .margin-responsive { margin: 1.5rem; }
+  .padding-responsive { padding: 1.5rem; }
+}
+
+@media (min-width: 768px) {
+  .margin-responsive { margin: 2rem; }
+  .padding-responsive { padding: 2rem; }
+}
+
+@media (min-width: 1024px) {
+  .margin-responsive { margin: 2.5rem; }
+  .padding-responsive { padding: 2.5rem; }
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus styles for better accessibility */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .card-responsive {
+    border: 2px solid #000;
+  }
+}
+
+button, Link {
   cursor: pointer;
 }

@@ -111,54 +111,54 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white">
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white overflow-x-hidden">
+      <div className="max-w-6xl mx-auto p-3 sm:p-4 md:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3 sm:gap-0">
           <div>
-            <h1 className="text-2xl font-bold text-purple-800">Welcome back, {user?.name?.split(' ')[0]}</h1>
-            <p className="text-sm text-purple-600 mt-1">{`Top issues in ${user?.district || 'your area'}`}</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-purple-800">Welcome back, {user?.name?.split(' ')[0]}</h1>
+            <p className="text-xs sm:text-sm text-purple-600 mt-1">{`Top issues in ${user?.district || 'your area'}`}</p>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => nav('/municipality-view')} className="px-4 py-2 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">View Municipalities</button>
-            <button onClick={() => setRefreshFlag(f => f + 1)} className="px-4 py-2 bg-white border border-purple-100 hover:bg-purple-50 rounded text-sm">Refresh</button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+            <button onClick={() => nav('/municipality-view')} className="px-3 sm:px-4 py-2 bg-purple-600 text-white rounded text-xs sm:text-sm hover:bg-purple-700 touch-friendly">View Municipalities</button>
+            <button onClick={() => setRefreshFlag(f => f + 1)} className="px-3 sm:px-4 py-2 bg-white border border-purple-100 hover:bg-purple-50 rounded text-xs sm:text-sm touch-friendly">Refresh</button>
           </div>
         </div>
 
         {error && <ErrorBox message={error} />}
         {loading ? <LoadingBox /> : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* --- Summary Cards --- */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               <SummaryCard title="District" value={user.district || '—'} icon={<FaTasks />} />
               <SummaryCard title="Top upvoted" value={topUpvoted.length} icon={<FaArrowUp />} />
               <SummaryCard title="Top downvoted" value={topDownvoted.length} icon={<FaArrowDown />} />
             </div>
 
             {/* --- My Reported Issues --- */}
-            <div className="bg-white rounded-xl shadow p-4 border border-purple-50">
-              <div className="flex items-center justify-between mb-3">
+            <div className="bg-white rounded-xl shadow p-3 sm:p-4 border border-purple-50 overflow-x-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
                 <div>
-                  <h3 className="text-lg font-semibold text-purple-800">My Reported Issues</h3>
-                  <div className="text-sm text-gray-500">Issues you reported — quick glance.</div>
+                  <h3 className="text-base sm:text-lg font-semibold text-purple-800">My Reported Issues</h3>
+                  <div className="text-xs sm:text-sm text-gray-500">Issues you reported — quick glance.</div>
                 </div>
-                <div className="text-sm text-gray-500">{myReported.length} issues</div>
+                <div className="text-xs sm:text-sm text-gray-500">{myReported.length} issues</div>
               </div>
 
               {myReported.length === 0 ? (
-                <div className="py-6 text-center text-gray-400">You haven't reported any issues yet.</div>
+                <div className="py-4 sm:py-6 text-center text-gray-400 text-sm">You haven't reported any issues yet.</div>
               ) : (
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-2 sm:gap-3 lg:grid-cols-2">
                   {myReported.map((issue) => (
-                    <article key={issue._id} className="p-3 bg-purple-50/60 rounded-lg flex items-start justify-between">
-                      <div className="flex-1 pr-3">
-                        <div className="text-sm font-semibold text-gray-900 truncate">{issue.title || 'Untitled'}</div>
+                    <article key={issue._id} className="p-2 sm:p-3 bg-purple-50/60 rounded-lg flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-0">
+                      <div className="flex-1 sm:pr-3">
+                        <div className="text-xs sm:text-sm font-semibold text-gray-900 truncate">{issue.title || 'Untitled'}</div>
                         <div className="text-xs text-gray-600 mt-1">{issue.category || issue.category || 'General'} • {issue.priority || '—'}</div>
                         <div className="text-xs text-gray-500 mt-2 line-clamp-2">{issue.content || issue.description || ''}</div>
                         <div className="mt-2 text-xs text-gray-400">{issue.issueDistrict || '—'} • {new Date(issue.issuePublishDate || issue.createdAt).toLocaleDateString()}</div>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
+                      <div className="flex flex-row sm:flex-col items-center sm:items-end gap-2 sm:gap-2">
                         <div className="text-xs text-gray-600">↑ {count(issue.upvotes)} • ↓ {count(issue.downvotes)}</div>
-                        <button onClick={() => toIssue(issue)} className="mt-2 px-3 py-1 rounded bg-purple-700 text-white text-sm">View</button>
+                        <button onClick={() => toIssue(issue)} className="px-2 sm:px-3 py-1 rounded bg-purple-700 text-white text-xs sm:text-sm touch-friendly">View</button>
                       </div>
                     </article>
                   ))}
@@ -167,11 +167,11 @@ export default function Dashboard() {
             </div>
 
             {/* --- Top Issues --- */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
               {/* Top Upvoted Issues */}
-              <section className="bg-white bg-opacity-90 rounded-3xl shadow-2xl p-6 border-4 border-pink-100 hover:shadow-lg transition">
-                <h3 className="text-2xl font-extrabold mb-5 flex items-center gap-3 text-pink-700 select-none">
-                  <FaArrowUp className="text-green-500 w-6 h-6" />
+              <section className="bg-white bg-opacity-90 rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-4 md:p-6 border-4 border-pink-100 hover:shadow-lg transition overflow-x-hidden">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold mb-3 sm:mb-4 md:mb-5 flex items-center gap-2 sm:gap-3 text-pink-700 select-none">
+                  <FaArrowUp className="text-green-500 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                   Top Upvoted Issues
                 </h3>
                 {topUpvoted.length === 0 ? (
@@ -192,9 +192,9 @@ export default function Dashboard() {
               </section>
 
               {/* Top Downvoted Issues */}
-              <section className="bg-white bg-opacity-90 rounded-3xl shadow-2xl p-6 border-4 border-pink-100 hover:shadow-lg transition">
-                <h3 className="text-2xl font-extrabold mb-5 flex items-center gap-3 text-pink-700 select-none">
-                  <FaArrowDown className="text-red-500 w-6 h-6" />
+              <section className="bg-white bg-opacity-90 rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-4 md:p-6 border-4 border-pink-100 hover:shadow-lg transition overflow-x-hidden">
+                <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold mb-3 sm:mb-4 md:mb-5 flex items-center gap-2 sm:gap-3 text-pink-700 select-none">
+                  <FaArrowDown className="text-red-500 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                   Top Downvoted Issues
                 </h3>
                 {topDownvoted.length === 0 ? (

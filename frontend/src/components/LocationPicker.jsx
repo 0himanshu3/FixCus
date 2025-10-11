@@ -58,22 +58,22 @@ const LocationPicker = ({ location, setLocation }) => {
   }, [setLocation]);
 
   return (
-    <div className="w-full">
-      <div className="flex items-center gap-2 mb-2">
+    <div className="w-full overflow-x-hidden">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-2">
         <input
           id="location-input"
           type="text"
           placeholder="Enter your native location"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          className="w-full px-4 py-3 border border-black rounded-md focus:outline-none"
+          className="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-black rounded-md focus:outline-none text-sm sm:text-base"
         />
         <button
           type="button"
           onClick={() => setShowMapModal(true)}
-          className="rounded"
+          className="rounded touch-friendly"
         >
-          <MapPinIcon className="h-6 w-6 text-gray-700 hover:text-gray-900 cursor-pointer" />
+          <MapPinIcon className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700 hover:text-gray-900 cursor-pointer" />
         </button>
       </div>
 
