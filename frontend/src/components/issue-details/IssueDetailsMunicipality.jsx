@@ -824,11 +824,11 @@ useEffect(() => {
               ))}
             </div>
             {issue.images.length > 3 && (
-              <button
-                onClick={() => setShowImageSlider(true)}
-                className="mt-4 px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-300 transform hover:scale-105 transition-all">
-                🎭 View More
-              </button>
+            <button
+              onClick={() => setShowImageSlider(true)}
+              className="mt-4 w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-300 transform hover:scale-105 transition-all text-sm sm:text-base">
+              🎭 View More
+            </button>
             )}
           </div>
         )}
@@ -920,11 +920,11 @@ useEffect(() => {
           )}
         </AnimatePresence>
         {/* Upvotes / Downvotes */}
-        <div className="flex items-center gap-4 justify-center">
-          <div className="px-6 py-3 bg-gradient-to-r from-green-400 to-green-500 text-white rounded-full font-black text-lg shadow-xl border-4 border-purple-600">
+        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-center">
+          <div className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-green-400 to-green-500 text-white rounded-full font-black text-sm sm:text-lg shadow-xl border-2 sm:border-4 border-purple-600">
             👍 Upvotes: {issue.upvotes?.length || 0}
           </div>
-          <div className="px-6 py-3 bg-gradient-to-r from-red-400 to-red-500 text-white rounded-full font-black text-lg shadow-xl border-4 border-purple-600">
+          <div className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-red-400 to-red-500 text-white rounded-full font-black text-sm sm:text-lg shadow-xl border-2 sm:border-4 border-purple-600">
             👎 Downvotes: {issue.downvotes?.length || 0}
           </div>
         </div>
@@ -932,7 +932,7 @@ useEffect(() => {
         <div className="text-center">
           <button
             onClick={() => setIsTimelineModalOpen(true)}
-            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-pink-100 font-black text-lg rounded-full shadow-lg hover:from-purple-700 hover:to-purple-800 border-4 border-pink-400 transform hover:scale-105 transition-all">
+            className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-pink-100 font-black text-sm sm:text-lg rounded-full shadow-lg hover:from-purple-700 hover:to-purple-800 border-2 sm:border-4 border-pink-400 transform hover:scale-105 transition-all">
             📅 View Issue Timeline
           </button>
         </div>
@@ -988,7 +988,7 @@ useEffect(() => {
                 />
                 <button
                   onClick={() => handleUpdateWhatsappLink(whatsappLinkInput)}
-                  className="px-4 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 shadow-md"
+                  className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 shadow-md text-sm sm:text-base"
                 >
                   Save Link
                 </button>
@@ -1013,7 +1013,7 @@ useEffect(() => {
             />
             <button
               onClick={handleTakeUpIssue}
-              className="w-full px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-black text-lg hover:bg-purple-800 shadow-lg border-4 border-pink-400 transform hover:scale-105 transition-all">
+              className="w-full px-4 sm:px-6 py-2 sm:py-3 bg-purple-700 text-pink-100 rounded-full font-black text-sm sm:text-lg hover:bg-purple-800 shadow-lg border-2 sm:border-4 border-pink-400 transform hover:scale-105 transition-all">
               🎪 Take Up & Set Deadline
             </button>
           </div>
@@ -1032,14 +1032,14 @@ useEffect(() => {
                 <>
                   {/* Suggested Staff Members (only unassigned) */}
                   <div className="mt-6 bg-gradient-to-r from-white/80 to-white/60 rounded-xl p-4 border-4 border-purple-300 shadow-md">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-black text-xl text-purple-900">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                      <h3 className="font-black text-lg sm:text-xl text-purple-900">
                         ⭐ Suggested Staff Members
                       </h3>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                         <button
                           onClick={() => fetchSuggestedStaff(issue._id)}
-                          className="px-3 py-1 rounded-full border-2 border-purple-400 text-sm font-semibold hover:bg-purple-50">
+                          className="w-full sm:w-auto px-3 py-1 rounded-full border-2 border-purple-400 text-xs sm:text-sm font-semibold hover:bg-purple-50">
                           Refresh
                         </button>
                         <button
@@ -1049,7 +1049,7 @@ useEffect(() => {
                             !unassignedSuggested ||
                             unassignedSuggested.length === 0
                           }
-                          className="px-3 py-1 rounded-full bg-green-600 text-white font-black text-sm hover:bg-green-700 disabled:opacity-50">
+                          className="w-full sm:w-auto px-3 py-1 rounded-full bg-green-600 text-white font-black text-xs sm:text-sm hover:bg-green-700 disabled:opacity-50">
                           {assigningAllSuggested
                             ? "Assigning..."
                             : `Assign All (${
@@ -1075,30 +1075,33 @@ useEffect(() => {
                           return (
                             <div
                               key={userId}
-                              className="p-3 bg-white rounded-lg shadow-sm border-2 border-purple-200 flex items-center justify-between">
-                              <div className="flex items-center gap-3">
+                              className="p-3 bg-white rounded-lg shadow-sm border-2 border-purple-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                              <div className="flex items-center gap-3 w-full sm:w-auto">
                                 <img
                                   src={c.avatar || "/default-avatar.png"}
                                   alt={c.name}
-                                  className="w-12 h-12 rounded-full object-cover border-2 border-purple-300"
+                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-purple-300 flex-shrink-0"
                                 />
-                                <div>
-                                  <p className="font-semibold text-purple-900">
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold text-purple-900 text-sm sm:text-base truncate">
                                     {c.name}
                                   </p>
-                                  <p className="text-sm text-gray-600">
+                                  <p className="text-xs sm:text-sm text-gray-600 truncate">
                                     {c.email}
                                   </p>
-                                  <p className="text-xs text-gray-500 mt-1">
+                                  <p className="text-xs text-gray-500 mt-1 hidden sm:block">
                                     Score: {(c.score || 0).toFixed(3)} • Solved:{" "}
                                     {(c.solvedRate || 0).toFixed(2)} •
                                     AssignedCount: {c.assignedCount || 0}
                                   </p>
+                                  <p className="text-xs text-gray-500 mt-1 sm:hidden">
+                                    Score: {(c.score || 0).toFixed(2)} • Solved: {(c.solvedRate || 0).toFixed(1)}
+                                  </p>
                                 </div>
                               </div>
 
-                              <div className="flex items-center gap-3">
-                                <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-700 font-bold text-sm border-2 border-purple-200">
+                              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                                <span className="px-2 sm:px-3 py-1 rounded-full bg-purple-100 text-purple-700 font-bold text-xs sm:text-sm border-2 border-purple-200 text-center">
                                   {suggestedRole}
                                 </span>
 
@@ -1110,7 +1113,7 @@ useEffect(() => {
                                     )
                                   }
                                   disabled={isAssigning}
-                                  className="px-4 py-2 rounded-full bg-blue-600 text-white font-black hover:bg-blue-700 disabled:opacity-50">
+                                  className="w-full sm:w-auto px-3 sm:px-4 py-1 sm:py-2 rounded-full bg-blue-600 text-white font-black hover:bg-blue-700 disabled:opacity-50 text-sm sm:text-base">
                                   {isAssigning ? "Assigning..." : "Assign"}
                                 </button>
                               </div>
@@ -1174,7 +1177,7 @@ useEffect(() => {
 
                     <button
                       onClick={handleAssignStaff}
-                      className="w-full px-6 py-3 bg-green-600 text-white rounded-full font-black text-lg hover:bg-green-700 shadow-lg border-4 border-purple-500 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-4 sm:px-6 py-2 sm:py-3 bg-green-600 text-white rounded-full font-black text-sm sm:text-lg hover:bg-green-700 shadow-lg border-2 sm:border-4 border-purple-500 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={!roleName || !staffEmail || assigningStaff}>
                       {assigningStaff ? "Assigning..." : "✅ Assign Staff"}
                     </button>
@@ -1215,25 +1218,25 @@ useEffect(() => {
                     Post-Resolution Reports
                   </h3>
                   <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      <button
-                        onClick={handleViewFeedback}
-                        className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-full font-black text-lg hover:bg-blue-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all">
-                        📢 View Citizen Feedback
-                      </button>
-                      <button
-                        onClick={handleViewReport}
-                        className="flex-1 px-6 py-3 bg-teal-600 text-white rounded-full font-black text-lg hover:bg-teal-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all">
-                        📜 View Supervisor Report
-                      </button>
-                    </div>
-                    <div>
-                      <button
-                        onClick={handleGenerateAnalysis}
-                        className="w-full px-6 py-3 bg-indigo-600 text-white rounded-full font-black text-lg hover:bg-indigo-700 shadow-lg border-4 border-purple-400 transform hover:scale-105 transition-all">
-                        🤖 Generate AI Feedback Analysis
-                      </button>
-                    </div>
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <button
+                      onClick={handleViewFeedback}
+                      className="flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-full font-black text-sm sm:text-lg hover:bg-blue-700 shadow-lg border-2 sm:border-4 border-purple-400 transform hover:scale-105 transition-all">
+                      📢 View Citizen Feedback
+                    </button>
+                    <button
+                      onClick={handleViewReport}
+                      className="flex-1 px-4 sm:px-6 py-2 sm:py-3 bg-teal-600 text-white rounded-full font-black text-sm sm:text-lg hover:bg-teal-700 shadow-lg border-2 sm:border-4 border-purple-400 transform hover:scale-105 transition-all">
+                      📜 View Supervisor Report
+                    </button>
+                  </div>
+                  <div>
+                    <button
+                      onClick={handleGenerateAnalysis}
+                      className="w-full px-4 sm:px-6 py-2 sm:py-3 bg-indigo-600 text-white rounded-full font-black text-sm sm:text-lg hover:bg-indigo-700 shadow-lg border-2 sm:border-4 border-purple-400 transform hover:scale-105 transition-all">
+                      🤖 Generate AI Feedback Analysis
+                    </button>
+                  </div>
                   </div>
                 </div>
               )}

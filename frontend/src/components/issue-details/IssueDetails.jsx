@@ -325,7 +325,7 @@ function IssueDetails() {
             {issue.images.length > 3 && (
               <button
                 onClick={() => setShowImageSlider(true)}
-                className="mt-4 cursor-pointer px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-300 transform hover:scale-105 transition-all">
+                className="mt-4 cursor-pointer w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-300 transform hover:scale-105 transition-all text-sm sm:text-base">
                 🎭 View More
               </button>
             )}
@@ -445,15 +445,15 @@ function IssueDetails() {
           </div>
         )}
 
-        <div className="flex items-center gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-center">
           <button
             onClick={handleUpvote}
-            className="px-6 py-3 bg-gradient-to-r from-green-400 to-green-500 text-white rounded-full font-black text-lg shadow-xl border-4 border-purple-600 hover:scale-105 transform transition-all">
+            className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-green-400 to-green-500 text-white rounded-full font-black text-sm sm:text-lg shadow-xl border-2 sm:border-4 border-purple-600 hover:scale-105 transform transition-all">
             👍 Upvote ({issue.upvotes?.length || 0})
           </button>
           <button
             onClick={handleDownvote}
-            className="px-6 py-3 bg-gradient-to-r from-red-400 to-red-500 text-white rounded-full font-black text-lg shadow-xl border-4 border-purple-600 hover:scale-105 transform transition-all">
+            className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-red-400 to-red-500 text-white rounded-full font-black text-sm sm:text-lg shadow-xl border-2 sm:border-4 border-purple-600 hover:scale-105 transform transition-all">
             👎 Downvote ({issue.downvotes?.length || 0})
           </button>
         </div>
@@ -462,7 +462,7 @@ function IssueDetails() {
         <div className="text-center">
           <button
             onClick={() => setIsTimelineModalOpen(true)}
-            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-pink-100 font-black text-lg rounded-full shadow-lg hover:from-purple-700 hover:to-purple-800 border-4 border-pink-400 transform hover:scale-105 transition-all">
+            className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-pink-100 font-black text-sm sm:text-lg rounded-full shadow-lg hover:from-purple-700 hover:to-purple-800 border-2 sm:border-4 border-pink-400 transform hover:scale-105 transition-all">
             📅 View Issue Timeline
           </button>
         </div>
@@ -472,17 +472,17 @@ function IssueDetails() {
             💬 Comments
           </h2>
 
-          <div className="flex gap-2 mb-4">
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
             <input
               type="text"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Add a comment..."
-              className="flex-grow border-4 border-purple-500 rounded-lg px-4 py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
+              className="flex-grow border-2 sm:border-4 border-purple-500 rounded-lg px-3 sm:px-4 py-2 sm:py-3 font-semibold text-purple-900 focus:border-pink-500 focus:ring-2 sm:focus:ring-4 focus:ring-pink-300"
             />
             <button
               onClick={handleAddComment}
-              className="px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-md border-2 border-pink-300 transform hover:scale-105 transition-all">
+              className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-md border-2 border-pink-300 transform hover:scale-105 transition-all">
               💬 Comment
             </button>
           </div>
@@ -501,15 +501,15 @@ function IssueDetails() {
                         onChange={(e) => setEditingContent(e.target.value)}
                         className="w-full border-2 border-purple-500 rounded-lg px-3 py-2 font-semibold text-purple-900 focus:border-pink-500 focus:ring-2 focus:ring-pink-300"
                       />
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <button
                           onClick={() => handleEditComment(c._id)}
-                          className="px-3 py-1 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 shadow-md border-2 border-purple-300">
+                          className="w-full sm:w-auto px-3 py-1 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 shadow-md border-2 border-purple-300 text-sm sm:text-base">
                           ✅ Save
                         </button>
                         <button
                           onClick={() => setEditingCommentId(null)}
-                          className="px-3 py-1 bg-gray-300 text-purple-900 rounded-full font-bold hover:bg-gray-400 border-2 border-purple-300">
+                          className="w-full sm:w-auto px-3 py-1 bg-gray-300 text-purple-900 rounded-full font-bold hover:bg-gray-400 border-2 border-purple-300 text-sm sm:text-base">
                           Cancel
                         </button>
                       </div>
@@ -561,7 +561,7 @@ function IssueDetails() {
             </p>
             <button
               onClick={() => setIsFeedbackModalOpen(true)}
-              className="px-8 py-4 bg-purple-700 text-pink-100 font-black text-lg rounded-full shadow-lg hover:bg-purple-800 border-4 border-pink-400 transform hover:scale-105 transition-all">
+              className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-purple-700 text-pink-100 font-black text-sm sm:text-lg rounded-full shadow-lg hover:bg-purple-800 border-2 sm:border-4 border-pink-400 transform hover:scale-105 transition-all">
               ⭐ Leave Feedback on Resolution
             </button>
           </div>
@@ -717,16 +717,16 @@ function IssueDetails() {
                     </FeedbackSection>
                   </div>
 
-                  <div className="flex justify-end gap-4 mt-6 pt-4 border-t-2 border-purple-500">
+                  <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-6 pt-4 border-t-2 border-purple-500">
                     <button
                       onClick={() => setIsFeedbackModalOpen(false)}
-                      className="px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400">
+                      className="w-full sm:w-auto px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400 text-sm sm:text-base">
                       Cancel
                     </button>
                     <button
                       onClick={handleFeedbackSubmit}
                       disabled={isSubmittingFeedback}
-                      className="px-4 py-2 bg-purple-700 text-pink-100 rounded-full font-bold border-2 border-pink-400 hover:bg-purple-800 shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed">
+                      className="w-full sm:w-auto px-4 py-2 bg-purple-700 text-pink-100 rounded-full font-bold border-2 border-pink-400 hover:bg-purple-800 shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed text-sm sm:text-base">
                       {isSubmittingFeedback
                         ? "Submitting..."
                         : "✅ Submit Feedback"}

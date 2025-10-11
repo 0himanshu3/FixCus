@@ -400,7 +400,7 @@ export default function MunicipalityMain() {
 
   // Render
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-purple-200 via-pink-200 to-purple-200">
+    <div className="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-purple-200 via-pink-200 to-purple-200">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Left — Pending issues list and Resolved issues below */}
@@ -435,33 +435,66 @@ export default function MunicipalityMain() {
 
           <div className="bg-white rounded-xl shadow-lg border-2 border-purple-200 overflow-hidden mb-6">
             <div className="max-h-[420px] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
-              <table className="min-w-full">
-                <thead className="bg-gradient-to-r from-purple-100 to-pink-100 sticky top-0 border-b-2 border-purple-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-bold text-purple-900 uppercase tracking-wider">Title</th>
-                    <th className="px-6 py-3 text-center text-xs font-bold text-purple-900 uppercase tracking-wider">Location</th>
-                    <th className="px-6 py-3 text-center text-xs font-bold text-purple-900 uppercase tracking-wider">Priority</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-purple-100">
-                  {loadingIssues ? (
-                    <tr><td colSpan="3" className="p-6 text-center text-purple-600 font-medium">Loading issues...</td></tr>
-                  ) : filteredIssues.length === 0 ? (
-                    <tr><td colSpan="3" className="p-6 text-center text-purple-600 font-medium">No pending issues found.</td></tr>
-                  ) : (
-                    filteredIssues.map(issue => (
-                      <tr key={issue._id} className="hover:bg-purple-50 transition cursor-pointer" onClick={() => navigate(`/issue/${issue.slug}`)}>
-                        <td className="px-6 py-4">
+              {/* Desktop table (md and up) */}
+              <div className="hidden md:block">
+                <table className="min-w-full">
+                  <thead className="bg-gradient-to-r from-purple-100 to-pink-100 sticky top-0 border-b-2 border-purple-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-bold text-purple-900 uppercase tracking-wider">Title</th>
+                      <th className="px-6 py-3 text-center text-xs font-bold text-purple-900 uppercase tracking-wider">Location</th>
+                      <th className="px-6 py-3 text-center text-xs font-bold text-purple-900 uppercase tracking-wider">Priority</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-purple-100">
+                    {loadingIssues ? (
+                      <tr><td colSpan="3" className="p-6 text-center text-purple-600 font-medium">Loading issues...</td></tr>
+                    ) : filteredIssues.length === 0 ? (
+                      <tr><td colSpan="3" className="p-6 text-center text-purple-600 font-medium">No pending issues found.</td></tr>
+                    ) : (
+                      filteredIssues.map(issue => (
+                        <tr key={issue._id} className="hover:bg-purple-50 transition cursor-pointer" onClick={() => navigate(`/issue/${issue.slug}`)}>
+                          <td className="px-6 py-4">
+                            <div className="font-semibold text-gray-900">{issue.title}</div>
+                            <div className="text-xs text-purple-600 font-medium mt-1">📅 {new Date(issue.createdAt).toLocaleString()}</div>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <div className="inline-flex items-center gap-2 text-sm text-gray-700 font-medium">
+                              <FaMapMarkerAlt className="text-purple-500" />
+                              {issue.issueDistrict || issue.location || '—'}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${
+                              (issue.priority || '').toLowerCase() === 'high' ? 'bg-red-100 text-red-700 border-red-300' :
+                                (issue.priority || '').toLowerCase() === 'medium' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
+                                  'bg-green-100 text-green-700 border-green-300'
+                            }`}>
+                              {(issue.priority || 'normal').toUpperCase()}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile list (shown on small screens) */}
+              <div className="md:hidden p-3 space-y-3">
+                {loadingIssues ? (
+                  <div className="p-4 text-center text-purple-600 font-medium">Loading issues...</div>
+                ) : filteredIssues.length === 0 ? (
+                  <div className="p-4 text-center text-purple-600 font-medium">No pending issues found.</div>
+                ) : (
+                  filteredIssues.map(issue => (
+                    <div key={issue._id} onClick={() => navigate(`/issue/${issue.slug}`)} className="bg-white p-3 rounded-lg border border-purple-100 shadow-sm hover:shadow-md transition cursor-pointer">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 pr-2">
                           <div className="font-semibold text-gray-900">{issue.title}</div>
-                          <div className="text-xs text-purple-600 font-medium mt-1">📅 {new Date(issue.createdAt).toLocaleString()}</div>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <div className="inline-flex items-center gap-2 text-sm text-gray-700 font-medium">
-                            <FaMapMarkerAlt className="text-purple-500" />
-                            {issue.issueDistrict || issue.location || '—'}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-center">
+                          <div className="text-xs text-purple-600 mt-1">📅 {new Date(issue.createdAt).toLocaleString()}</div>
+                          <div className="text-xs text-gray-700 mt-1 inline-flex items-center gap-2"><FaMapMarkerAlt className="text-purple-500" />{issue.issueDistrict || issue.location || '—'}</div>
+                        </div>
+                        <div className="flex-shrink-0 ml-3">
                           <span className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${
                             (issue.priority || '').toLowerCase() === 'high' ? 'bg-red-100 text-red-700 border-red-300' :
                               (issue.priority || '').toLowerCase() === 'medium' ? 'bg-yellow-100 text-yellow-700 border-yellow-300' :
@@ -469,12 +502,12 @@ export default function MunicipalityMain() {
                           }`}>
                             {(issue.priority || 'normal').toUpperCase()}
                           </span>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
 

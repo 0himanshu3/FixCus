@@ -265,18 +265,35 @@ const MonthlyAnalysis = () => {
   }));
 
   return (
-    <div id="monthly-analysis-container" style={{ backgroundColor: '#f9fafb', minHeight: '100vh', padding: '2rem' }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+    <div id="monthly-analysis-container" style={{ backgroundColor: '#f9fafb', minHeight: '100vh', padding: '1rem' }}>
+      <style>{`
+        #monthly-analysis-container .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+        #monthly-analysis-container .charts-row { display: block; }
+        #monthly-analysis-container .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        #monthly-analysis-container .chart-box { background-color: #ffffff; padding: 1.25rem; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e5e7eb; }
+        #monthly-analysis-container .header-controls { display: flex; gap: 0.75rem; align-items: center; justify-content: flex-end; width: 100%; }
+        @media (max-width: 768px) {
+          #monthly-analysis-container .two-col { grid-template-columns: 1fr !important; }
+          #monthly-analysis-container .stat-cards { grid-template-columns: 1fr !important; }
+          #monthly-analysis-container .header-controls { flex-direction: column-reverse; align-items: stretch; gap: 0.5rem; }
+          #monthly-analysis-container h1 { font-size: 1.25rem; }
+          #monthly-analysis-container .chart-box { padding: 1rem !important; }
+          /* Reduce X axis label rotation to avoid overflow on very small screens */
+          #monthly-analysis-container .recharts-cartesian-axis-tick-value { transform: rotate(0deg) !important; }
+        }
+      `}</style>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '0 0.5rem' }}>
         
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', justifyContent: 'space-between', alignItems: 'stretch', marginBottom: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '1.875rem', fontWeight: 700, color: '#111827' }}>Monthly Analysis</h1>
             <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>Overview of issues & performance</p>
           </div>
 
           {/* Filter column (month select + CSV button) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
+            <div className="header-controls">
+              <div style={{ flex: '1 1 auto' }} />
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
@@ -294,6 +311,7 @@ const MonthlyAnalysis = () => {
             </select>
 
             {/* CSV Report button (hex colors only) */}
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
               onClick={handleDownloadCSV}
               disabled={csvLoading}
@@ -302,7 +320,7 @@ const MonthlyAnalysis = () => {
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.5rem 0.9rem',
-                backgroundColor: '#06b6d4', // cyan-500 hex-like
+                backgroundColor: '#06b6d4',
                 color: '#ffffff',
                 fontWeight: 600,
                 borderRadius: '0.5rem',
@@ -312,11 +330,12 @@ const MonthlyAnalysis = () => {
             >
               {csvLoading ? 'Generating CSV...' : 'Download CSV Report'}
             </button>
+            </div>
           </div>
         </div>
 
-        {/* Stat Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+  {/* Stat Cards */}
+  <div className="stat-cards" style={{ marginBottom: '1.25rem' }}>
           <StatCard title="Assigned Issues" value={assignedIssues} icon={<FaTasks />} />
           <StatCard title="Completed Issues" value={completedIssues} icon={<FaCheckCircle />} />
           <StatCard title="Avg Completion Time" value={formatTime(avgCompletionTimeHours)} icon={<FaUsers />} />
@@ -324,10 +343,12 @@ const MonthlyAnalysis = () => {
         </div>
 
         {/* Charts Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem', marginBottom: '2rem' }}>
+        <div className="charts-row" style={{ marginBottom: '1.25rem' }}>
+          {/* two-column area for charts on wider screens */}
+          <div className="two-col">
           
           {/* Pie Chart */}
-          <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb', overflow: 'auto', maxHeight: '24rem' }}>
+          <div className="chart-box" style={{ overflow: 'auto', maxHeight: '24rem' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem', color: '#111827' }}>Completion Rate</h3>
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
@@ -350,7 +371,7 @@ const MonthlyAnalysis = () => {
           </div>
 
           {/* Bar Chart */}
-          <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
+          <div className="chart-box">
             <h3 style={{ fontSize: '1.125rem', fontWeight: 700, marginBottom: '1rem', color: '#111827' }}>Top Issues (Upvotes vs Downvotes)</h3>
             {votesBarData.length > 0 ? (
               <ResponsiveContainer width="100%" height={260}>
@@ -368,14 +389,16 @@ const MonthlyAnalysis = () => {
               <p style={{ color: '#6b7280' }}>No issue votes data available.</p>
             )}
           </div>
+          </div>
         </div>
 
         {/* Most Upvoted/Downvoted */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+        <div style={{ marginBottom: '1.25rem' }}>
+          <div className="two-col">
           
           {/* Most Upvoted */}
           {mostUpvoted ? (
-            <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
+            <div className="chart-box">
               <h4 style={{ fontSize: '1.125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: '#111827' }}>
                 <FaThumbsUp style={{ color: '#22c55e' }} /> Most Upvoted Issue
               </h4>
@@ -389,7 +412,7 @@ const MonthlyAnalysis = () => {
               </Link>
             </div>
           ) : (
-            <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '1rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e5e7eb' }}>
+            <div className="chart-box">
               <p style={{ color: '#6b7280' }}>No upvoted issues available.</p>
             </div>
           )}
@@ -414,10 +437,11 @@ const MonthlyAnalysis = () => {
               <p style={{ color: '#6b7280' }}>No downvoted issues available.</p>
             </div>
           )}
+          </div>
         </div>
 
         {/* Download Button */}
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '0.5rem' }}>
           <button
             onClick={handleDownloadPDF}
             disabled={pdfLoading}

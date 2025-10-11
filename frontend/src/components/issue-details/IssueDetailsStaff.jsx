@@ -697,7 +697,7 @@ export default function IssueDetailsStaff() {
             {issue.images.length > 3 && (
               <button
                 onClick={() => setShowImageSlider(true)}
-                className="mt-4 px-6 py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-300 transform hover:scale-105 transition-all"
+                className="mt-4 w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-purple-700 text-pink-100 rounded-full font-bold hover:bg-purple-800 shadow-lg border-2 border-pink-300 transform hover:scale-105 transition-all text-sm sm:text-base"
               >
                 🎭 View More
               </button>
@@ -822,11 +822,11 @@ export default function IssueDetailsStaff() {
         )}
 
         {/* Upvotes / Downvotes */}
-        <div className="flex items-center gap-4 justify-center">
-          <div className="px-6 py-3 bg-gradient-to-r from-green-400 to-green-500 text-white rounded-full font-black text-lg shadow-xl border-4 border-purple-600">
+        <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-center">
+          <div className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-green-400 to-green-500 text-white rounded-full font-black text-sm sm:text-lg shadow-xl border-2 sm:border-4 border-purple-600">
             👍 Upvotes: {issue.upvotes?.length || 0}
           </div>
-          <div className="px-6 py-3 bg-gradient-to-r from-red-400 to-red-500 text-white rounded-full font-black text-lg shadow-xl border-4 border-purple-600">
+          <div className="w-full sm:w-auto px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-red-400 to-red-500 text-white rounded-full font-black text-sm sm:text-lg shadow-xl border-2 sm:border-4 border-purple-600">
             👎 Downvotes: {issue.downvotes?.length || 0}
           </div>
         </div>
@@ -835,7 +835,7 @@ export default function IssueDetailsStaff() {
         <div className="text-center">
           <button
             onClick={() => setIsTimelineModalOpen(true)}
-            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-pink-100 font-black text-lg rounded-full shadow-lg hover:from-purple-700 hover:to-purple-800 border-4 border-pink-400 transform hover:scale-105 transition-all">
+            className="w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-pink-100 font-black text-sm sm:text-lg rounded-full shadow-lg hover:from-purple-700 hover:to-purple-800 border-2 sm:border-4 border-pink-400 transform hover:scale-105 transition-all">
             📅 View Issue Timeline
           </button>
         </div>
@@ -947,9 +947,9 @@ export default function IssueDetailsStaff() {
                             ⏰ Deadline passed — actions disabled
                           </span>
                         ) : (
-                          <div className="flex gap-2">
+                          <div className="flex flex-col sm:flex-row gap-2">
                             <button
-                              className="px-4 py-2 bg-purple-600 text-pink-100 rounded-full font-bold hover:bg-purple-700 shadow-md border-2 border-pink-300 transform hover:scale-105 transition-all"
+                              className="w-full sm:w-auto px-3 sm:px-4 py-1 sm:py-2 bg-purple-600 text-pink-100 rounded-full font-bold hover:bg-purple-700 shadow-md border-2 border-pink-300 transform hover:scale-105 transition-all text-sm sm:text-base"
                               onClick={() => {
                                 setUpdateModalTask(task);
                                 setUpdateText("");
@@ -958,7 +958,7 @@ export default function IssueDetailsStaff() {
                               📝 Give Task Update
                             </button>
                             <button
-                              className="px-4 py-2 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 shadow-md border-2 border-purple-300 transform hover:scale-105 transition-all"
+                              className="w-full sm:w-auto px-3 sm:px-4 py-1 sm:py-2 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 shadow-md border-2 border-purple-300 transform hover:scale-105 transition-all text-sm sm:text-base"
                               onClick={() => {
                                 setProofModalTask(task);
                                 setProofText("");
@@ -1060,7 +1060,7 @@ export default function IssueDetailsStaff() {
                         </p>
                       </div>
                       <button
-                        className={`px-4 py-2 rounded-full text-white font-bold shadow-md border-2 transform hover:scale-105 transition-all ${
+                        className={`w-full sm:w-auto px-3 sm:px-4 py-1 sm:py-2 rounded-full text-white font-bold shadow-md border-2 transform hover:scale-105 transition-all text-sm sm:text-base ${
                           isAssigning || assignModalOpen || isResolved
                             ? "bg-gray-400 cursor-not-allowed border-gray-500"
                             : "bg-purple-600 hover:bg-purple-700 border-pink-300"
@@ -1126,16 +1126,16 @@ export default function IssueDetailsStaff() {
                               </div>
 
                               {task.taskProofSubmitted && !isCompleted && (
-                                <div className="mt-2 flex gap-2">
+                                <div className="mt-2 flex flex-col sm:flex-row gap-2">
                                   <button
-                                    className="px-3 py-1 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 shadow-md border-2 border-purple-300"
+                                    className="w-full sm:w-auto px-3 py-1 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 shadow-md border-2 border-purple-300 text-sm sm:text-base"
                                     onClick={() =>
                                       approveOrRejectProof(task._id, true)
                                     }>
                                     ✅ Approve
                                   </button>
                                   <button
-                                    className="px-3 py-1 bg-red-600 text-white rounded-full font-bold hover:bg-red-700 shadow-md border-2 border-purple-300"
+                                    className="w-full sm:w-auto px-3 py-1 bg-red-600 text-white rounded-full font-bold hover:bg-red-700 shadow-md border-2 border-purple-300 text-sm sm:text-base"
                                     onClick={() =>
                                       approveOrRejectProof(task._id, false)
                                     }>
@@ -1233,7 +1233,7 @@ export default function IssueDetailsStaff() {
                         </p>
                       </div>
                       <button
-                        className={`px-4 py-2 text-white rounded-full font-bold shadow-md border-2 transform hover:scale-105 transition-all ${
+                        className={`w-full sm:w-auto px-3 sm:px-4 py-1 sm:py-2 text-white rounded-full font-bold shadow-md border-2 transform hover:scale-105 transition-all text-sm sm:text-base ${
                           isResolved
                             ? "bg-gray-400 cursor-not-allowed border-gray-500"
                             : "bg-purple-600 hover:bg-purple-700 border-pink-300"
@@ -1298,16 +1298,16 @@ export default function IssueDetailsStaff() {
                               </div>
 
                               {task.taskProofSubmitted && !isCompleted && (
-                                <div className="mt-2 flex gap-2">
+                                <div className="mt-2 flex flex-col sm:flex-row gap-2">
                                   <button
-                                    className="px-3 py-1 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 shadow-md border-2 border-purple-300"
+                                    className="w-full sm:w-auto px-3 py-1 bg-green-600 text-white rounded-full font-bold hover:bg-green-700 shadow-md border-2 border-purple-300 text-sm sm:text-base"
                                     onClick={() =>
                                       approveOrRejectProof(task._id, true)
                                     }>
                                     ✅ Approve
                                   </button>
                                   <button
-                                    className="px-3 py-1 bg-red-600 text-white rounded-full font-bold hover:bg-red-700 shadow-md border-2 border-purple-300"
+                                    className="w-full sm:w-auto px-3 py-1 bg-red-600 text-white rounded-full font-bold hover:bg-red-700 shadow-md border-2 border-purple-300 text-sm sm:text-base"
                                     onClick={() =>
                                       approveOrRejectProof(task._id, false)
                                     }>
@@ -1520,10 +1520,10 @@ export default function IssueDetailsStaff() {
                           </p>
                         </div>
 
-                        <div className="flex flex-col items-end gap-2">
+                        <div className="flex flex-col sm:flex-row items-end gap-2">
                           {/* Reassign to coordinator */}
                           <button
-                            className={`px-3 py-1 bg-yellow-600 text-white rounded-full font-bold hover:bg-yellow-700 shadow-md border-2 border-purple-300
+                            className={`w-full sm:w-auto px-3 py-1 bg-yellow-600 text-white rounded-full font-bold hover:bg-yellow-700 shadow-md border-2 border-purple-300 text-sm sm:text-base
             ${
               isDisabled
                 ? "opacity-60 cursor-not-allowed hover:bg-yellow-600"
@@ -1543,7 +1543,7 @@ export default function IssueDetailsStaff() {
 
                           {/* Complete it yourself */}
                           <button
-                            className={`px-3 py-1 bg-green-700 text-white rounded-full font-bold hover:bg-green-800 shadow-md border-2 border-purple-300
+                            className={`w-full sm:w-auto px-3 py-1 bg-green-700 text-white rounded-full font-bold hover:bg-green-800 shadow-md border-2 border-purple-300 text-sm sm:text-base
             ${
               isDisabled
                 ? "opacity-60 cursor-not-allowed hover:bg-green-700"
@@ -1607,7 +1607,7 @@ export default function IssueDetailsStaff() {
                 ratings for staff.
               </p>
               <button
-                className={`w-full px-6 py-3 text-white rounded-full font-black text-lg shadow-lg border-4 transform hover:scale-105 transition-all ${
+                className={`w-full px-4 sm:px-6 py-2 sm:py-3 text-white rounded-full font-black text-sm sm:text-lg shadow-lg border-2 sm:border-4 transform hover:scale-105 transition-all ${
                   isResolved
                     ? "bg-gray-400 cursor-not-allowed border-gray-500"
                     : "bg-green-600 hover:bg-green-700 border-purple-500"
@@ -1666,14 +1666,14 @@ export default function IssueDetailsStaff() {
                   className="w-full border-4 border-purple-500 p-3 rounded-lg mb-4 text-purple-900 font-semibold"
                 />
 
-                <div className="flex gap-2 justify-end">
+                <div className="flex flex-col sm:flex-row gap-2 justify-end">
                   <button
-                    className="px-4 py-2 bg-gray-300 text-purple-900 rounded-full"
+                    className="w-full sm:w-auto px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400 text-sm sm:text-base"
                     onClick={() => setReassignModalOpen(false)}>
                     Cancel
                   </button>
                   <button
-                    className="px-4 py-2 bg-yellow-600 text-white rounded-full"
+                    className="w-full sm:w-auto px-4 py-2 bg-yellow-600 text-white rounded-full font-bold border-2 border-purple-400 hover:bg-yellow-700 shadow-md text-sm sm:text-base"
                     onClick={submitReassignToCoordinator}
                     disabled={isReassigning}>
                     {isReassigning ? "Reassigning..." : "Reassign"}
@@ -1733,14 +1733,14 @@ export default function IssueDetailsStaff() {
                   </div>
                 )}
 
-                <div className="flex gap-2 justify-end">
+                <div className="flex flex-col sm:flex-row gap-2 justify-end">
                   <button
-                    className="px-4 py-2 bg-gray-300 text-purple-900 rounded-full"
+                    className="w-full sm:w-auto px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400 text-sm sm:text-base"
                     onClick={() => setSuperCompleteModalOpen(false)}>
                     Cancel
                   </button>
                   <button
-                    className="px-4 py-2 bg-green-600 text-white rounded-full"
+                    className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-full font-bold border-2 border-purple-400 hover:bg-green-700 shadow-md text-sm sm:text-base"
                     onClick={submitCompleteBySupervisor}
                     disabled={isCompletingAsSupervisor}>
                     {isCompletingAsSupervisor
@@ -1782,14 +1782,14 @@ export default function IssueDetailsStaff() {
                   className="w-full border-4 border-purple-500 p-3 rounded-lg mb-4 text-purple-900 font-semibold focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
                   placeholder="Describe progress..."
                 />
-                <div className="flex gap-2 justify-end">
+                <div className="flex flex-col sm:flex-row gap-2 justify-end">
                   <button
-                    className="px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400"
+                    className="w-full sm:w-auto px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400 text-sm sm:text-base"
                     onClick={() => setUpdateModalOpen(false)}>
                     Cancel
                   </button>
                   <button
-                    className="px-4 py-2 bg-purple-700 text-pink-100 rounded-full font-bold border-2 border-pink-400 hover:bg-purple-800 shadow-md"
+                    className="w-full sm:w-auto px-4 py-2 bg-purple-700 text-pink-100 rounded-full font-bold border-2 border-pink-400 hover:bg-purple-800 shadow-md text-sm sm:text-base"
                     onClick={submitTaskUpdate}>
                     Submit Update
                   </button>
@@ -1842,14 +1842,14 @@ export default function IssueDetailsStaff() {
                     ))}
                   </div>
                 )}
-                <div className="flex gap-2 justify-end">
+                <div className="flex flex-col sm:flex-row gap-2 justify-end">
                   <button
-                    className="px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400"
+                    className="w-full sm:w-auto px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400 text-sm sm:text-base"
                     onClick={() => setProofModalOpen(false)}>
                     Cancel
                   </button>
                   <button
-                    className="px-4 py-2 bg-green-600 text-white rounded-full font-bold border-2 border-purple-400 hover:bg-green-700 shadow-md"
+                    className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-full font-bold border-2 border-purple-400 hover:bg-green-700 shadow-md text-sm sm:text-base"
                     onClick={submitTaskProof}>
                     Submit Proof
                   </button>
@@ -1916,14 +1916,14 @@ export default function IssueDetailsStaff() {
                   }
                   className="w-full border-4 border-purple-500 p-3 rounded-lg mb-4 text-purple-900 font-semibold focus:border-pink-500 focus:ring-4 focus:ring-pink-300"
                 />
-                <div className="flex gap-2 justify-end">
+                <div className="flex flex-col sm:flex-row gap-2 justify-end">
                   <button
-                    className="px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400"
+                    className="w-full sm:w-auto px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400 text-sm sm:text-base"
                     onClick={() => setAssignModalOpen(false)}>
                     Cancel
                   </button>
                   <button
-                    className="px-4 py-2 bg-green-600 text-white rounded-full font-bold border-2 border-purple-400 hover:bg-green-700 shadow-md"
+                    className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-full font-bold border-2 border-purple-400 hover:bg-green-700 shadow-md text-sm sm:text-base"
                     onClick={assignTaskToAssignee}>
                     Assign
                   </button>
@@ -2102,14 +2102,14 @@ export default function IssueDetailsStaff() {
                     </div>
                   </div>
 
-                  <div className="flex gap-2 justify-end mt-6">
+                  <div className="flex flex-col sm:flex-row gap-2 justify-end mt-6">
                     <button
-                      className="px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400"
+                      className="w-full sm:w-auto px-4 py-2 bg-gray-300 text-purple-900 rounded-full font-bold border-2 border-purple-500 hover:bg-gray-400 text-sm sm:text-base"
                       onClick={() => setResolveModalOpen(false)}>
                       Cancel
                     </button>
                     <button
-                      className={`px-4 py-2 bg-green-600 text-white rounded-full font-bold border-2 border-purple-400 hover:bg-green-700 shadow-md ${
+                      className={`w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-full font-bold border-2 border-purple-400 hover:bg-green-700 shadow-md text-sm sm:text-base ${
                         isResolving ? "opacity-60 cursor-not-allowed" : ""
                       }`}
                       onClick={submitResolution}

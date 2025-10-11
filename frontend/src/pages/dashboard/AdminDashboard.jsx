@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { FaRupeeSign, FaUsers, FaBuilding, FaFilter, FaHandHoldingHeart, FaSignOutAlt, FaCheckCircle, FaTasks, FaUserFriends, FaFileAlt, FaInfoCircle, FaComments } from 'react-icons/fa';
+import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +18,7 @@ const AdminDashboard = () => {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [issueDetails, setIssueDetails] = useState(null);
   const [aiReport, setAiReport] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [feedbackList, setFeedbackList] = useState([]);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -124,15 +126,26 @@ const fetchMunicipalities = async () => {
 
   const generateAiReport = async (issueId) => {
     try {
-      // const res = await axios.post(`http://localhost:3000/api/v1/admin/generate-feedback-report`, 
-      //   { issueId },
-      //   { withCredentials: true }
-      // );
-      setAiReport({});
+      // show modal immediately with loading state
+      setAiReport(null);
+      setAiLoading(true);
       setShowReportModal(true);
+
+      const res = await axios.post(
+        `${import.meta.env.VITE_REACT_APP_BACKEND_BASEURL}/api/v1/feedbacks/analyze-feedback`,
+        { issueId },
+        { withCredentials: true }
+      );
+      // backend may return analysis as a string (markdown or text)
+      const analysis = res.data?.analysis ?? res.data?.analysisText ?? res.data ?? '';
+      setAiReport(analysis);
     } catch (err) {
       console.error('Error generating AI report:', err);
+      const message = err.response?.data?.message || 'Failed to generate report';
+      setAiReport(`**Error:** ${message}`);
       toast.error('Failed to generate report');
+    } finally {
+      setAiLoading(false);
     }
   };
 
@@ -293,7 +306,7 @@ return (
       <div className="mt-8">
         <div className="flex space-x-4">
           {/* Vertical Tabs */}
-          <div className="w-1/4 bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl shadow-xl p-4 border-4 border-purple-600">
+          <div className="w-full md:w-1/4 bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl shadow-xl p-4 border-4 border-purple-600">
             <h3 className="text-xl font-black text-purple-900 mb-4 overflow-hidden">✅ Completed Issues</h3>
 
             {/* Filter Dropdowns */}
@@ -339,24 +352,63 @@ return (
                 </button>
               ))}
             </div>
-          </div>
 
-          {/* Issue Details and Actions */}
-          <div className="w-3/4 bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl shadow-xl p-6 border-4 border-purple-600">
-            {selectedIssue ? (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h2 className="text-3xl font-black text-purple-900 overflow-hidden">{selectedIssue.title}</h2>
-                    <p className="text-purple-700 font-bold">📍 {selectedIssue.issueDistrict}</p>
-                  </div>
-                  <div className="flex space-x-4 overflow-hidden">
+            {/* Mobile-only fixed action panel (bottom) */}
+            {selectedIssue && (
+              <>
+              <div className="md:hidden mt-4 p-3 text-sm text-gray-700 bg-white/60 rounded-lg">Selected issue details are available on larger screens. Use the action bar at the bottom to view details, feedback, or generate a report.</div>
+              <div className="md:hidden fixed bottom-4 left-4 right-4 z-50">
+                <div className="bg-white/95 rounded-xl p-3 shadow-lg border border-purple-200">
+                  <div className="flex flex-col gap-2">
                     <button
                       onClick={() => {
                         setSelectedIssue(selectedIssue);
                         fetchIssueDetails(selectedIssue._id);
                       }}
-                      className="bg-purple-700 hover:bg-purple-800 text-pink-100 px-4 py-2 rounded-full flex items-center font-bold border-2 border-pink-300 shadow-md transition-all duration-200 will-change-transform"
+                      className="w-full bg-purple-700 hover:bg-purple-800 text-pink-100 px-4 py-3 rounded-lg flex items-center justify-center font-bold border-2 border-pink-300 shadow-sm"
+                    >
+                      <FaInfoCircle className="mr-2" /> View Details
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedIssue(selectedIssue);
+                        fetchIssueFeedback(selectedIssue._id);
+                      }}
+                      className="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg flex items-center justify-center font-bold border-2 border-white shadow-sm"
+                    >
+                      <FaComments className="mr-2" /> View Feedback
+                    </button>
+
+                    <button
+                      onClick={() => generateAiReport(selectedIssue._id)}
+                      className="w-full bg-pink-500 hover:bg-pink-600 text-white px-4 py-3 rounded-lg flex items-center justify-center font-bold border-2 border-purple-700 shadow-sm"
+                    >
+                      <FaFileAlt className="mr-2" /> Generate Report
+                    </button>
+                  </div>
+                </div>
+              </div>
+              </>
+            )}
+          </div>
+
+          {/* Issue Details and Actions (hidden on small screens) */}
+          <div className="hidden md:block md:w-3/4 bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl shadow-xl p-6 border-4 border-purple-600 md:mt-0">
+            {selectedIssue ? (
+              <div className="space-y-4">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-black text-purple-900 overflow-hidden">{selectedIssue.title}</h2>
+                    <p className="text-purple-700 font-bold">📍 {selectedIssue.issueDistrict}</p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row sm:space-x-4 w-full sm:w-auto">
+                    <button
+                      onClick={() => {
+                        setSelectedIssue(selectedIssue);
+                        fetchIssueDetails(selectedIssue._id);
+                      }}
+                      className="w-full sm:w-auto mb-2 sm:mb-0 bg-purple-700 hover:bg-purple-800 text-pink-100 px-4 py-2 rounded-lg flex items-center justify-center font-bold border-2 border-pink-300 shadow-md transition-all duration-200 will-change-transform"
                     >
                       <FaInfoCircle className="mr-2" />
                       View Details
@@ -366,14 +418,14 @@ return (
                         setSelectedIssue(selectedIssue);
                         fetchIssueFeedback(selectedIssue._id);
                       }}
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-full flex items-center font-bold border-2 border-white shadow-md transition-all duration-200 will-change-transform"
+                      className="w-full sm:w-auto mb-2 sm:mb-0 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center font-bold border-2 border-white shadow-md transition-all duration-200 will-change-transform"
                     >
                       <FaComments className="mr-2" />
                       View Feedback
                     </button>
                     <button
                       onClick={() => generateAiReport(selectedIssue._id)}
-                      className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-full flex items-center font-bold border-2 border-purple-700 shadow-md transition-all duration-200 will-change-transform"
+                      className="w-full sm:w-auto bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded-lg flex items-center justify-center font-bold border-2 border-purple-700 shadow-md transition-all duration-200 will-change-transform"
                     >
                       <FaFileAlt className="mr-2" />
                       Generate Report
@@ -477,10 +529,28 @@ return (
     </div>
   )}
 
-    {/* AI Report Modal - same as before */}
-    {showReportModal && aiReport && (
-      <div className="fixed inset-0 bg-purple-900/95 flex items-center justify-center p-4 z-50" onClick={() => setShowReportModal(false)}>
-        {/* Same content as before */}
+    {/* AI Report Modal */}
+    {showReportModal && (
+      <div className="fixed inset-0 bg-purple-900/95 flex items-center justify-center p-4 z-50" onClick={() => { setShowReportModal(false); setAiReport(null); setAiLoading(false); }}>
+        <div className="bg-gradient-to-br from-pink-200 to-pink-300 rounded-2xl p-6 max-w-3xl w-full max-h-[85vh] overflow-y-auto border-4 border-purple-600 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-2xl font-black text-purple-900 overflow-hidden">AI Analysis Report</h3>
+            <button onClick={() => { setShowReportModal(false); setAiReport(null); setAiLoading(false); }} className="text-2xl font-black text-purple-900 hover:text-purple-700">✕</button>
+          </div>
+
+          {aiLoading ? (
+            <div className="flex flex-col items-center justify-center p-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-teal-500 mb-4"></div>
+              <div className="text-teal-700 font-semibold">Generating AI report...</div>
+            </div>
+          ) : aiReport ? (
+            <div className="prose max-w-full text-gray-800">
+              <ReactMarkdown>{String(aiReport)}</ReactMarkdown>
+            </div>
+          ) : (
+            <div className="p-4 text-center text-gray-600">No report available.</div>
+          )}
+        </div>
       </div>
     )}
   </div>
@@ -568,24 +638,24 @@ const CompletedIssueCard = ({ issue, onViewDetails, onViewFeedback, onGenerateRe
         <span>{issue.totalPositions} Positions</span>
       </div>
     </div>
-    <div className="mt-6 flex space-x-4">
+    <div className="mt-6 flex flex-col sm:flex-row sm:space-x-4 gap-3">
       <button
         onClick={onViewDetails}
-        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
+        className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
       >
         <FaInfoCircle className="mr-2" />
         View Details
       </button>
       <button
         onClick={onViewFeedback}
-        className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
+        className="w-full sm:flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
       >
         <FaComments className="mr-2" />
         View Feedback
       </button>
       <button
         onClick={onGenerateReport}
-        className="flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
+        className="w-full sm:flex-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
       >
         <FaFileAlt className="mr-2" />
         Generate Report
