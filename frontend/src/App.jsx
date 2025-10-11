@@ -38,6 +38,8 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import FillApplicationPage from "./components/FillApplicationPage";
 import MunicipalityMain from "./pages/dashboard/MuncipalityMain";
 import ChangeDetails from "./pages/ChangeDetails";
+import NotFound from "./pages/NotFound";
+
 const App = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const dispatch = useDispatch();
@@ -200,6 +202,7 @@ const App = () => {
               <Route path="/password/forgot" element={<ForgotPassword />} />
               <Route path="/otp-verification/:email" element={<OTP />} />
               <Route path="/password/reset/:token" element={<ResetPassword />} />
+              <Route path="*" element={<NotFound />} />
           </Routes>
 
       <ToastContainer theme="dark" />
