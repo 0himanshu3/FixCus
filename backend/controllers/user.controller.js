@@ -11,7 +11,7 @@ import crypto from "crypto"
 export const register = async (req, res) => {
     try {
         // Destructure all fields including role and municipalityName
-        let { name, email, password, location, role, municipalityName,division, district, state, country } = req.body;
+        let { name, email, password, location, role, municipalityName, division, district, state, country } = req.body;
         
         // Validate all required fields including location
         if (!name || !email || !password || !location || !role) {
@@ -23,16 +23,37 @@ export const register = async (req, res) => {
             return res.status(400).json({ msg: "Municipality name is required for municipality admin" });
         }
         
+        // Enforce gmail addresses only
+        const gmailRegex = /^[^\s@]+@gmail\.com$/i;
+        if (!gmailRegex.test(email)) {
+            return res.status(400).json({ msg: "Please use a Gmail address (must end with @gmail.com)" });
+        }
+
+        // Password complexity: 8-16 chars, at least one uppercase, one digit, one special symbol
+        if (typeof password !== 'string' || password.length < 8 || password.length > 16) {
+            return res.status(400).json({ msg: "Password must be between 8 and 16 characters" });
+        }
+        const uppercaseRegex = /[A-Z]/;
+        const digitRegex = /\d/;
+        // Allowed special symbols: ! @ # $ % ^ & * ( ) _ + -
+        const specialRegex = /[!@#$%^&*()_+\-]/;
+
+        if (!uppercaseRegex.test(password)) {
+            return res.status(400).json({ msg: "Password must include at least one uppercase letter (A-Z)" });
+        }
+        if (!digitRegex.test(password)) {
+            return res.status(400).json({ msg: "Password must include at least one digit (0-9)" });
+        }
+        if (!specialRegex.test(password)) {
+            return res.status(400).json({ msg: "Password must include at least one special symbol (allowed: ! @ # $ % ^ & * ( ) _ + -)" });
+        }
+        
         // Check if email already exists in either User or Municipality collection
         const existingUser = await User.findOne({ email, accountVerified: true });
         const existingMunicipality = await Municipality.findOne({ email, accountVerified: true });
         
         if (existingUser || existingMunicipality) {
             return res.status(400).json({ msg: "Email is already registered" });
-        }
-        
-        if (password.length < 8 || password.length > 16) {
-            return res.status(400).json({ msg: "Password must be between 8 and 16 characters" });
         }
         
         name = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
@@ -70,12 +91,14 @@ export const register = async (req, res) => {
         await user.save();
         sendVerificationCode(verificationCode, email, res);
     } catch (error) {
+        console.error("Register error:", error);
         return res.status(500).json({
             success: false,
             message: "Something went wrong"
         });
     }
 }
+
 
 
 export const verifyOtp = async (req, res) => {

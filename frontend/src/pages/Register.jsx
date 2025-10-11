@@ -21,14 +21,34 @@ function Register() {
     const { loading, error, message, isAuthenticated } = useSelector(state => state.auth);
     const navigateTo = useNavigate();
 
+    // Allowed special symbols (show these to users)
+    const allowedSpecials = ['!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '-'];
+
     const validateName = (value) => (!value.trim() ? 'Name is required' : '');
+
+    // enforce gmail only
     const validateEmail = (value) => {
         if (!value.trim()) return 'Email is required';
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return !emailRegex.test(value) ? 'Enter a valid email (must include @ and domain)' : '';
+        const gmailRegex = /^[^\s@]+@gmail\.com$/i;
+        return !gmailRegex.test(value) ? 'Enter a valid Gmail address (must end with @gmail.com)' : '';
     };
-    const validatePassword = (value) =>
-        !value ? 'Password is required' : (value.length < 8 || value.length > 16 ? 'Password must be 8–16 characters' : '');
+
+    // password rules checked individually for live UI and validation
+    const passwordLengthOk = (value) => value && value.length >= 8 && value.length <= 16;
+    const passwordUppercaseOk = (value) => /[A-Z]/.test(value || '');
+    const passwordDigitOk = (value) => /\d/.test(value || '');
+    // allowed special symbols: ! @ # $ % ^ & * ( ) _ + -
+    const passwordSpecialOk = (value) => /[!@#$%^&*()_+\-]/.test(value || '');
+
+    const validatePassword = (value) => {
+        if (!value) return 'Password is required';
+        if (!passwordLengthOk(value)) return 'Password must be 8–16 characters';
+        if (!passwordUppercaseOk(value)) return 'Password must include at least one uppercase letter';
+        if (!passwordDigitOk(value)) return 'Password must include at least one digit';
+        if (!passwordSpecialOk(value)) return `Password must include at least one special symbol (${allowedSpecials.join(' ')})`;
+        return '';
+    };
+
     const validateMunicipalityName = (value) =>
         role === 'municipality_admin' && !value.trim() ? 'Municipality name is required' : '';
     const validateLocation = (value) =>
@@ -101,6 +121,14 @@ function Register() {
         "Stray Animal Menace",
         "General Issue"
     ];
+
+    // live requirement booleans for the UI
+    const reqs = {
+        length: passwordLengthOk(password),
+        uppercase: passwordUppercaseOk(password),
+        digit: passwordDigitOk(password),
+        special: passwordSpecialOk(password)
+    };
 
     return (
         <div className="flex flex-col justify-center md:flex-row h-screen relative overflow-hidden">
@@ -245,9 +273,10 @@ function Register() {
                                     setEmail(e.target.value);
                                     setErrors(prev => ({ ...prev, email: validateEmail(e.target.value) }));
                                 }}
-                                placeholder="📧 Email Address"
+                                placeholder="📧 Email Address (must be @gmail.com)"
                                 className="w-full px-4 py-3 border-3 border-purple-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-200 focus:border-purple-500 transition-all placeholder-gray-400"
                             />
+                            <p className="text-xs text-gray-500 mt-1 ml-2">We currently accept Gmail addresses only</p>
                             {errors.email && <p className="text-red-500 text-xs mt-1 ml-2 font-medium">⚠️ {errors.email}</p>}
                         </div>
 
@@ -264,6 +293,34 @@ function Register() {
                                 className="w-full px-4 py-3 border-3 border-purple-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-purple-200 focus:border-purple-500 transition-all placeholder-gray-400"
                             />
                             {errors.password && <p className="text-red-500 text-xs mt-1 ml-2 font-medium">⚠️ {errors.password}</p>}
+
+                            {/* Live password requirements */}
+                            <div className="mt-2 text-sm space-y-1 ml-1">
+                                <div className="flex items-center">
+                                    <span className={`mr-2 ${reqs.length ? 'text-green-600' : 'text-gray-400'}`}>
+                                        {reqs.length ? '✅' : '⬜'} 
+                                    </span>
+                                    <span className={`${reqs.length ? 'text-gray-700' : 'text-gray-400'}`}>8–16 characters</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <span className={`mr-2 ${reqs.uppercase ? 'text-green-600' : 'text-gray-400'}`}>
+                                        {reqs.uppercase ? '✅' : '⬜'}
+                                    </span>
+                                    <span className={`${reqs.uppercase ? 'text-gray-700' : 'text-gray-400'}`}>At least one uppercase letter (A-Z)</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <span className={`mr-2 ${reqs.digit ? 'text-green-600' : 'text-gray-400'}`}>
+                                        {reqs.digit ? '✅' : '⬜'}
+                                    </span>
+                                    <span className={`${reqs.digit ? 'text-gray-700' : 'text-gray-400'}`}>At least one digit (0-9)</span>
+                                </div>
+                                <div className="flex items-center">
+                                    <span className={`mr-2 ${reqs.special ? 'text-green-600' : 'text-gray-400'}`}>
+                                        {reqs.special ? '✅' : '⬜'}
+                                    </span>
+                                    <span className={`${reqs.special ? 'text-gray-700' : 'text-gray-400'}`}>At least one special symbol ({allowedSpecials.join(' ')})</span>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Location */}
